@@ -1,0 +1,10 @@
+[package]
+name = "sqlite_book_db"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+
+[dependencies.rusqlite]
+version = "0.32.1"
+features = ["bundled"]
