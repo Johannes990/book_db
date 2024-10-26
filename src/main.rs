@@ -9,63 +9,15 @@ use publisher::Publisher;
 use bookauthor::BookAuthor;
 
 use rusqlite::{Connection, Result, Statement, ToSql};
-use std::{error::Error};
 
 
 fn main() -> Result<()> {
     let conn = Connection::open("book.db")?;
 
-    let _res_create_publisher = create_table(
-        &conn, 
-        "Publisher", 
-        vec![
-        "id INTEGER PRIMARY KEY",
-        "name TEXT UNIQUE NOT NULL"
-    ]);
+    let publishers = get_publishers(&conn);
 
-    let _res_create_book = create_table(
-        &conn, 
-        "Book", 
-        vec![
-        "id INTEGER PRIMARY KEY",
-        "title TEXT",
-        "subtitle TEXT",
-        "translator TEXT",
-        "year_published INTEGER",
-        "year_translated INTEGER",
-        "publisher_id INTEGER",
-        "FOREIGN KEY(publisher_id) REFERENCES Publisher(id)"
-    ]);
-
-    let _res_create_author = create_table(
-        &conn,
-        "Author",
-        vec![
-            "id INTEGER PRIMARY KEY",
-            "first_name TEXT NOT NULL",
-            "last_name TEXT NOT NULL"
-        ]);
-
-    let _res_create_bookauthor = create_table(
-        &conn,
-        "BookAuthor",
-        vec![
-            "book_id INTEGER",
-            "author_id INTEGER",
-            "FOREIGN KEY(book_id) REFERENCES Book(id)",
-            "FOREIGN KEY(author_id) REFERENCES Author(id)",
-            "PRIMARY KEY(book_id, author_id)"
-        ]);
-
-    let publishers = get_publishers(&conn).unwrap();
-    let authors = get_authors(&conn).unwrap();
-
-    for publisher in publishers {
+    if let Ok(publisher) = publishers {
         println!("Found publisher: {:?}", publisher);
-    }
-
-    for author in authors {
-        println!("Found author: {:?}", author);
     }
 
     Ok(())
