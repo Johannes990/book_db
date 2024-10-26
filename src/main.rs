@@ -16,42 +16,14 @@ fn main() -> Result<()> {
 
     let publishers = get_publishers(&conn);
 
-    let books = vec![
-        Book {
-            id: 1,
-            title: "Teadusrevolutsioonide Struktuur".to_string(),
-            subtitle: "".to_string(),
-            translator: "Ruth Lias".to_string(),
-            year_published: 1962,
-            year_translated: 2003,
-            publisher_id: 1
-        },
-        Book {
-            id: 2,
-            title: "Aritmeetika Alused".to_string(),
-            subtitle: "Loogilis-matemaatiline uurimus arvu mõistest".to_string(),
-            translator: "Piret Kuusk".to_string(),
-            year_published: 1884,
-            year_translated: 2014,
-            publisher_id: 2
-        },
-        Book {
-            id: 3,
-            title: "Tegelikkuse Sotsiaalne Ülesehitus".to_string(),
-            subtitle: "Teadmussotsioloogiline uurimus".to_string(),
-            translator: "Katre Pärn, Mirjam Parve, Ragne Schults".to_string(),
-            year_published: 1991,
-            year_translated: 2018,
-            publisher_id: 1
-        }
-    ];
-
-    for book in books {
-        let _res_add_book = add_book(&conn, book)?;
-    }
+    let books = get_books(&conn);
 
     if let Ok(publisher) = publishers {
-        println!("Found publisher: {:?}", publisher);
+        println!("Found publisher: {:?}\n", publisher);
+    }
+
+    if let Ok(book) = books {
+        println!("Found book: {:?}\n", book);
     }
 
     Ok(())
