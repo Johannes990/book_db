@@ -6,24 +6,23 @@ mod bookauthor;
 use book::Book;
 use author::Author;
 use publisher::Publisher;
-use bookauthor::BookAuthor;
 
 use rusqlite::{Connection, Result, Statement, ToSql};
-
 
 fn main() -> Result<()> {
     let conn = Connection::open("book.db")?;
 
-    let publishers = get_publishers(&conn);
+    let books_authors = get_books_with_authors(&conn).unwrap();
 
-    let books = get_books(&conn);
-
-    if let Ok(publisher) = publishers {
-        println!("Found publisher: {:?}\n", publisher);
-    }
-
-    if let Ok(book) = books {
-        println!("Found book: {:?}\n", book);
+    for (book, author, publisher) in books_authors {
+        println!("Book: {}", book.title);
+        println!("  Author: {} {}", author.first_name, author.last_name);
+        println!("  Subtitle: {}", book.subtitle);
+        println!("  Translator: {}", book.translator);
+        println!("  Year Published: {}", book.year_published);
+        println!("  Year Translated: {}", book.year_translated);
+        println!("  Publisher: {}", publisher.name);
+        println!(); // Blank line for better separation
     }
 
     Ok(())
@@ -195,7 +194,7 @@ fn get_books(conn: &Connection) -> rusqlite::Result<Vec<Book>> {
     Ok(return_vec)
 }
 
-fn add_book_and_author(conn: &Connection, book: Book, author: Author) -> Result<()> {
+fn add_book_and_author(conn: &Connection, book_id: i32, author_id: i32) -> Result<()> {
     insert_command(
         conn, 
         "BookAuthor", 
@@ -204,27 +203,47 @@ fn add_book_and_author(conn: &Connection, book: Book, author: Author) -> Result<
             "author_id"
         ], 
         vec![
-            &book.id as &dyn ToSql,
-            &author.id as &dyn ToSql
+            &book_id as &dyn ToSql,
+            &author_id as &dyn ToSql
         ]
     )
 }
 
-fn get_books_with_authors(conn: &Connection) -> rusqlite::Result<Vec<BookAuthor>> {
-    let mut book_authors = select_command(
-        conn, 
-        "BookAuthor",
-        vec![
-            "book_id",
-            "author_id"
-        ])?;
-    let book_authors_iter = book_authors.query_map([], |row| {
-        Ok(BookAuthor {
-            book_id: row.get(0)?,
-            author_id: row.get(1)?
-        })
+fn get_books_with_authors(conn: &Connection) -> rusqlite::Result<Vec<(Book, Author, Publisher)>> {
+    let sql = "
+        SELECT B.id, B.title, B.subtitle, B.translator,
+        B.year_published, B.year_translated, B.publisher_id,
+        A.id, A.first_name, A.last_name, P.id, P.name
+        FROM Book AS B
+        JOIN BookAuthor on B.id = BookAuthor.book_id
+        JOIN Author AS A on A.id = BookAuthor.author_id
+        JOIN Publisher AS P on P.id = B.publisher_id
+    ";
+    let mut stmt = conn.prepare(&sql)?;
+
+    let book_authors_iter = stmt.query_map([], |row| {
+        Ok((
+            Book {
+                id: row.get(0)?,
+                title: row.get(1)?,
+                subtitle: row.get(2)?,
+                translator: row.get(3)?,
+                year_published: row.get(4)?,
+                year_translated: row.get(5)?,
+                publisher_id: row.get(6)?
+            },
+            Author {
+                id: row.get(7)?,
+                first_name: row.get(8)?,
+                last_name: row.get(9)?
+            },
+            Publisher {
+                id: row.get(10)?,
+                name: row.get(11)?,
+            }
+        ))
     })?;
 
-    let return_vec: Vec<BookAuthor> = book_authors_iter.collect::<Result<_, _>>()?;
+    let return_vec: Vec<(Book, Author, Publisher)> = book_authors_iter.collect::<Result<_, _>>()?;
     Ok(return_vec)
 }
