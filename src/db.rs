@@ -46,7 +46,7 @@ impl<'life> DB<'life> {
     }
 
     pub fn create_table(&mut self, table_name: &'life str, columns: Vec<&'life str>) -> Result<(), DBError> {
-        self.check_table_exists(table_name);
+        let _ = self.check_table_exists(table_name);
 
         let col_names = self.col_names_from_sql(&columns);
         self.db_table_column_map.insert(table_name, col_names);
@@ -57,12 +57,29 @@ impl<'life> DB<'life> {
         Ok(())
     }
 
-    pub fn insert_row(&mut self, table_name: &'life str, columns: Vec<&'life str>, values: Vec<&dyn ToSql>) -> Result<(), DBError> {
-        self.check_table_exists(table_name);
+    pub fn insert_statement(&mut self, table_name: &'life str, columns: Vec<&'life str>, values: Vec<&dyn ToSql>) -> Result<(), DBError> {
+        let _ = self.check_table_exists(table_name);
         let table_cols = self.db_table_column_map.get(table_name).unwrap();
-        self.check_insertion_columns_exist(table_cols, &columns);
+        let _ = self.check_cols_match_existing(table_cols, &columns);
+
+        let col_str = columns.join("; ");
+        let placeholders = (0..columns.len()).map(|_| "?").collect::<Vec<_>>().join(", ");
+        let sql = format!("INSERT INTO {} ({}) VALUES ({})", table_name, col_str, placeholders);
+        self.db_conn.execute(&sql, values.as_slice())?;
 
         Ok(())
+    }
+
+    pub fn select_statement(&self, table_name: &'life str, cols: &Vec<&'life str>) -> Result<Statement> {
+        let _ = self.check_table_exists(table_name);
+        let table_cols = self.db_table_column_map.get(table_name).unwrap();
+        let _ = self.check_cols_match_existing(table_cols, cols);
+
+        let col_str = cols.join(", ");
+        let sql = format!("SELECT {} FROM {}", col_str, table_name);
+        let res = self.db_conn.prepare(&sql)?;
+
+        Ok(res)
     }
 
     fn check_table_exists(&self, table_name: &'life str) -> Result<(), DBError> {
@@ -73,9 +90,9 @@ impl<'life> DB<'life> {
         }
     }
 
-    fn check_insertion_columns_exist(&self, expected_cols: &Vec<&'life str>, cols: &Vec<&'life str>) -> Result<(), DBError> {
+    fn check_cols_match_existing(&self, existing_cols: &Vec<&'life str>, cols: &Vec<&'life str>) -> Result<(), DBError> {
         for col in cols {
-            if !expected_cols.contains(col) {
+            if !existing_cols.contains(col) {
                 return Err(DBError::ColumnDoesNotExist(col.to_string()));
             }
         }
