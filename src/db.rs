@@ -30,13 +30,13 @@ impl From<Error> for DBError {
 pub struct DB<'life> {
     pub db_name: &'life str,
     db_conn: Connection,
-    db_table_column_map: HashMap<&'life str, Vec<&'life str>>,
+    db_tab_col_map: HashMap<&'life str, Vec<&'life str>>,
 }
 
 impl<'life> DB<'life> {
     pub fn new(&mut self, name: &'life str) {
         self.db_name = name;
-        self.db_table_column_map = HashMap::new();
+        self.db_tab_col_map = HashMap::new();
     }
 
     pub fn create_conn(&mut self) -> Result<()> {
@@ -46,10 +46,10 @@ impl<'life> DB<'life> {
     }
 
     pub fn create_table(&mut self, table_name: &'life str, columns: Vec<&'life str>) -> Result<(), DBError> {
-        let _ = self.check_table_exists(table_name);
+        let _ = self.check_table_does_not_exist(table_name);
 
         let col_names = self.col_names_from_sql(&columns);
-        self.db_table_column_map.insert(table_name, col_names);
+        self.db_tab_col_map.insert(table_name, col_names);
 
         let columns_str = columns.join(", ");
         let sql = format!("CREATE TABLE IF NOT EXISTS {} ({})", table_name, columns_str);
@@ -59,7 +59,7 @@ impl<'life> DB<'life> {
 
     pub fn insert_statement(&mut self, table_name: &'life str, columns: Vec<&'life str>, values: Vec<&dyn ToSql>) -> Result<(), DBError> {
         let _ = self.check_table_exists(table_name);
-        let table_cols = self.db_table_column_map.get(table_name).unwrap();
+        let table_cols = self.db_tab_col_map.get(table_name).unwrap();
         let _ = self.check_cols_match_existing(table_cols, &columns);
 
         let col_str = columns.join("; ");
@@ -72,7 +72,7 @@ impl<'life> DB<'life> {
 
     pub fn select_statement(&self, table_name: &'life str, cols: &Vec<&'life str>) -> Result<Statement> {
         let _ = self.check_table_exists(table_name);
-        let table_cols = self.db_table_column_map.get(table_name).unwrap();
+        let table_cols = self.db_tab_col_map.get(table_name).unwrap();
         let _ = self.check_cols_match_existing(table_cols, cols);
 
         let col_str = cols.join(", ");
@@ -82,8 +82,20 @@ impl<'life> DB<'life> {
         Ok(res)
     }
 
+    fn check_tab_col_map_contains_table(&self, table_name: &'life str) -> bool {
+        self.db_tab_col_map.contains_key(table_name)
+    }
+
+    fn check_table_does_not_exist(&self, table_name: &'life str) -> Result<(), DBError> {
+        if !self.check_tab_col_map_contains_table(table_name) {
+            Ok(())
+        } else {
+            Err(DBError::TableAlreadyExists(table_name.to_string()))
+        }
+    }
+
     fn check_table_exists(&self, table_name: &'life str) -> Result<(), DBError> {
-        if self.db_table_column_map.contains_key(table_name) {
+        if self.check_tab_col_map_contains_table(table_name) {
             Ok(())
         } else {
             Err(DBError::TableDoesNotExist(table_name.to_string()))
