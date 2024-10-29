@@ -1,13 +1,7 @@
-mod book;
-mod person;
-mod publisher;
-mod bookperson;
+mod domain;
+mod db;
 
-use book::Book;
-use bookperson::BookPerson;
-use person::Person;
-use publisher::Publisher;
-
+use domain::{book::Book, person::Person, bookperson::BookPerson, publisher::Publisher};
 use rusqlite::{Connection, Result, Statement, ToSql};
 
 fn main() -> Result<()> {
