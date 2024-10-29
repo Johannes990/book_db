@@ -1,6 +1,6 @@
 use rusqlite::{Connection, Result, Error, Statement, ToSql};
-use std::collections::{HashMap};
-use std::fmt::{self, write};
+use std::collections::HashMap;
+use std::fmt;
 
 #[derive(Debug)]
 pub enum DBError {
@@ -30,7 +30,7 @@ impl From<Error> for DBError {
 }
 
 pub struct DB<'life> {
-    pub db_name: &'life str,
+    db_name: &'life str,
     db_conn: Connection,
     db_tab_col_map: HashMap<&'life str, Vec<&'life str>>,
 }
@@ -45,12 +45,6 @@ impl<'life> DB<'life> {
                 db_conn: conn, 
                 db_tab_col_map: HashMap::new() 
         })
-    }
-
-    pub fn create_conn(&mut self) -> Result<()> {
-        let db_string = self.db_name.to_owned() + ".db";
-        self.db_conn = Connection::open(db_string)?;
-        Ok(())
     }
 
     pub fn create_table(&mut self, table_name: &'life str, columns: Vec<&'life str>, constraints: Vec<&'life str>) -> Result<(), DBError> {
