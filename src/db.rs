@@ -1,9 +1,10 @@
 use rusqlite::{Connection, Result, Error, Statement, ToSql};
-use std::collections::{HashMap, HashSet};
+use std::collections::{HashMap};
 use std::fmt::{self, write};
 
 #[derive(Debug)]
 pub enum DBError {
+    ConnectionCreationError(String),
     TableAlreadyExists(String),
     TableDoesNotExist(String),
     ColumnDoesNotExist(String),
@@ -13,6 +14,7 @@ pub enum DBError {
 impl fmt::Display for DBError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
+            DBError::ConnectionCreationError(name) => write!(f, "Can't open connection to database '{}'", name),
             DBError::TableAlreadyExists(table) => write!(f, "Table '{}' already exists", table),
             DBError::TableDoesNotExist(table) => write!(f, "Table '{}' does not exist", table),
             DBError::ColumnDoesNotExist(column) => write!(f, "Column '{}' does not exist", column),
@@ -34,9 +36,15 @@ pub struct DB<'life> {
 }
 
 impl<'life> DB<'life> {
-    pub fn new(&mut self, name: &'life str) {
-        self.db_name = name;
-        self.db_tab_col_map = HashMap::new();
+    pub fn new(name: &'life str) -> Result<Self, DBError> {
+        let db_string = name.to_owned() + ".db";
+        let conn = Connection::open(&db_string).map_err(|text| DBError::ConnectionCreationError(text.to_string()))?;
+        Ok(
+            Self {
+                db_name: name, 
+                db_conn: conn, 
+                db_tab_col_map: HashMap::new() 
+        })
     }
 
     pub fn create_conn(&mut self) -> Result<()> {
@@ -45,14 +53,16 @@ impl<'life> DB<'life> {
         Ok(())
     }
 
-    pub fn create_table(&mut self, table_name: &'life str, columns: Vec<&'life str>) -> Result<(), DBError> {
+    pub fn create_table(&mut self, table_name: &'life str, columns: Vec<&'life str>, constraints: Vec<&'life str>) -> Result<(), DBError> {
         let _ = self.check_table_does_not_exist(table_name);
 
         let col_names = self.col_names_from_sql(&columns);
         self.db_tab_col_map.insert(table_name, col_names);
 
         let columns_str = columns.join(", ");
-        let sql = format!("CREATE TABLE IF NOT EXISTS {} ({})", table_name, columns_str);
+        let constraints_str = constraints.join(", ");
+        let table_contents = columns_str + ", " + &constraints_str;
+        let sql = format!("CREATE TABLE IF NOT EXISTS {} ({})", table_name, table_contents);
         self.db_conn.execute(&sql, [])?;
         Ok(())
     }
@@ -62,7 +72,7 @@ impl<'life> DB<'life> {
         let table_cols = self.db_tab_col_map.get(table_name).unwrap();
         let _ = self.check_cols_match_existing(table_cols, &columns);
 
-        let col_str = columns.join("; ");
+        let col_str = columns.join(", ");
         let placeholders = (0..columns.len()).map(|_| "?").collect::<Vec<_>>().join(", ");
         let sql = format!("INSERT INTO {} ({}) VALUES ({})", table_name, col_str, placeholders);
         self.db_conn.execute(&sql, values.as_slice())?;

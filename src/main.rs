@@ -2,33 +2,30 @@ mod domain;
 mod db;
 
 use domain::{book::Book, person::Person, bookperson::BookPerson, publisher::Publisher};
+use db::{DB, DBError};
 use rusqlite::{Connection, Result, Statement, ToSql};
 
 fn main() -> Result<()> {
-    let conn = Connection::open("book.db")?;
-
-    let _res_create_person = create_table(
-        &conn, 
+    let mut db = DB::new("book").unwrap();
+    let _ = db.create_table(
         "Person", 
-        vec![
-            "id INTEGER PRIMARY KEY",
-            "first_name TEXT NOT NULL",
-            "middle_name TEXT",
-            "last_name TEXT NOT NULL"
-        ]
+    vec![
+        "id INTEGER PRIMARY KEY",
+        "first_name TEXT NOT NULL",
+        "middle_name TEXT",
+        "last_name TEXT NOT NULL"
+        ], 
+        vec![]
     );
-
-    let _res_create_publisher = create_table(
-        &conn,
-        "Publisher",
+    let _ = db.create_table(
+        "Publisher", 
         vec![
-            "id INTEGER PRIMARY KEY",
-            "name TEXT UNIQUE NOT NULL"
-        ]
+        "id INTEGER PRIMARY KEY",
+        "name TEXT UNIQUE NOT NULL"
+        ], 
+        vec![]
     );
-
-    let _res_create_book = create_table(
-        &conn,
+    let _ = db.create_table(
         "Book",
         vec![
             "id INTEGER PRIMARY KEY",
@@ -36,29 +33,31 @@ fn main() -> Result<()> {
             "subtitle TEXT",
             "year_published INTEGER",
             "year_translated INTEGER",
-            "publisher_id INTEGER",
+            "publisher_id INTEGER"
+        ],
+        vec![
             "FOREIGN KEY (publisher_id) REFERENCES Publisher(id)"
         ]
     );
-
-    let _res_create_bookauthor = create_table(
-        &conn, 
-        "BookAuthor", 
+    let _ = db.create_table(
+        "BookAuthor",
         vec![
             "book_id INTEGER",
-            "author_id INTEGER",
+            "author_id INTEGER"
+        ],
+        vec![
             "FOREIGN KEY (book_id) REFERENCES Book(id)",
             "FOREIGN KEY (author_id) REFERENCES Person(id)",
             "PRIMARY KEY (book_id, author_id)"
         ]
     );
-
-    let _res_create_booktranslator = create_table(
-        &conn,
+    let _ = db.create_table(
         "BookTranslator",
         vec![
             "book_id INTEGER",
-            "translator_id INTEGER",
+            "translator_id INTEGER"
+        ],
+        vec![
             "FOREIGN KEY (book_id) REFERENCES Book(id)",
             "FOREIGN KEY (translator_id) REFERENCES Person(id)",
             "PRIMARY KEY (book_id, translator_id)"
@@ -72,7 +71,9 @@ fn main() -> Result<()> {
     ];
 
     for publisher in publishers {
-        let _res_add_publisher = add_publisher(&conn, publisher);
+        if let Err(e) = add_publisher(&mut db, publisher) {
+            println!("Error adding publisher: {}", e);
+        }
     }
 
     let persons = vec![
@@ -105,7 +106,7 @@ fn main() -> Result<()> {
     ];
 
     for person in persons {
-        let _res_add_person = add_person(&conn, person);
+        let _res_add_person = add_person(&mut db, person);
     }
 
     let books = vec![
@@ -124,7 +125,7 @@ fn main() -> Result<()> {
     ];
 
     for book in books {
-        let _res_add_book = add_book(&conn, book);
+        let _res_add_book = add_book(&mut db, book);
     }
 
     let bookauthors = vec![
@@ -143,7 +144,7 @@ fn main() -> Result<()> {
     ];
 
     for ba in bookauthors {
-        let _res_add_ba = add_book_and_author(&conn, ba);
+        let _res_add_ba = add_book_and_author(&mut db, ba);
     }
 
     let booktranslators = vec![
@@ -168,56 +169,22 @@ fn main() -> Result<()> {
 
     for bt in booktranslators {
         println!("Trying to add {:?}", bt);
-        let _res_add_bt = add_book_and_translator(&conn, bt);
+        let _res_add_bt = add_book_and_translator(&mut db, bt);
+    }
+    
+    let books_res = get_books(&db);
+    println!("Books result: {:?}", books_res);
+    if let Ok(books_received) = books_res {
+        for book in books_received {
+            println!("Received book {:?}", book);
+        }
     }
 
     Ok(())
 }
 
-fn create_table(
-    conn: &Connection, 
-    table: &str, 
-    columns: Vec<&str>
-) -> Result<()> {
-    let columns_str = columns.join(", ");
-    let sql = format!("CREATE TABLE IF NOT EXISTS {} ({})", table, columns_str);
-
-    conn.execute(&sql, [])?;
-
-    Ok(())
-}
-
-fn insert_command(
-    conn: &Connection,
-    table: &str,
-    columns: Vec<&str>,
-    values: Vec<&dyn ToSql>,
-) -> Result<()> {
-    let columns_str = columns.join(", ");
-    let placeholders = (0..columns.len()).map(|_| "?").collect::<Vec<_>>().join(", ");
-    let sql = format!("INSERT INTO {} ({}) VALUES ({})", table, columns_str, placeholders);
-
-    conn.execute(&sql, values.as_slice())?;
-
-    Ok(())
-}
-
-fn select_command<'conn>(
-    conn: &'conn Connection,
-    table: &str,
-    columns: Vec<&str>
-) -> rusqlite::Result<Statement<'conn>> {
-    let columns_str = columns.join(", ");
-    let sql = format!("SELECT {} FROM {}", columns_str, table);
-
-    let res = conn.prepare(&sql)?;
-
-    Ok(res)
-}
-
-fn add_publisher(conn: &Connection, publisher: Publisher) -> Result<()> {
-    insert_command(
-        conn,
+fn add_publisher(db: &mut DB, publisher: Publisher) -> Result<(), DBError> {
+    db.insert_statement(
         "Publisher",
         vec![
             "id", 
@@ -230,14 +197,12 @@ fn add_publisher(conn: &Connection, publisher: Publisher) -> Result<()> {
     )
 }
 
-fn get_publishers(conn: &Connection) -> rusqlite::Result<Vec<Publisher>> {
-    let mut publishers = select_command(
-        conn, 
-        "Publisher", 
-        vec![
+fn get_publishers(db: &DB) -> rusqlite::Result<Vec<Publisher>> {
+    let cols = vec![
             "id", 
             "name"
-        ])?;
+        ];
+    let mut publishers = db.select_statement("Publisher", &cols)?;
     let publisher_iter = publishers.query_map([], |row| {
         Ok(Publisher {
             id: row.get(0)?,
@@ -249,9 +214,8 @@ fn get_publishers(conn: &Connection) -> rusqlite::Result<Vec<Publisher>> {
     Ok(return_vec)
 }
 
-fn add_person(conn: &Connection, person: Person) -> Result<()> {
-    insert_command(
-        conn,
+fn add_person(db: &mut DB, person: Person) -> Result<(), DBError> {
+    db.insert_statement(
         "Person",
         vec![
             "id", 
@@ -268,16 +232,14 @@ fn add_person(conn: &Connection, person: Person) -> Result<()> {
     )
 }
 
-fn get_persons(conn: &Connection) -> rusqlite::Result<Vec<Person>> {
-    let mut persons = select_command(
-        conn, 
-        "Person", 
-        vec![
-            "id", 
-            "first_name", 
-            "middle_name",
-            "last_name"
-        ])?;
+fn get_persons(db: &DB) -> rusqlite::Result<Vec<Person>> {
+    let cols = vec![
+        "id", 
+        "first_name", 
+        "middle_name",
+        "last_name"
+    ];
+    let mut persons = db.select_statement("Person", &cols)?;
     let person_iter = persons.query_map([], |row| {
         Ok(Person {
             id: row.get(0)?,
@@ -291,9 +253,8 @@ fn get_persons(conn: &Connection) -> rusqlite::Result<Vec<Person>> {
     Ok(return_vec)
 }
 
-fn add_book(conn: &Connection, book: Book) -> Result<()> {
-    insert_command(
-        conn,
+fn add_book(db: &mut DB, book: Book) -> Result<(), DBError> {
+    db.insert_statement(
         "Book",
         vec![
             "id", 
@@ -314,25 +275,24 @@ fn add_book(conn: &Connection, book: Book) -> Result<()> {
     )
 }
 
-fn get_books(conn: &Connection) -> rusqlite::Result<Vec<Book>> {
-    let mut books = select_command(
-        conn, 
-        "Book", vec![
-            "id",
-            "title",
-            "subtitle",
-            "year_published",
-            "year_translated",
-            "publisher_id"
-        ])?;
+fn get_books(db: &DB) -> rusqlite::Result<Vec<Book>> {
+    let cols = vec![
+        "id",
+        "title",
+        "subtitle",
+        "year_published",
+        "year_translated",
+        "publisher_id"
+    ];
+    let mut books = db.select_statement("Book", &cols)?;
     let mut book_iter = books.query_map([], |row| {
         Ok(Book {
             id: row.get(0)?,
             title: row.get(1)?,
             subtitle: row.get(2)?,
-            year_published: row.get(4)?,
-            year_translated: row.get(5)?,
-            publisher_id: row.get(6)?,
+            year_published: row.get(3)?,
+            year_translated: row.get(4)?,
+            publisher_id: row.get(5)?,
         })
     })?;
 
@@ -340,9 +300,8 @@ fn get_books(conn: &Connection) -> rusqlite::Result<Vec<Book>> {
     Ok(return_vec)
 }
 
-fn add_book_and_author(conn: &Connection, book_author: BookPerson) -> Result<()> {
-    insert_command(
-        conn, 
+fn add_book_and_author(db: &mut DB, book_author: BookPerson) -> Result<(), DBError> {
+    db.insert_statement(
         "BookAuthor", 
         vec![
             "book_id", 
@@ -355,10 +314,8 @@ fn add_book_and_author(conn: &Connection, book_author: BookPerson) -> Result<()>
     )
 }
 
-fn add_book_and_translator(conn: &Connection, book_translator: BookPerson) -> Result<()> {
-    print!("INSIDE ADD_BOOK_AND_TRANSLATOR");
-    insert_command(
-        conn,
+fn add_book_and_translator(db: &mut DB, book_translator: BookPerson) -> Result<(), DBError> {
+    db.insert_statement(
         "BookTranslator",
         vec![
             "book_id",
@@ -389,19 +346,19 @@ fn get_books_with_persons(conn: &Connection) -> rusqlite::Result<Vec<(Book, Pers
                 id: row.get(0)?,
                 title: row.get(1)?,
                 subtitle: row.get(2)?,
-                year_published: row.get(4)?,
-                year_translated: row.get(5)?,
-                publisher_id: row.get(6)?
+                year_published: row.get(3)?,
+                year_translated: row.get(4)?,
+                publisher_id: row.get(5)?
             },
             Person {
-                id: row.get(7)?,
-                first_name: row.get(8)?,
-                middle_name: row.get(9)?,
-                last_name: row.get(10)?
+                id: row.get(6)?,
+                first_name: row.get(7)?,
+                middle_name: row.get(7)?,
+                last_name: row.get(9)?
             },
             Publisher {
-                id: row.get(11)?,
-                name: row.get(12)?,
+                id: row.get(10)?,
+                name: row.get(11)?,
             }
         ))
     })?;
