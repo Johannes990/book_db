@@ -1,11 +1,14 @@
 mod domain;
 mod db;
+mod app;
 
 use domain::{book::Book, person::Person, bookperson::BookPerson, publisher::Publisher};
 use db::{DB, DBError};
-use rusqlite::{Connection, Result, Statement, ToSql};
+use rusqlite::{Connection, Result, ToSql};
 
-fn main() -> Result<()> {
+use std::io;
+
+fn main() -> io::Result<()> {
     let mut db = DB::new("book").unwrap();
     let _ = db.create_table(
         "Person", 
@@ -180,7 +183,12 @@ fn main() -> Result<()> {
         }
     }
 
-    Ok(())
+    let mut terminal = ratatui::init();
+    terminal.clear()?;
+    let app_result = app::run(terminal);
+    ratatui::restore();
+    app_result
+
 }
 
 fn add_publisher(db: &mut DB, publisher: Publisher) -> Result<(), DBError> {
