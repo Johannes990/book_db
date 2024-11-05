@@ -3,26 +3,65 @@ mod db;
 mod ui;
 mod app;
 
-use domain::{book::Book, person::Person, bookperson::BookPerson, publisher::Publisher};
-use db::{DB, DBError};
-use ratatui::prelude::CrosstermBackend;
-use ratatui::Terminal;
-use rusqlite::{Connection, Result, ToSql};
-use ui::{draw, events, colorscheme::ColorScheme};
+use crossterm::{
+    execute,
+    terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
+};
+
+use ratatui::{
+    prelude::CrosstermBackend,
+    Terminal,
+};
+use rusqlite::{
+    Connection,
+    Result,
+    ToSql,
+};
+use domain::{
+    book::Book,
+    person::Person,
+    bookperson::BookPerson,
+    publisher::Publisher,
+};
+use db::{
+    DB,
+    DBError,
+};
+use ui::{
+    colorscheme::ColorScheme,
+    draw,
+    events::handle_key_events,
+};
 use app::App;
 
 use std::io;
 
 fn main() -> io::Result<()> {
-    let stdout = io::stdout();
+    enable_raw_mode()?;
+    let mut stdout = io::stdout();
+    execute!(stdout, EnterAlternateScreen);
     let backend = CrosstermBackend::new(stdout);
     let mut terminal = Terminal::new(backend)?;
     let mut app = App::new(ColorScheme::CoolBlue);
 
-    loop {
-        draw::draw(&mut terminal, &app)?;
+    let res = run_app(&mut terminal, &mut app);
 
-        if events::handle_key_events(&mut app)? {
+    disable_raw_mode()?;
+    execute!(terminal.backend_mut(), LeaveAlternateScreen)?;
+    terminal.show_cursor()?;
+
+    if let Err(err) = res {
+        eprintln!("Error: {:?}", err)
+    }
+
+    Ok(())
+}
+
+fn run_app<B: ratatui::backend::Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<()> {
+    loop {
+        draw::draw(terminal, app)?;
+
+        if handle_key_events(app)? {
             break;
         }
     }
