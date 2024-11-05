@@ -1,7 +1,7 @@
 use std::io;
 
 use ratatui::crossterm::event::{self, Event, KeyCode, KeyEventKind};
-use crate::ui::app::{App, PopUp};
+use crate::app::{App, PopUp};
 
 pub fn handle_key_events(app: &mut App) -> io::Result<bool> {
     if let Event::Key(key) = event::read()? {

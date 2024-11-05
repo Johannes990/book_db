@@ -1,14 +1,15 @@
 mod domain;
 mod db;
 mod ui;
+mod app;
 
 use domain::{book::Book, person::Person, bookperson::BookPerson, publisher::Publisher};
 use db::{DB, DBError};
 use ratatui::prelude::CrosstermBackend;
 use ratatui::Terminal;
 use rusqlite::{Connection, Result, ToSql};
-use ui::{draw, events};
-use ui::app::App;
+use ui::{draw, events, colorscheme::ColorScheme};
+use app::App;
 
 use std::io;
 
@@ -16,8 +17,8 @@ fn main() -> io::Result<()> {
     let stdout = io::stdout();
     let backend = CrosstermBackend::new(stdout);
     let mut terminal = Terminal::new(backend)?;
-    
-    let mut app = App::new();
+    let mut app = App::new(ColorScheme::CoolBlue);
+
     loop {
         draw::draw(&mut terminal, &app)?;
 

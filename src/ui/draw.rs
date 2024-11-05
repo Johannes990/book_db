@@ -8,7 +8,7 @@ use ratatui::{
 };
 use std::io;
 
-use crate::ui::app::{App, PopUp};
+use crate::app::{App, PopUp};
 
 pub fn draw<B>(terminal: &mut Terminal<B>, app: &App) -> io::Result<()>
 where
@@ -18,30 +18,39 @@ where
     terminal.draw(|frame| {
         match app.current_popup {
             PopUp::None => draw_main_view(frame, app),
-            PopUp::QuitDialog => draw_quit_dialog(frame),
+            PopUp::QuitDialog => draw_quit_dialog(frame, app),
         }
     })?;
     Ok(())
 }
 
 fn draw_main_view(frame: &mut Frame, app: &App) {
-    let greeting = Paragraph::new("Hello and welcome to this initial page of my terminal db app! Press 'q' to quit.")
-        .white()
-        .on_cyan();
-    frame.render_widget(greeting, frame.area());
+    let main_page_style = Style::default()
+        .bg(app.main_pg_bg_col())
+        .fg(app.main_pg_txt_col());
+
+    let main_page_content = Paragraph::new(
+        "Hello and welcome to this initial page of my terminal db app! Press 'q' to quit."
+    ).style(main_page_style);
+
+    frame.render_widget(main_page_content, frame.area());
 }
 
-fn draw_quit_dialog(frame: &mut Frame) {
+fn draw_quit_dialog(frame: &mut Frame, app: &App) {
     frame.render_widget(Clear, frame.area());
+
+    let quit_popup_style = Style::default()
+        .bg(app.quit_popup_bg_col())
+        .fg(app.quit_popup_txt_col());
+
     let popup_block = Block::default()
         .title("Are you sure you want to quit?")
         .borders(Borders::ALL)
-        .style(Style::new().red())
-        .bg(Color::Black);
+        .style(quit_popup_style);
 
     let exit_text = Text::styled(
         "Press 'y' or 'Y' to quit, 'n' or 'N' to return to main window.",
-        Style::new().fg(Color::Red),
+        Style::new().fg(app.quit_popup_txt_col()),
     );
 
     let exit_paragraph = Paragraph::new(exit_text)
