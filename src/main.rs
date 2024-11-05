@@ -29,7 +29,6 @@ use db::{
 };
 use ui::{
     colorscheme::ColorScheme,
-    draw,
     events::handle_key_events,
 };
 use app::App;
@@ -39,12 +38,14 @@ use std::io;
 fn main() -> io::Result<()> {
     enable_raw_mode()?;
     let mut stdout = io::stdout();
-    execute!(stdout, EnterAlternateScreen);
+    execute!(stdout, EnterAlternateScreen)?;
+
     let backend = CrosstermBackend::new(stdout);
     let mut terminal = Terminal::new(backend)?;
-    let mut app = App::new(ColorScheme::CoolBlue);
+    let mut app = App::new(ColorScheme::Autumn);
 
-    let res = run_app(&mut terminal, &mut app);
+    //let res = run(&mut terminal, &mut app);
+    let res = app.run(&mut terminal);
 
     disable_raw_mode()?;
     execute!(terminal.backend_mut(), LeaveAlternateScreen)?;
@@ -54,17 +55,6 @@ fn main() -> io::Result<()> {
         eprintln!("Error: {:?}", err)
     }
 
-    Ok(())
-}
-
-fn run_app<B: ratatui::backend::Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<()> {
-    loop {
-        draw::draw(terminal, app)?;
-
-        if handle_key_events(app)? {
-            break;
-        }
-    }
     Ok(())
 }
 

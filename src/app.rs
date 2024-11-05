@@ -1,5 +1,15 @@
-use crate::ui::colorscheme::ColorScheme;
-use ratatui::style::Color;
+use crate::{
+    ui::{
+        colorscheme::ColorScheme,
+        render,
+    },
+    handle_key_events,
+};
+use ratatui::{
+    style::Color,
+    Terminal,
+};
+use std::io;
 
 pub enum Screen {
     DataBaseEntryView,
@@ -23,6 +33,17 @@ impl App {
             current_popup: PopUp::None,
             selected_color_scheme: color_scheme
         }
+    }
+
+    pub fn run<B: ratatui::backend::Backend>(&mut self, terminal: &mut Terminal<B>) -> io::Result<()> {
+        loop {
+            render::render(terminal, self)?;
+    
+            if handle_key_events(self)? {
+                break;
+            }
+        }
+        Ok(())
     }
 
     pub fn main_pg_bg_col(&self) -> Color {

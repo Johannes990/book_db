@@ -1,7 +1,7 @@
 use ratatui::{
     layout::{Layout, Constraint, Direction},
     widgets::{Block, Borders, Clear, Paragraph, Wrap},
-    style::{Color, Style, Stylize},
+    style::Style,
     text::Text,
     Frame,
     Terminal,
@@ -10,21 +10,21 @@ use std::io;
 
 use crate::app::{App, PopUp};
 
-pub fn draw<B>(terminal: &mut Terminal<B>, app: &App) -> io::Result<()>
+pub fn render<B>(terminal: &mut Terminal<B>, app: &App) -> io::Result<()>
 where
     B: ratatui::backend::Backend,
 {
     // Call terminal.draw and convert its output to io::Result<()>
     terminal.draw(|frame| {
         match app.current_popup {
-            PopUp::None => draw_main_view(frame, app),
-            PopUp::QuitDialog => draw_quit_dialog(frame, app),
+            PopUp::None => render_main_view(frame, app),
+            PopUp::QuitDialog => render_quit_dialog(frame, app),
         }
     })?;
     Ok(())
 }
 
-fn draw_main_view(frame: &mut Frame, app: &App) {
+fn render_main_view(frame: &mut Frame, app: &App) {
     let main_page_style = Style::default()
         .bg(app.main_pg_bg_col())
         .fg(app.main_pg_txt_col());
@@ -36,7 +36,7 @@ fn draw_main_view(frame: &mut Frame, app: &App) {
     frame.render_widget(main_page_content, frame.area());
 }
 
-fn draw_quit_dialog(frame: &mut Frame, app: &App) {
+fn render_quit_dialog(frame: &mut Frame, app: &App) {
     frame.render_widget(Clear, frame.area());
 
     let quit_popup_style = Style::default()
