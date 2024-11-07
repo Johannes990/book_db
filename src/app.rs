@@ -28,12 +28,15 @@ pub struct App {
     pub current_popup: PopUp,
     pub selected_color_scheme: ColorScheme,
     pub current_path: PathBuf,
-    pub file_list: Vec<String>,
+    pub file_list: Vec<(String, bool)>,
     pub selected_index: usize,
+    pub scroll_offset: usize,
+    pub terminal_height: u16,
+    pub terminal_width: u16,
 }
 
 impl App {
-    pub fn new(color_scheme: ColorScheme) -> Self {
+    pub fn new(color_scheme: ColorScheme, terminal_height: u16, terminal_width: u16) -> Self {
         let initial_path = std::env::current_dir().unwrap_or_else(|_| PathBuf::from("/"));
         let file_list = get_files_in_dir(&initial_path);
 
@@ -44,14 +47,16 @@ impl App {
             current_path: initial_path,
             file_list,
             selected_index: 0,
+            scroll_offset: 0,
+            terminal_height,
+            terminal_width,
         }
     }
 
     pub fn update_file_list(&mut self) -> io::Result<()> {
-        self.file_list = fs::read_dir(&self.current_path)?
-            .filter_map(|entry| entry.ok().map(|e| e.file_name().into_string().unwrap_or_default()))
-            .collect();
+        self.file_list = get_files_in_dir(&self.current_path);
         self.selected_index = 0;
+        self.scroll_offset = 0;
         Ok(())
     }
 
@@ -92,12 +97,15 @@ impl App {
 
 }
 
-fn get_files_in_dir(path: &PathBuf) -> Vec<String> {
+fn get_files_in_dir(path: &PathBuf) -> Vec<(String, bool)> {
     match fs::read_dir(path) {
         Ok(entries) => entries
             .filter_map(|entry| entry.ok())
-            .map(|entry| entry.file_name().into_string().unwrap_or_else(|_| "Invalid UTF-8".into()))
+            .map(|entry| {
+                let is_dir = entry.file_type().map_or(false, |t| t.is_dir());
+                (entry.file_name().into_string().unwrap_or_else(|_| "Invalid UTF-8".into()), is_dir)
+            })
             .collect(),
-        Err(_) => vec!["<Error reading directory>".into()],
+        Err(_) => vec![("<Error reading directory>".into(), false)],
     }
 }

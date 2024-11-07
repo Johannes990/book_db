@@ -43,7 +43,9 @@ fn main() -> io::Result<()> {
 
     let backend = CrosstermBackend::new(stdout);
     let mut terminal = Terminal::new(backend)?;
-    let mut app = App::new(ColorScheme::Autumn);
+    let terminal_height = terminal.size()?.height;
+    let terminal_width = terminal.size()?.width;
+    let mut app = App::new(ColorScheme::Autumn, terminal_height, terminal_width);
 
     //let res = run(&mut terminal, &mut app);
     let res = app.run(&mut terminal);

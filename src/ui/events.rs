@@ -1,8 +1,11 @@
-use std::{io, fs};
+use std::io;
 
 use crossterm::event::{KeyModifiers, KeyboardEnhancementFlags, PushKeyboardEnhancementFlags};
 use ratatui::crossterm::event::{self, Event, KeyCode, KeyEventKind};
-use crate::app::{App, PopUp, Screen};
+use crate::{
+    app::{App, PopUp, Screen},
+    ui::utils,
+};
 
 pub fn setup_keyboard_enchancements() {
     PushKeyboardEnhancementFlags(
@@ -49,11 +52,20 @@ pub fn handle_key_events(app: &mut App) -> io::Result<bool> {
                         (KeyCode::Up, KeyModifiers::NONE) => {
                             if app.selected_index > 0 {
                                 app.selected_index -= 1;
+
+                                if app.selected_index < app.scroll_offset {
+                                    app.scroll_offset = app.selected_index;
+                                }
                             }
                         },
                         (KeyCode::Down, KeyModifiers::NONE) => {
                             if app.selected_index < app.file_list.len() {
                                 app.selected_index += 1;
+                                
+                                let mut visible_lines = utils::calculate_visible_lines(app.terminal_height, 0.75) - 2; // how many lines can we display
+                                if app.selected_index >= app.scroll_offset + visible_lines {
+                                    app.scroll_offset = app.selected_index - visible_lines + 1;
+                                }
                             }
                         }
                         (KeyCode::Enter, KeyModifiers::NONE) => {
@@ -64,10 +76,10 @@ pub fn handle_key_events(app: &mut App) -> io::Result<bool> {
                                     app.update_file_list()?;
                                 }
                             } else {
-                                let selected_file = &app.file_list[app.selected_index - 1];
+                                let (selected_file, is_dir) = &app.file_list[app.selected_index - 1];
                                 let new_path = app.current_path.join(selected_file);
 
-                                if new_path.is_dir() {
+                                if *is_dir && new_path.is_dir() {
                                     app.current_path = new_path;
                                     app.update_file_list()?;
                                 } else {

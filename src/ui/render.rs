@@ -79,14 +79,15 @@ fn render_file_explorer(frame: &mut Frame, app: &App) {
         Style::default().fg(Color::Yellow)
     };
     items.push(ListItem::new("..").style(parent_style));
-    
-    for (i, file) in app.file_list.iter().enumerate() {
-        let is_dir = Path::new(file).is_dir();
-        let actual_idx = i + 1;
 
-        let style = if is_dir && actual_idx == app.selected_index {
+    let visible_files = app.file_list.iter().skip(app.scroll_offset).enumerate();
+    
+    for (i, (file, is_dir)) in visible_files {
+        let actual_idx = i + app.scroll_offset + 1;
+
+        let style = if *is_dir && actual_idx == app.selected_index {
             Style::default().bg(Color::LightYellow).fg(Color::Red)
-        } else if is_dir {
+        } else if *is_dir {
             Style::default().fg(Color::Red)
         } else if actual_idx == app.selected_index {
             Style::default().bg(Color::LightYellow).fg(Color::Gray)
