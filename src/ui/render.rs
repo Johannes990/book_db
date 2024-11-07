@@ -1,14 +1,17 @@
+use color_eyre::owo_colors::colors::css::LightYellow;
 use ratatui::{
-    layout::{Layout, Constraint, Direction},
-    widgets::{Block, Borders, Clear, Paragraph, Wrap},
-    style::Style,
-    text::Text,
+    prelude::Rect,
+    layout::{Constraint, Direction, Layout},
+    style::{Color, Style}, text::Text,
+    widgets::{Block, Borders, Clear, List, ListItem, Paragraph, Wrap},
+    text::{Line, Span},
     Frame,
-    Terminal,
+    Terminal
 };
-use std::io;
+use std::{io, rc::Rc};
+use std::path::Path;
 
-use crate::app::{App, PopUp};
+use crate::app::{App, PopUp, Screen};
 
 pub fn render<B>(terminal: &mut Terminal<B>, app: &App) -> io::Result<()>
 where
@@ -16,24 +19,99 @@ where
 {
     // Call terminal.draw and convert its output to io::Result<()>
     terminal.draw(|frame| {
-        match app.current_popup {
-            PopUp::None => render_main_view(frame, app),
-            PopUp::QuitDialog => render_quit_dialog(frame, app),
+        match app.current_screen {
+            Screen::SplashScreenView => {
+                match app.current_popup {
+                    PopUp::None => render_splash_screen(frame, app),
+                    PopUp::QuitDialog => render_quit_dialog(frame, app),
+                }
+            },
+            Screen::CreateNewFileView => {},
+            Screen::FileExplorerView => {
+                match app.current_popup {
+                    PopUp::None => render_file_explorer(frame, app),
+                    _ => {}
+                }
+            },
+            Screen::OptionsView => {},
+            _ => {}
         }
+        
     })?;
     Ok(())
 }
 
-fn render_main_view(frame: &mut Frame, app: &App) {
+fn render_splash_screen(frame: &mut Frame, app: &App) {
+    let chunks = get_content_and_info_chunks(frame);
+
     let main_page_style = Style::default()
         .bg(app.main_pg_bg_col())
         .fg(app.main_pg_txt_col());
 
     let main_page_content = Paragraph::new(
-        "Hello and welcome to this initial page of my terminal db app! Press 'q' to quit."
+        "Database terminal app v0.0.1".to_owned()
     ).style(main_page_style);
 
-    frame.render_widget(main_page_content, frame.area());
+    frame.render_widget(main_page_content, chunks[0]);
+
+    let info_text = Paragraph::new(Line::from(vec![
+        Span::styled("f", Style::default().fg(Color::Cyan)),
+        Span::raw(" - open file explorer to load existing database file, "),
+        Span::styled("c", Style::default().fg(Color::Cyan)),
+        Span::raw(" - create new database file, "),
+        Span::styled("o", Style::default().fg(Color::Cyan)),
+        Span::raw(" - open options page, "),
+        Span::styled("ESC / q", Style::default().fg(Color::Cyan)),
+        Span::raw(" - quit app.")
+    ]))
+    .block(Block::default().borders(Borders::ALL). title("Info"));
+
+frame.render_widget(info_text, chunks[1]);
+}
+
+fn render_file_explorer(frame: &mut Frame, app: &App) {
+    let chunks = get_content_and_info_chunks(frame);
+
+    let mut items: Vec<ListItem> = Vec::new();
+    let parent_style = if app.selected_index == 0 {
+        Style::default().bg(Color::LightYellow).fg(Color::Yellow)
+    } else {
+        Style::default().fg(Color::Yellow)
+    };
+    items.push(ListItem::new("..").style(parent_style));
+    
+    for (i, file) in app.file_list.iter().enumerate() {
+        let is_dir = Path::new(file).is_dir();
+        let actual_idx = i + 1;
+
+        let style = if is_dir && actual_idx == app.selected_index {
+            Style::default().bg(Color::LightYellow).fg(Color::Red)
+        } else if is_dir {
+            Style::default().fg(Color::Red)
+        } else if actual_idx == app.selected_index {
+            Style::default().bg(Color::LightYellow).fg(Color::Gray)
+        } else {
+            Style::default().fg(Color::Gray)
+        };
+
+        items.push(ListItem::new(file.clone()).style(style));
+    }
+
+    let list_widget = List::new(items)
+        .block(Block::default().borders(Borders::ALL).title("File Explorer"));
+    
+    frame.render_widget(list_widget, chunks[0]);
+
+    let info_text = Paragraph::new(Line::from(vec![
+        Span::raw("Commands: "),
+        Span::styled("Up / Down", Style::default().fg(Color::Cyan)),
+        Span::raw(" - Navigate, "),
+        Span::styled("Esc", Style::default().fg(Color::Cyan)),
+        Span::raw(" - Back to splash screen"),
+    ]))
+    .block(Block::default().borders(Borders::ALL). title("Info"));
+
+    frame.render_widget(info_text, chunks[1]);
 }
 
 fn render_quit_dialog(frame: &mut Frame, app: &App) {
@@ -48,10 +126,14 @@ fn render_quit_dialog(frame: &mut Frame, app: &App) {
         .borders(Borders::ALL)
         .style(quit_popup_style);
 
-    let exit_text = Text::styled(
-        "Press 'y' or 'Y' to quit, 'n' or 'N' to return to main window.",
-        Style::new().fg(app.quit_popup_txt_col()),
-    );
+    
+    let exit_text = Line::from(vec![
+        Span::raw("Press "),
+        Span::styled("y", Style::default().fg(Color::Cyan)),
+        Span::raw(" to quit, "),
+        Span::styled("Esc / n", Style::default().fg(Color::Cyan)),
+        Span::raw(" to return to main window"),
+    ]);
 
     let exit_paragraph = Paragraph::new(exit_text)
         .block(popup_block)
@@ -80,4 +162,16 @@ fn centered_rect(percent_x: u16, percent_y: u16, r: ratatui::layout::Rect) -> ra
             Constraint::Percentage((100 - percent_x) / 2),
         ])
         .split(popup_layout[1])[1]
+}
+
+fn get_content_and_info_chunks(frame: &Frame) -> Rc<[Rect]> {
+    let chunks = Layout::default()
+        .direction(Direction::Vertical)
+        .constraints([
+            Constraint::Percentage(75),
+            Constraint::Percentage(25),
+        ])
+        .split(frame.area());
+
+    chunks
 }

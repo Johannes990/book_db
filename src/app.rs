@@ -9,10 +9,13 @@ use ratatui::{
     style::Color,
     Terminal,
 };
-use std::io;
+use std::{fs, io, path::PathBuf};
 
 pub enum Screen {
-    DataBaseEntryView,
+    SplashScreenView,
+    FileExplorerView,
+    CreateNewFileView,
+    OptionsView,
 }
 
 pub enum PopUp {
@@ -24,15 +27,32 @@ pub struct App {
     pub current_screen: Screen,
     pub current_popup: PopUp,
     pub selected_color_scheme: ColorScheme,
+    pub current_path: PathBuf,
+    pub file_list: Vec<String>,
+    pub selected_index: usize,
 }
 
 impl App {
-    pub fn new(color_scheme: ColorScheme) -> Self { 
+    pub fn new(color_scheme: ColorScheme) -> Self {
+        let initial_path = std::env::current_dir().unwrap_or_else(|_| PathBuf::from("/"));
+        let file_list = get_files_in_dir(&initial_path);
+
         Self {
-            current_screen: Screen::DataBaseEntryView,
+            current_screen: Screen::SplashScreenView,
             current_popup: PopUp::None,
-            selected_color_scheme: color_scheme
+            selected_color_scheme: color_scheme,
+            current_path: initial_path,
+            file_list,
+            selected_index: 0,
         }
+    }
+
+    pub fn update_file_list(&mut self) -> io::Result<()> {
+        self.file_list = fs::read_dir(&self.current_path)?
+            .filter_map(|entry| entry.ok().map(|e| e.file_name().into_string().unwrap_or_default()))
+            .collect();
+        self.selected_index = 0;
+        Ok(())
     }
 
     pub fn run<B: ratatui::backend::Backend>(&mut self, terminal: &mut Terminal<B>) -> io::Result<()> {
@@ -60,5 +80,24 @@ impl App {
 
     pub fn quit_popup_txt_col(&self) -> Color {
         self.selected_color_scheme.colors().quit_popup_txt_col
+    }
+
+    pub fn switch_to_screen(&mut self, screen: Screen) {
+        self.current_screen = screen;
+    }
+
+    pub fn switch_to_popup(&mut self, popup: PopUp) {
+        self.current_popup = popup;
+    }
+
+}
+
+fn get_files_in_dir(path: &PathBuf) -> Vec<String> {
+    match fs::read_dir(path) {
+        Ok(entries) => entries
+            .filter_map(|entry| entry.ok())
+            .map(|entry| entry.file_name().into_string().unwrap_or_else(|_| "Invalid UTF-8".into()))
+            .collect(),
+        Err(_) => vec!["<Error reading directory>".into()],
     }
 }

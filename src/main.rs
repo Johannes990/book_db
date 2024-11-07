@@ -29,13 +29,14 @@ use db::{
 };
 use ui::{
     colorscheme::ColorScheme,
-    events::handle_key_events,
+    events::{handle_key_events, setup_keyboard_enchancements},
 };
 use app::App;
 
 use std::io;
 
 fn main() -> io::Result<()> {
+    setup_keyboard_enchancements();
     enable_raw_mode()?;
     let mut stdout = io::stdout();
     execute!(stdout, EnterAlternateScreen)?;
