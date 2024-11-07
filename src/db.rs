@@ -2,6 +2,7 @@ use rusqlite::{Connection, Result, Error, Statement, ToSql};
 use std::collections::HashMap;
 use std::fmt;
 
+
 #[derive(Debug)]
 pub enum DBError {
     ConnectionCreationError(String),

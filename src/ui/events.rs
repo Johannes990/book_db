@@ -1,11 +1,11 @@
 use std::io;
-
 use crossterm::event::{KeyModifiers, KeyboardEnhancementFlags, PushKeyboardEnhancementFlags};
 use ratatui::crossterm::event::{self, Event, KeyCode, KeyEventKind};
 use crate::{
     app::{App, PopUp, Screen},
     ui::utils,
 };
+
 
 pub fn setup_keyboard_enchancements() {
     PushKeyboardEnhancementFlags(
@@ -42,7 +42,6 @@ pub fn handle_key_events(app: &mut App) -> io::Result<bool> {
                             }
                         }
                     }
-                    _ => {}
                 }
             },
             Screen::FileExplorerView => {
@@ -62,7 +61,7 @@ pub fn handle_key_events(app: &mut App) -> io::Result<bool> {
                             if app.selected_index < app.file_list.len() {
                                 app.selected_index += 1;
                                 
-                                let mut visible_lines = utils::calculate_visible_lines(app.terminal_height, 0.75) - 2; // how many lines can we display
+                                let visible_lines = utils::calculate_visible_lines(app.terminal_height, 0.75) - 2; // how many lines can we display
                                 if app.selected_index >= app.scroll_offset + visible_lines {
                                     app.scroll_offset = app.selected_index - visible_lines + 1;
                                 }
@@ -97,7 +96,7 @@ pub fn handle_key_events(app: &mut App) -> io::Result<bool> {
             Screen::CreateNewFileView => {
 
             },
-            _ => {}
+            
         }
     }
     Ok(false)

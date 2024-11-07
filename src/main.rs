@@ -7,7 +7,6 @@ use crossterm::{
     execute,
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
-
 use ratatui::{
     prelude::CrosstermBackend,
     Terminal,
@@ -32,8 +31,8 @@ use ui::{
     events::{handle_key_events, setup_keyboard_enchancements},
 };
 use app::App;
-
 use std::io;
+
 
 fn main() -> io::Result<()> {
     setup_keyboard_enchancements();

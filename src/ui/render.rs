@@ -1,17 +1,15 @@
-use color_eyre::owo_colors::colors::css::LightYellow;
 use ratatui::{
     prelude::Rect,
     layout::{Constraint, Direction, Layout},
-    style::{Color, Style}, text::Text,
+    style::{Color, Style},
     widgets::{Block, Borders, Clear, List, ListItem, Paragraph, Wrap},
     text::{Line, Span},
     Frame,
     Terminal
 };
 use std::{io, rc::Rc};
-use std::path::Path;
-
 use crate::app::{App, PopUp, Screen};
+
 
 pub fn render<B>(terminal: &mut Terminal<B>, app: &App) -> io::Result<()>
 where
@@ -34,7 +32,6 @@ where
                 }
             },
             Screen::OptionsView => {},
-            _ => {}
         }
         
     })?;
