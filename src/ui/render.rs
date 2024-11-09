@@ -61,7 +61,10 @@ fn render_splash_screen(frame: &mut Frame, app: &App) {
         Span::styled("ESC / q", Style::default().fg(Color::Cyan)),
         Span::raw(" - quit app.")
     ]))
-    .block(Block::default().borders(Borders::ALL). title("Info"));
+    .wrap(Wrap {trim: true})
+    .block(Block::default()
+    .borders(Borders::ALL)
+    .title("Info"));
 
 frame.render_widget(info_text, chunks[1]);
 }
@@ -107,7 +110,10 @@ fn render_file_explorer(frame: &mut Frame, app: &App) {
         Span::styled("Esc", Style::default().fg(Color::Cyan)),
         Span::raw(" - Back to splash screen"),
     ]))
-    .block(Block::default().borders(Borders::ALL). title("Info"));
+    .wrap(Wrap {trim: true})
+    .block(Block::default()
+    .borders(Borders::ALL)
+    .title("Info"));
 
     frame.render_widget(info_text, chunks[1]);
 }
