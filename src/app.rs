@@ -87,6 +87,22 @@ impl App {
         self.selected_color_scheme.colors().quit_popup_txt_col
     }
 
+    pub fn quit_popup_txt_highlight_col(&self) -> Color {
+        self.selected_color_scheme.colors().quit_popup_txt_highlight_col
+    }
+
+    pub fn info_block_bg_col(&self) -> Color {
+        self.selected_color_scheme.colors().info_block_bg_col
+    }
+
+    pub fn info_block_txt_col(&self) -> Color {
+        self.selected_color_scheme.colors().info_block_txt_col
+    }
+
+    pub fn info_block_txt_highlight_col(&self) -> Color {
+        self.selected_color_scheme.colors().info_block_txt_highlight_col
+    }
+
     pub fn switch_to_screen(&mut self, screen: Screen) {
         self.current_screen = screen;
     }

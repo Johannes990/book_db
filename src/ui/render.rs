@@ -52,16 +52,17 @@ fn render_splash_screen(frame: &mut Frame, app: &App) {
     frame.render_widget(main_page_content, chunks[0]);
 
     let info_text = Paragraph::new(Line::from(vec![
-        Span::styled("f", Style::default().fg(Color::Cyan)),
-        Span::raw(" - open file explorer to load existing database file, "),
-        Span::styled("c", Style::default().fg(Color::Cyan)),
-        Span::raw(" - create new database file, "),
-        Span::styled("o", Style::default().fg(Color::Cyan)),
-        Span::raw(" - open options page, "),
-        Span::styled("ESC / q", Style::default().fg(Color::Cyan)),
-        Span::raw(" - quit app.")
+        Span::styled("f", Style::default().fg(app.info_block_txt_highlight_col())),
+        Span::styled(" - open file explorer to load existing database file, ", Style::default().fg(app.info_block_txt_col())),
+        Span::styled("c", Style::default().fg(app.info_block_txt_highlight_col())),
+        Span::styled(" - create new database file, ", Style::default().fg(app.info_block_txt_col())),
+        Span::styled("o", Style::default().fg(app.info_block_txt_highlight_col())),
+        Span::styled(" - open options page, ", Style::default().fg(app.info_block_txt_col())),
+        Span::styled("ESC / q", Style::default().fg(app.info_block_txt_highlight_col())),
+        Span::styled(" - quit app.", Style::default().fg(app.info_block_txt_col()))
     ]))
     .wrap(Wrap {trim: true})
+    .style(Style::default().bg(app.info_block_bg_col()))
     .block(Block::default()
     .borders(Borders::ALL)
     .title("Info"));
@@ -104,13 +105,14 @@ fn render_file_explorer(frame: &mut Frame, app: &App) {
     frame.render_widget(list_widget, chunks[0]);
 
     let info_text = Paragraph::new(Line::from(vec![
-        Span::raw("Commands: "),
-        Span::styled("Up / Down", Style::default().fg(Color::Cyan)),
-        Span::raw(" - Navigate, "),
-        Span::styled("Esc", Style::default().fg(Color::Cyan)),
-        Span::raw(" - Back to splash screen"),
+        Span::styled("Commands: ", Style::default().fg(app.info_block_txt_col())),
+        Span::styled("Up / Down", Style::default().fg(app.info_block_txt_highlight_col())),
+        Span::styled(" - Navigate, ", Style::default().fg(app.info_block_txt_col())),
+        Span::styled("Esc", Style::default().fg(app.info_block_txt_highlight_col())),
+        Span::styled(" - Back to splash screen", Style::default().fg(app.info_block_txt_col())),
     ]))
     .wrap(Wrap {trim: true})
+    .style(Style::default().bg(app.info_block_bg_col()))
     .block(Block::default()
     .borders(Borders::ALL)
     .title("Info"));
@@ -133,9 +135,9 @@ fn render_quit_dialog(frame: &mut Frame, app: &App) {
     
     let exit_text = Line::from(vec![
         Span::raw("Press "),
-        Span::styled("y", Style::default().fg(Color::Cyan)),
+        Span::styled("y", Style::default().fg(app.quit_popup_txt_highlight_col())),
         Span::raw(" to quit, "),
-        Span::styled("Esc / n", Style::default().fg(Color::Cyan)),
+        Span::styled("Esc / n", Style::default().fg(app.quit_popup_txt_highlight_col())),
         Span::raw(" to return to main window"),
     ]);
 
