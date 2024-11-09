@@ -1,7 +1,7 @@
 use ratatui::{
     prelude::Rect,
     layout::{Constraint, Direction, Layout},
-    style::{Color, Style},
+    style::Style,
     widgets::{Block, Borders, Clear, List, ListItem, Paragraph, Wrap},
     text::{Line, Span},
     Frame,
@@ -73,13 +73,22 @@ frame.render_widget(info_text, chunks[1]);
 fn render_file_explorer(frame: &mut Frame, app: &App) {
     let chunks = get_vertical_chunks(frame, 75);
 
-    let mut items: Vec<ListItem> = Vec::new();
-    let parent_style = if app.selected_index == 0 {
-        Style::default().bg(Color::LightYellow).fg(Color::Yellow)
+    let file_explorer_page_style = Style::default()
+        .bg(app.file_exp_pg_bg_color())
+        .fg(app.file_exp_pg_txt_color());
+
+    let mut file_folders_list: Vec<ListItem> = Vec::new();
+    let parent_folder_style = if app.selected_index == 0 {
+        Style::default()
+            .bg(app.file_exp_pg_selected_col())
+            .fg(app.file_exp_pg_parent_folder_col())
     } else {
-        Style::default().fg(Color::Yellow)
+        Style::default()
+            .fg(app.file_exp_pg_parent_folder_col())
     };
-    items.push(ListItem::new("..").style(parent_style));
+    file_folders_list
+        .push(ListItem::new("..")
+        .style(parent_folder_style));
 
     let visible_files = app.file_list.iter().skip(app.scroll_offset).enumerate();
     
@@ -87,20 +96,29 @@ fn render_file_explorer(frame: &mut Frame, app: &App) {
         let actual_idx = i + app.scroll_offset + 1;
 
         let style = if *is_dir && actual_idx == app.selected_index {
-            Style::default().bg(Color::LightYellow).fg(Color::Red)
+            Style::default()
+                .bg(app.file_exp_pg_selected_col())
+                .fg(app.file_exp_pg_folder_col())
         } else if *is_dir {
-            Style::default().fg(Color::Red)
+            Style::default()
+                .fg(app.file_exp_pg_folder_col())
         } else if actual_idx == app.selected_index {
-            Style::default().bg(Color::LightYellow).fg(Color::Gray)
+            Style::default()
+                .bg(app.file_exp_pg_selected_col())
+                .fg(app.file_exp_pg_file_color())
         } else {
-            Style::default().fg(Color::Gray)
+            Style::default()
+                .fg(app.file_exp_pg_file_color())
         };
 
-        items.push(ListItem::new(file.clone()).style(style));
+        file_folders_list.push(ListItem::new(file.clone()).style(style));
     }
 
-    let list_widget = List::new(items)
-        .block(Block::default().borders(Borders::ALL).title("File Explorer"));
+    let list_widget = List::new(file_folders_list)
+        .style(file_explorer_page_style)
+        .block(Block::default()
+        .borders(Borders::ALL)
+        .title("File Explorer"));
     
     frame.render_widget(list_widget, chunks[0]);
 

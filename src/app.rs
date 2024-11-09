@@ -91,6 +91,30 @@ impl App {
         self.selected_color_scheme.colors().quit_popup_txt_highlight_col
     }
 
+    pub fn file_exp_pg_bg_color(&self) -> Color {
+        self.selected_color_scheme.colors().file_exp_pg_bg_color
+    }
+
+    pub fn file_exp_pg_txt_color(&self) -> Color {
+        self.selected_color_scheme.colors().file_exp_pg_txt_col
+    }
+
+    pub fn file_exp_pg_folder_col(&self) -> Color {
+        self.selected_color_scheme.colors().file_exp_pg_folder_col
+    }
+
+    pub fn file_exp_pg_file_color(&self) -> Color {
+        self.selected_color_scheme.colors().file_exp_pg_file_color
+    }
+
+    pub fn file_exp_pg_parent_folder_col(&self) -> Color {
+        self.selected_color_scheme.colors().file_exp_pg_parent_folder_col
+    }
+
+    pub fn file_exp_pg_selected_col(&self) -> Color {
+        self.selected_color_scheme.colors().file_exp_pg_selected_col
+    }
+
     pub fn info_block_bg_col(&self) -> Color {
         self.selected_color_scheme.colors().info_block_bg_col
     }
