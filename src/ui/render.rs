@@ -39,7 +39,7 @@ where
 }
 
 fn render_splash_screen(frame: &mut Frame, app: &App) {
-    let chunks = get_content_and_info_chunks(frame);
+    let chunks = get_vertical_chunks(frame, 75);
 
     let main_page_style = Style::default()
         .bg(app.main_pg_bg_col())
@@ -67,7 +67,7 @@ frame.render_widget(info_text, chunks[1]);
 }
 
 fn render_file_explorer(frame: &mut Frame, app: &App) {
-    let chunks = get_content_and_info_chunks(frame);
+    let chunks = get_vertical_chunks(frame, 75);
 
     let mut items: Vec<ListItem> = Vec::new();
     let parent_style = if app.selected_index == 0 {
@@ -143,7 +143,7 @@ fn render_quit_dialog(frame: &mut Frame, app: &App) {
 }
 
 fn centered_rect(percent_x: u16, percent_y: u16, r: ratatui::layout::Rect) -> ratatui::layout::Rect {
-    let popup_layout = Layout::default()
+    let layout = Layout::default()
         .direction(Direction::Vertical)
         .constraints([
             Constraint::Percentage((100 - percent_y) / 2),
@@ -159,15 +159,15 @@ fn centered_rect(percent_x: u16, percent_y: u16, r: ratatui::layout::Rect) -> ra
             Constraint::Percentage(percent_x),
             Constraint::Percentage((100 - percent_x) / 2),
         ])
-        .split(popup_layout[1])[1]
+        .split(layout[1])[1]
 }
 
-fn get_content_and_info_chunks(frame: &Frame) -> Rc<[Rect]> {
+fn get_vertical_chunks(frame: &Frame, percent_y: u16) -> Rc<[Rect]> {
     let chunks = Layout::default()
         .direction(Direction::Vertical)
         .constraints([
-            Constraint::Percentage(75),
-            Constraint::Percentage(25),
+            Constraint::Percentage(percent_y),
+            Constraint::Percentage(100 - percent_y),
         ])
         .split(frame.area());
 
