@@ -8,7 +8,7 @@ use crossterm::{
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
 use ratatui::{
-    prelude::CrosstermBackend,
+    prelude::{Backend, CrosstermBackend},
     Terminal,
 };
 use rusqlite::{
@@ -36,28 +36,53 @@ use std::io;
 
 fn main() -> io::Result<()> {
     setup_keyboard_enchancements();
-    enable_raw_mode()?;
-    let mut stdout = io::stdout();
-    execute!(stdout, EnterAlternateScreen)?;
+    let backend = CrosstermBackend::new(io::stdout());
+    let mut terminal = setup_terminal(backend)?;
+    let mut app = setup_app(&terminal, ColorScheme::Autumn)?;
+    let res = app.run(&mut terminal);
+    handle_errors(res);
+    teardown_terminal(&mut terminal)?;
 
-    let backend = CrosstermBackend::new(stdout);
-    let mut terminal = Terminal::new(backend)?;
+    Ok(())
+}
+
+fn setup_terminal<B>(mut backend: B) -> Result<Terminal<B>, io::Error>
+where
+    B: Backend + std::io::Write,
+{
+    enable_raw_mode()?;
+    execute!(backend, EnterAlternateScreen)?;
+    let terminal = Terminal::new(backend)?;
+
+    Ok(terminal)
+}
+
+fn setup_app<B>(terminal: &Terminal<B>, color_scheme: ColorScheme) -> Result<App, io::Error> 
+where 
+    B: Backend,
+{
     let terminal_height = terminal.size()?.height;
     let terminal_width = terminal.size()?.width;
-    let mut app = App::new(ColorScheme::Autumn, terminal_height, terminal_width);
+    let app = App::new(color_scheme, terminal_height, terminal_width);
 
-    //let res = run(&mut terminal, &mut app);
-    let res = app.run(&mut terminal);
+    Ok(app)
+}
 
+fn teardown_terminal<B>(terminal: &mut Terminal<B>) -> Result<(), io::Error>
+where 
+    B: Backend + std::io::Write,
+{
     disable_raw_mode()?;
     execute!(terminal.backend_mut(), LeaveAlternateScreen)?;
     terminal.show_cursor()?;
 
+    Ok(())
+}
+
+fn handle_errors(res: io::Result<()>) {
     if let Err(err) = res {
         eprintln!("Error: {:?}", err)
     }
-
-    Ok(())
 }
 
 fn add_publisher(db: &mut DB, publisher: Publisher) -> Result<(), DBError> {
