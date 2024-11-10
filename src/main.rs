@@ -2,6 +2,7 @@ mod domain;
 mod db;
 mod ui;
 mod app;
+mod fexp;
 
 use crossterm::{
     execute,
