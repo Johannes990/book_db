@@ -1,4 +1,4 @@
-use crate::fexp::fexpdata::FileExplorerData;
+use crate::fex::fexdata::FileExplorerData;
 use ratatui::widgets::{ScrollbarState, TableState};
 use unicode_width::UnicodeWidthStr;
 use std::{fs::{self}, io, path::PathBuf};
@@ -10,10 +10,10 @@ const ITEM_HEIGHT: usize = 4;
 pub struct FileExplorerTable {
     state: TableState,
     pub current_path: PathBuf,
-    items: Vec<FileExplorerData>,
+    pub items: Vec<FileExplorerData>,
     longest_item_lens: (u16, u16, u16),
     scroll_state: ScrollbarState,
-    index: usize,
+    pub index: usize,
 }
 
 impl FileExplorerTable {

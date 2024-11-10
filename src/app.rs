@@ -1,9 +1,8 @@
 use crate::{
-    ui::{
+    fex::fextable::FileExplorerTable, handle_key_events, ui::{
         colorscheme::ColorScheme,
         render,
-    },
-    handle_key_events,
+    }
 };
 use ratatui::{
     style::Color,
@@ -33,12 +32,14 @@ pub struct App {
     pub scroll_offset: usize,
     pub terminal_height: u16,
     pub terminal_width: u16,
+    pub file_explorer_table: FileExplorerTable,
 }
 
 impl App {
     pub fn new(color_scheme: ColorScheme, terminal_height: u16, terminal_width: u16) -> Self {
         let initial_path = std::env::current_dir().unwrap_or_else(|_| PathBuf::from("/"));
         let file_list = get_files_in_dir(&initial_path);
+        let file_explorer_table = FileExplorerTable::new();
 
         Self {
             current_screen: Screen::SplashScreenView,
@@ -50,6 +51,7 @@ impl App {
             scroll_offset: 0,
             terminal_height,
             terminal_width,
+            file_explorer_table
         }
     }
 
