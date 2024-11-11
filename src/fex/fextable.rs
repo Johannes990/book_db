@@ -5,14 +5,14 @@ use std::{fs::{self}, io, path::PathBuf};
 use chrono::{DateTime, Utc};
 
 
-const ITEM_HEIGHT: usize = 4;
+pub const ITEM_HEIGHT: usize = 1;
 
 pub struct FileExplorerTable {
-    state: TableState,
+    pub state: TableState,
     pub current_path: PathBuf,
     pub items: Vec<FileExplorerData>,
-    longest_item_lens: (u16, u16, u16),
-    scroll_state: ScrollbarState,
+    pub longest_item_lens: (u16, u16, u16),
+    pub scroll_state: ScrollbarState,
     pub index: usize,
 }
 
@@ -63,6 +63,16 @@ impl FileExplorerTable {
     }
 
     pub fn update_file_list(&mut self) -> io::Result<()> {
+        let mut items = get_data_from_path(&self.current_path);
+        
+        if let Some(_) = self.current_path.parent() {
+            items.insert(0, FileExplorerData::new(
+                "..".to_string(),
+                "".to_string(),
+                "".to_string(),
+                true
+            ));
+        }
         self.items = get_data_from_path(&self.current_path);
         self.index = 0;
         Ok(())
@@ -76,14 +86,14 @@ fn constraint_len_calculator(items: &[FileExplorerData]) -> (u16, u16, u16) {
         .map(UnicodeWidthStr::width)
         .max()
         .unwrap_or(0);
-    let address_len = items
+    let size_field_len = items
         .iter()
         .map(FileExplorerData::path_size)
         .flat_map(str::lines)
         .map(UnicodeWidthStr::width)
         .max()
         .unwrap_or(0);
-    let email_len = items
+    let creation_timestamp_len = items
         .iter()
         .map(FileExplorerData::date_created)
         .map(UnicodeWidthStr::width)
@@ -91,11 +101,11 @@ fn constraint_len_calculator(items: &[FileExplorerData]) -> (u16, u16, u16) {
         .unwrap_or(0);
 
     #[allow(clippy::cast_possible_truncation)]
-    (name_len as u16, address_len as u16, email_len as u16)
+    (name_len as u16, size_field_len as u16, creation_timestamp_len as u16)
 }
 
 fn get_data_from_path(path: &PathBuf) -> Vec<FileExplorerData> {
-    match fs::read_dir(path) {
+    let mut entries = match fs::read_dir(path) {
         Ok(entries) => entries
             .filter_map(|entry| entry.ok())
             .map(|entry| {
@@ -135,5 +145,16 @@ fn get_data_from_path(path: &PathBuf) -> Vec<FileExplorerData> {
             "N/A".into(),
             false
         )],
+    };
+
+    if path.parent().is_some() {
+        entries.insert(0, FileExplorerData::new(
+            "..".to_string(),
+            "".to_string(),
+            "".to_string(),
+            true
+        ));
     }
+
+    entries
 }

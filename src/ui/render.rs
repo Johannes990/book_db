@@ -1,17 +1,19 @@
 use ratatui::{
-    prelude::Rect,
     layout::{Constraint, Direction, Layout},
+    prelude::{Margin, Rect},
     style::Style,
-    widgets::{Block, Borders, Clear, List, ListItem, Paragraph, Wrap},
-    text::{Line, Span},
+    text::{Line, Span, Text},
+    widgets::{Block, Borders, Cell, Clear, HighlightSpacing, 
+        Paragraph, Row, Scrollbar, ScrollbarOrientation, 
+        Table, Wrap},
     Frame,
     Terminal
 };
 use std::{io, rc::Rc};
-use crate::app::{App, PopUp, Screen};
+use crate::{app::{App, PopUp, Screen}, fex::fexdata::FileExplorerData};
 
 
-pub fn render<B>(terminal: &mut Terminal<B>, app: &App) -> io::Result<()>
+pub fn render<B>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<()>
 where
     B: ratatui::backend::Backend,
 {
@@ -27,7 +29,10 @@ where
             Screen::CreateNewFileView => {},
             Screen::FileExplorerView => {
                 match app.current_popup {
-                    PopUp::None => render_file_explorer(frame, app),
+                    PopUp::None => {
+                        render_file_explorer(frame, app);
+                        render_scrollbar(frame, app);
+                    }
                     _ => {}
                 }
             },
@@ -70,6 +75,7 @@ fn render_splash_screen(frame: &mut Frame, app: &App) {
 frame.render_widget(info_text, chunks[1]);
 }
 
+/*
 fn render_file_explorer(frame: &mut Frame, app: &App) {
     let chunks = get_vertical_chunks(frame, 75);
 
@@ -77,7 +83,7 @@ fn render_file_explorer(frame: &mut Frame, app: &App) {
         .bg(app.file_exp_pg_bg_color())
         .fg(app.file_exp_pg_txt_color());
 
-    let mut file_folders_list: Vec<ListItem> = Vec::new();
+    let mut fex_items: Vec<ListItem> = Vec::new();
     let parent_folder_style = if app.selected_index == 0 {
         Style::default()
             .bg(app.file_exp_pg_selected_col())
@@ -86,7 +92,7 @@ fn render_file_explorer(frame: &mut Frame, app: &App) {
         Style::default()
             .fg(app.file_exp_pg_parent_folder_col())
     };
-    file_folders_list
+    fex_items
         .push(ListItem::new("..")
         .style(parent_folder_style));
 
@@ -111,16 +117,77 @@ fn render_file_explorer(frame: &mut Frame, app: &App) {
                 .fg(app.file_exp_pg_file_color())
         };
 
-        file_folders_list.push(ListItem::new(file.clone()).style(style));
+        fex_items.push(ListItem::new(file.clone()).style(style));
     }
 
-    let list_widget = List::new(file_folders_list)
+    let list_widget = List::new(fex_items)
         .style(file_explorer_page_style)
         .block(Block::default()
         .borders(Borders::ALL)
         .title("File Explorer"));
     
     frame.render_widget(list_widget, chunks[0]);
+
+    let info_text = Paragraph::new(Line::from(vec![
+        Span::styled("Commands: ", Style::default().fg(app.info_block_txt_col())),
+        Span::styled("Up / Down", Style::default().fg(app.info_block_txt_highlight_col())),
+        Span::styled(" - Navigate, ", Style::default().fg(app.info_block_txt_col())),
+        Span::styled("Esc", Style::default().fg(app.info_block_txt_highlight_col())),
+        Span::styled(" - Back to splash screen", Style::default().fg(app.info_block_txt_col())),
+    ]))
+    .wrap(Wrap {trim: true})
+    .style(Style::default().bg(app.info_block_bg_col()))
+    .block(Block::default()
+    .borders(Borders::ALL)
+    .title("Info"));
+
+    frame.render_widget(info_text, chunks[1]);
+}
+    */
+
+fn render_file_explorer(frame: &mut Frame, app: &mut App) {
+    let chunks = get_vertical_chunks(frame, 75);
+    let fexp_page_style = Style::default()
+        .bg(app.file_exp_pg_bg_color())
+        .fg(app.file_exp_pg_txt_color());
+    let selected_style = Style::default()
+        .bg(app.file_exp_pg_selected_col());
+    let mut fex_items: Vec<FileExplorerData> = Vec::new();
+    fex_items.push(
+        FileExplorerData::new("..".to_string(),
+        "".to_string(), 
+        "".to_string(), 
+        true)
+    );
+    let header = ["File/Folder", "Size", "Date created"]
+        .into_iter()
+        .map(Cell::from)
+        .collect::<Row>()
+        .style(fexp_page_style)
+        .height(1);
+    let visible_files: Vec<Row> = app.file_explorer_table.items.iter().enumerate().map(|(i, data)| {
+        let color = match i % 2 {
+            0 => app.table_row_normal_col(),
+            _ => app.table_row_alt_color(),
+        };
+        let item = data.ref_array();
+        item.into_iter()
+            .map(|content| Cell::from(Text::from(format!("{content}"))))
+            .collect::<Row>()
+            .style(Style::new().bg(color).fg(app.file_exp_pg_file_color()))
+    }).collect();
+    let table = Table::new(
+        visible_files,
+        [
+            Constraint::Min(app.file_explorer_table.longest_item_lens.0 + 1),
+            Constraint::Length(app.file_explorer_table.longest_item_lens.1 + 1),
+            Constraint::Length(app.file_explorer_table.longest_item_lens.2 + 4),
+        ],
+    )
+    .header(header)
+    .row_highlight_style(selected_style)
+    .highlight_spacing(HighlightSpacing::Always);
+    frame.render_stateful_widget(table, chunks[0], &mut app.file_explorer_table.state);
 
     let info_text = Paragraph::new(Line::from(vec![
         Span::styled("Commands: ", Style::default().fg(app.info_block_txt_col())),
@@ -166,6 +233,21 @@ fn render_quit_dialog(frame: &mut Frame, app: &App) {
     let area = centered_rect(55, 30, frame.area());
 
     frame.render_widget(exit_paragraph, area);
+}
+
+fn render_scrollbar(frame: &mut Frame, app: &mut App) {
+    frame.render_stateful_widget(
+        Scrollbar::default()
+            .orientation(ScrollbarOrientation::VerticalRight)
+            .begin_symbol(None)
+            .end_symbol(None),
+        frame.area().inner(Margin {
+            vertical: 1,
+            horizontal: 1,
+        }),
+        &mut app.file_explorer_table.scroll_state,
+    );
+
 }
 
 fn centered_rect(percent_x: u16, percent_y: u16, r: ratatui::layout::Rect) -> ratatui::layout::Rect {

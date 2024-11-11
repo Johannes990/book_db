@@ -1,10 +1,7 @@
 use std::io;
 use crossterm::event::{KeyModifiers, KeyboardEnhancementFlags, PushKeyboardEnhancementFlags};
 use ratatui::crossterm::event::{self, Event, KeyCode, KeyEventKind};
-use crate::{
-    app::{App, PopUp, Screen},
-    ui::utils,
-};
+use crate::app::{App, PopUp, Screen};
 
 
 pub fn setup_keyboard_enchancements() {
@@ -48,39 +45,26 @@ pub fn handle_key_events(app: &mut App) -> io::Result<bool> {
                 if key_event.kind == KeyEventKind::Press {
                     match (key_event.code, key_event.modifiers) {
                         (KeyCode::Esc, KeyModifiers::NONE) => app.switch_to_screen(Screen::SplashScreenView),
-                        (KeyCode::Up, KeyModifiers::NONE) => {
-                            if app.selected_index > 0 {
-                                app.selected_index -= 1;
-
-                                if app.selected_index < app.scroll_offset {
-                                    app.scroll_offset = app.selected_index;
-                                }
-                            }
-                        },
-                        (KeyCode::Down, KeyModifiers::NONE) => {
-                            if app.selected_index < app.file_list.len() {
-                                app.selected_index += 1;
-                                
-                                let visible_lines = utils::calculate_visible_lines(app.terminal_height, 0.75) - 2; // how many lines can we display
-                                if app.selected_index >= app.scroll_offset + visible_lines {
-                                    app.scroll_offset = app.selected_index - visible_lines + 1;
-                                }
-                            }
-                        }
+                        (KeyCode::Up, KeyModifiers::NONE) => app.file_explorer_table.previous(),
+                        (KeyCode::Down, KeyModifiers::NONE) => app.file_explorer_table.next(),
                         (KeyCode::Enter, KeyModifiers::NONE) => {
                             // app.selected_index = 0 when we have '..' selected (go back to parent dir)
-                            if app.selected_index == 0 {
-                                if let Some(parent) = app.current_path.parent() {
-                                    app.current_path = parent.to_path_buf();
-                                    app.update_file_list()?;
+                            if app.file_explorer_table.index == 0 {
+                                if let Some(parent) = app.file_explorer_table.current_path.parent() {
+                                    app.file_explorer_table.current_path = parent.to_path_buf();
+                                    app.file_explorer_table.update_file_list()?;
                                 }
                             } else {
-                                let (selected_file, is_dir) = &app.file_list[app.selected_index - 1];
-                                let new_path = app.current_path.join(selected_file);
+                                let data_row = &app
+                                    .file_explorer_table.items[app.file_explorer_table.index];
+                                let selected_file = data_row.path_name();
+                                let is_dir = data_row.is_dir();
+                                let new_path = app.file_explorer_table.current_path.join(selected_file);
 
                                 if *is_dir && new_path.is_dir() {
-                                    app.current_path = new_path;
-                                    app.update_file_list()?;
+                                    app.file_explorer_table.current_path = new_path;
+                                    app.file_explorer_table.update_file_list()?;
+                                    app.file_explorer_table.index = 0;
                                 } else {
                                     // handle file opening...
                                 }
