@@ -1,11 +1,9 @@
 use ratatui::{
     layout::{Constraint, Direction, Layout},
     prelude::{Margin, Rect},
-    style::{Style, Color},
+    style::{Color, Style},
     text::{Line, Span, Text},
-    widgets::{Block, Borders, Cell, Clear, HighlightSpacing, 
-        Paragraph, Row, Scrollbar, ScrollbarOrientation, 
-        Table, TableState, Wrap},
+    widgets::{Block, Borders, Cell, Clear, HighlightSpacing, List, ListItem, Paragraph, Row, Scrollbar, ScrollbarOrientation, Table, TableState, Wrap},
     Frame,
     Terminal
 };
@@ -134,7 +132,8 @@ fn render_file_explorer(frame: &mut Frame, app: &mut App) {
     frame.render_widget(info_text, chunks[1]);
 }
 
-fn render_database_view(frame: &mut Frame, app: & App) {
+fn render_database_view(frame: &mut Frame, app: &mut App) {
+    
     let general_text_style = Style::default().fg(app.general_text_color());
     let alt_text_style_1 = Style::default().fg(app.alt_text_color_1());
     let alt_text_style_2 = Style::default().fg(app.alt_text_color_2());
@@ -143,17 +142,26 @@ fn render_database_view(frame: &mut Frame, app: & App) {
     let db_page_style = Style::default()
         .bg(app.general_page_bg_color())
         .fg(app.general_text_color());
+    let outer_block = Block::bordered().title("DB view").style(db_page_style);
+    let inner_block = Block::bordered().title("TABLES").style(db_page_style);
+    let inner_area = outer_block.inner(chunks[0]);
+
+    let table_names: Vec<String> = app.get_db().get_table_list().unwrap();
+    let table_names_content: Vec<ListItem> = table_names
+        .into_iter()
+        .map(|table_name| ListItem::from(format!("{}\n", table_name)))
+        .collect();
+    let table_names_paragraph = List::new(table_names_content).style(db_page_style).block(inner_block);
+
     let text = Paragraph::new(Line::from(vec![
         Span::styled("Selected Database file: ", general_text_style),
         Span::styled(format!("{}.db", db_name), alt_text_style_2),
     ]))
     .style(db_page_style)
-    .block(Block::default()
-        .borders(Borders::ALL)
-        .title("DB View")
-    );
+    .block(outer_block);
 
     frame.render_widget(text, chunks[0]);
+    frame.render_widget(table_names_paragraph, inner_area);
 
     let info_text = Paragraph::new(Line::from(vec![
         Span::styled("Commands: ", general_text_style),

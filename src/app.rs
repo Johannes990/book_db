@@ -79,6 +79,10 @@ impl App {
         }
     }
 
+    pub fn get_db(&mut self) -> &mut DB {
+        Option::expect(self.selected_db.as_mut(), "No db loaded")
+    }
+
     pub fn general_text_color(&self) -> Color {
         self.selected_color_scheme.colors().general_text_color
     }

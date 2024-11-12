@@ -1,4 +1,5 @@
 use rusqlite::{Connection, Result, Error, Statement, ToSql};
+use ratatui::widgets::Row;
 use std::collections::HashMap;
 use std::fmt;
 
@@ -50,6 +51,22 @@ impl DB {
 
     pub fn get_db_name(&self) -> String {
         self.db_name.clone()
+    }
+
+    pub fn get_table_list(&self) -> Result<Vec<String>> {
+        let mut statement = self.db_conn
+            .prepare("SELECT name FROM sqlite_master WHERE type='table' ORDER BY name;")?;
+        let table_iter = statement.query_map([], |row| {
+            let table_name: String = row.get(0)?;
+            Ok(table_name)
+        })?;
+
+        let mut rows = Vec::new();
+        for table_name in table_iter {
+            rows.push(table_name?);
+        }
+
+        Ok(rows)
     }
 
     pub fn create_table(&mut self, table_name: String, columns: Vec<String>, constraints: Vec<String>) -> Result<(), DBError> {
