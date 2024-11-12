@@ -3,7 +3,10 @@ use ratatui::{
     prelude::{Margin, Rect},
     style::{Color, Style},
     text::{Line, Span, Text},
-    widgets::{Block, Borders, Cell, Clear, HighlightSpacing, List, ListItem, Paragraph, Row, Scrollbar, ScrollbarOrientation, Table, TableState, Wrap},
+    widgets::{Block, Borders, Cell, Clear, 
+        HighlightSpacing, List, ListItem, Paragraph, 
+        Row, Scrollbar, ScrollbarOrientation, Table, 
+        TableState, Wrap},
     Frame,
     Terminal
 };
@@ -133,7 +136,6 @@ fn render_file_explorer(frame: &mut Frame, app: &mut App) {
 }
 
 fn render_database_view(frame: &mut Frame, app: &mut App) {
-    
     let general_text_style = Style::default().fg(app.general_text_color());
     let alt_text_style_1 = Style::default().fg(app.alt_text_color_1());
     let alt_text_style_2 = Style::default().fg(app.alt_text_color_2());
