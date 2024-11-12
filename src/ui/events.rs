@@ -53,6 +53,7 @@ pub fn handle_key_events(app: &mut App) -> io::Result<bool> {
                                 if let Some(parent) = app.file_explorer_table.current_path.parent() {
                                     app.file_explorer_table.current_path = parent.to_path_buf();
                                     app.file_explorer_table.update_file_list()?;
+                                    app.file_explorer_table.update_scrollbar_state();
                                 }
                             } else {
                                 let data_row = &app
@@ -63,8 +64,9 @@ pub fn handle_key_events(app: &mut App) -> io::Result<bool> {
 
                                 if *is_dir && new_path.is_dir() {
                                     app.file_explorer_table.current_path = new_path;
-                                    app.file_explorer_table.update_file_list()?;
                                     app.file_explorer_table.index = 0;
+                                    app.file_explorer_table.update_file_list()?;
+                                    app.file_explorer_table.update_scrollbar_state();
                                 } else {
                                     // handle file opening...
                                 }

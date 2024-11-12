@@ -56,44 +56,28 @@ impl App {
         Ok(())
     }
 
-    pub fn main_pg_bg_col(&self) -> Color {
-        self.selected_color_scheme.colors().main_pg_bg_col
+    pub fn general_text_color(&self) -> Color {
+        self.selected_color_scheme.colors().general_text_color
     }
 
-    pub fn main_pg_txt_col(&self) -> Color {
-        self.selected_color_scheme.colors().main_pg_txt_col
+    pub fn alt_text_color_1(&self) -> Color {
+        self.selected_color_scheme.colors().alt_text_color_1
+    }
+
+    pub fn alt_text_color_2(&self) -> Color {
+        self.selected_color_scheme.colors().alt_text_color_2
+    }
+
+    pub fn main_pg_bg_col(&self) -> Color {
+        self.selected_color_scheme.colors().main_pg_bg_col
     }
 
     pub fn quit_popup_bg_col(&self) -> Color {
         self.selected_color_scheme.colors().quit_popup_bg_col
     }
 
-    pub fn quit_popup_txt_col(&self) -> Color {
-        self.selected_color_scheme.colors().quit_popup_txt_col
-    }
-
-    pub fn quit_popup_txt_highlight_col(&self) -> Color {
-        self.selected_color_scheme.colors().quit_popup_txt_highlight_col
-    }
-
     pub fn file_exp_pg_bg_color(&self) -> Color {
         self.selected_color_scheme.colors().file_exp_pg_bg_color
-    }
-
-    pub fn file_exp_pg_txt_color(&self) -> Color {
-        self.selected_color_scheme.colors().file_exp_pg_txt_col
-    }
-
-    pub fn file_exp_pg_folder_col(&self) -> Color {
-        self.selected_color_scheme.colors().file_exp_pg_folder_col
-    }
-
-    pub fn file_exp_pg_file_color(&self) -> Color {
-        self.selected_color_scheme.colors().file_exp_pg_file_color
-    }
-
-    pub fn file_exp_pg_parent_folder_col(&self) -> Color {
-        self.selected_color_scheme.colors().file_exp_pg_parent_folder_col
     }
 
     pub fn file_exp_pg_selected_col(&self) -> Color {
@@ -110,14 +94,6 @@ impl App {
 
     pub fn info_block_bg_col(&self) -> Color {
         self.selected_color_scheme.colors().info_block_bg_col
-    }
-
-    pub fn info_block_txt_col(&self) -> Color {
-        self.selected_color_scheme.colors().info_block_txt_col
-    }
-
-    pub fn info_block_txt_highlight_col(&self) -> Color {
-        self.selected_color_scheme.colors().info_block_txt_highlight_col
     }
 
     pub fn switch_to_screen(&mut self, screen: Screen) {

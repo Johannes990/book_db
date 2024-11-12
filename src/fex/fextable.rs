@@ -43,7 +43,7 @@ impl FileExplorerTable {
         };
         self.index = i;
         self.state.select(Some(self.index));
-        self.scroll_state = self.scroll_state.position(self.index * ITEM_HEIGHT);
+        self.scroll_state = self.scroll_state.position(i * ITEM_HEIGHT);
     }
 
     pub fn previous(&mut self) {
@@ -59,7 +59,7 @@ impl FileExplorerTable {
         };
         self.index = i;
         self.state.select(Some(self.index));
-        self.scroll_state = self.scroll_state.position(self.index * ITEM_HEIGHT);
+        self.scroll_state = self.scroll_state.position(i * ITEM_HEIGHT);
     }
 
     pub fn update_file_list(&mut self) -> io::Result<()> {
@@ -74,8 +74,13 @@ impl FileExplorerTable {
             ));
         }
         self.items = get_data_from_path(&self.current_path);
-        self.index = 0;
+        self.state = TableState::new().with_selected(self.index);
         Ok(())
+    }
+
+    pub fn update_scrollbar_state(&mut self) {
+        let path_data = get_data_from_path(&self.current_path);
+        self.scroll_state = ScrollbarState::new((path_data.len() - 1) * ITEM_HEIGHT);
     }
 }
 
