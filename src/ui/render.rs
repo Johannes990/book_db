@@ -29,11 +29,14 @@ where
             Screen::CreateNewFileView => {},
             Screen::FileExplorerView => {
                 match app.current_popup {
-                    PopUp::None => {
-                        render_file_explorer(frame, app);
-                        
-                    }
+                    PopUp::None => render_file_explorer(frame, app),
                     _ => {}
+                }
+            },
+            Screen::OpenDataBaseView => {
+                match app.current_popup {
+                    PopUp::None => render_database_view(frame, app),
+                    PopUp::QuitDialog => todo!()
                 }
             },
             Screen::OptionsView => {},
@@ -47,7 +50,7 @@ fn render_splash_screen(frame: &mut Frame, app: &App) {
     let chunks = get_vertical_chunks(frame, 75);
 
     let main_page_style = Style::default()
-        .bg(app.main_pg_bg_col())
+        .bg(app.general_page_bg_color())
         .fg(app.general_text_color());
 
     let main_page_content = Paragraph::new(
@@ -78,7 +81,7 @@ frame.render_widget(info_text, chunks[1]);
 fn render_file_explorer(frame: &mut Frame, app: &mut App) {
     let chunks = get_vertical_chunks(frame, 75);
     let fexp_page_style = Style::default()
-        .bg(app.file_exp_pg_bg_color())
+        .bg(app.general_page_bg_color())
         .fg(app.general_text_color());
     let mut fex_items: Vec<FileExplorerData> = Vec::new();
     fex_items.push(
@@ -124,8 +127,45 @@ fn render_file_explorer(frame: &mut Frame, app: &mut App) {
     .wrap(Wrap {trim: true})
     .style(Style::default().bg(app.info_block_bg_col()))
     .block(Block::default()
-    .borders(Borders::ALL)
-    .title("Info"));
+        .borders(Borders::ALL)
+        .title("Info")
+    );
+
+    frame.render_widget(info_text, chunks[1]);
+}
+
+fn render_database_view(frame: &mut Frame, app: & App) {
+    let general_text_style = Style::default().fg(app.general_text_color());
+    let alt_text_style_1 = Style::default().fg(app.alt_text_color_1());
+    let alt_text_style_2 = Style::default().fg(app.alt_text_color_2());
+    let chunks = get_vertical_chunks(frame, 75);
+    let db_name = Option::expect(app.selected_db.as_ref(), "No DB Option found").get_db_name();
+    let db_page_style = Style::default()
+        .bg(app.general_page_bg_color())
+        .fg(app.general_text_color());
+    let text = Paragraph::new(Line::from(vec![
+        Span::styled("Selected Database file: ", general_text_style),
+        Span::styled(format!("{}.db", db_name), alt_text_style_2),
+    ]))
+    .style(db_page_style)
+    .block(Block::default()
+        .borders(Borders::ALL)
+        .title("DB View")
+    );
+
+    frame.render_widget(text, chunks[0]);
+
+    let info_text = Paragraph::new(Line::from(vec![
+        Span::styled("Commands: ", general_text_style),
+        Span::styled("Esc / q", alt_text_style_1),
+        Span::styled(" - Back to splash screen", general_text_style),
+    ]))
+    .wrap(Wrap {trim: true})
+    .style(Style::default().bg(app.info_block_bg_col()))
+    .block(Block::default()
+        .borders(Borders::ALL)
+        .title("Info")
+    );
 
     frame.render_widget(info_text, chunks[1]);
 }

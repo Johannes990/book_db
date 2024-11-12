@@ -88,10 +88,10 @@ fn handle_errors(res: io::Result<()>) {
 
 fn add_publisher(db: &mut DB, publisher: Publisher) -> Result<(), DBError> {
     db.insert_statement(
-        "Publisher",
+        "Publisher".to_string(),
         vec![
-            "id", 
-            "name"
+            "id".to_string(), 
+            "name".to_string()
         ],
         vec![
             &publisher.id as &dyn ToSql, 
@@ -102,10 +102,10 @@ fn add_publisher(db: &mut DB, publisher: Publisher) -> Result<(), DBError> {
 
 fn get_publishers(db: &DB) -> rusqlite::Result<Vec<Publisher>> {
     let cols = vec![
-            "id", 
-            "name"
+            "id".to_string(), 
+            "name".to_string()
         ];
-    let mut publishers = db.select_statement("Publisher", &cols)?;
+    let mut publishers = db.select_statement(&"Publisher".to_string(), &cols)?;
     let publisher_iter = publishers.query_map([], |row| {
         Ok(Publisher {
             id: row.get(0)?,
@@ -119,12 +119,12 @@ fn get_publishers(db: &DB) -> rusqlite::Result<Vec<Publisher>> {
 
 fn add_person(db: &mut DB, person: Person) -> Result<(), DBError> {
     db.insert_statement(
-        "Person",
+        "Person".to_string(),
         vec![
-            "id", 
-            "first_name", 
-            "middle_name",
-            "last_name"
+            "id".to_string(), 
+            "first_name".to_string(), 
+            "middle_name".to_string(),
+            "last_name".to_string()
         ],
         vec![
             &person.id as &dyn ToSql, 
@@ -137,12 +137,12 @@ fn add_person(db: &mut DB, person: Person) -> Result<(), DBError> {
 
 fn get_persons(db: &DB) -> rusqlite::Result<Vec<Person>> {
     let cols = vec![
-        "id", 
-        "first_name", 
-        "middle_name",
-        "last_name"
+        "id".to_string(), 
+        "first_name".to_string(), 
+        "middle_name".to_string(),
+        "last_name".to_string()
     ];
-    let mut persons = db.select_statement("Person", &cols)?;
+    let mut persons = db.select_statement(&"Person".to_string(), &cols)?;
     let person_iter = persons.query_map([], |row| {
         Ok(Person {
             id: row.get(0)?,
@@ -158,14 +158,14 @@ fn get_persons(db: &DB) -> rusqlite::Result<Vec<Person>> {
 
 fn add_book(db: &mut DB, book: Book) -> Result<(), DBError> {
     db.insert_statement(
-        "Book",
+        "Book".to_string(),
         vec![
-            "id", 
-            "title", 
-            "subtitle",  
-            "year_published", 
-            "year_translated", 
-            "publisher_id"
+            "id".to_string(), 
+            "title".to_string(), 
+            "subtitle".to_string(),  
+            "year_published".to_string(), 
+            "year_translated".to_string(), 
+            "publisher_id".to_string()
         ],
         vec![
             &book.id as &dyn ToSql, 
@@ -180,14 +180,14 @@ fn add_book(db: &mut DB, book: Book) -> Result<(), DBError> {
 
 fn get_books(db: &DB) -> rusqlite::Result<Vec<Book>> {
     let cols = vec![
-        "id",
-        "title",
-        "subtitle",
-        "year_published",
-        "year_translated",
-        "publisher_id"
+        "id".to_string(),
+        "title".to_string(),
+        "subtitle".to_string(),
+        "year_published".to_string(),
+        "year_translated".to_string(),
+        "publisher_id.to_string()".to_string()
     ];
-    let mut books = db.select_statement("Book", &cols)?;
+    let mut books = db.select_statement(&"Book".to_string(), &cols)?;
     let mut book_iter = books.query_map([], |row| {
         Ok(Book {
             id: row.get(0)?,
@@ -205,10 +205,10 @@ fn get_books(db: &DB) -> rusqlite::Result<Vec<Book>> {
 
 fn add_book_and_author(db: &mut DB, book_author: BookPerson) -> Result<(), DBError> {
     db.insert_statement(
-        "BookAuthor", 
+        "BookAuthor".to_string(), 
         vec![
-            "book_id", 
-            "author_id"
+            "book_id".to_string(), 
+            "author_id".to_string()
         ], 
         vec![
             &book_author.book_id as &dyn ToSql,
@@ -219,10 +219,10 @@ fn add_book_and_author(db: &mut DB, book_author: BookPerson) -> Result<(), DBErr
 
 fn add_book_and_translator(db: &mut DB, book_translator: BookPerson) -> Result<(), DBError> {
     db.insert_statement(
-        "BookTranslator",
+        "BookTranslator".to_string(),
         vec![
-            "book_id",
-            "translator_id",
+            "book_id".to_string(),
+            "translator_id".to_string(),
         ],
         vec![
             &book_translator.book_id as &dyn ToSql,
