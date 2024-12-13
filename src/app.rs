@@ -1,7 +1,5 @@
 use crate::{
-    db::{DBError, DB},
-    fex::fextable::FileExplorerTable, handle_key_events,
-    ui::{
+    db::{DBError, DB}, fex::fextable::FileExplorerTable, handle_key_events, options::Options, ui::{
         colorscheme::ColorScheme,
         render,
     }
@@ -23,30 +21,32 @@ pub enum Screen {
 pub enum PopUp {
     None,
     QuitDialog,
+    SaveDialog,
 }
 
 pub struct App {
     pub current_screen: Screen,
     pub current_popup: PopUp,
-    pub selected_color_scheme: ColorScheme,
     pub selected_db: Option<DB>,
     pub terminal_height: u16,
     pub terminal_width: u16,
     pub file_explorer_table: FileExplorerTable,
+    pub options: Options
 }
 
 impl App {
     pub fn new(color_scheme: ColorScheme, terminal_height: u16, terminal_width: u16) -> Self {
         let file_explorer_table = FileExplorerTable::new();
+        let options = Options::new(color_scheme);
 
         Self {
             current_screen: Screen::SplashScreenView,
             current_popup: PopUp::None,
-            selected_color_scheme: color_scheme,
             selected_db: None,
             terminal_height,
             terminal_width,
-            file_explorer_table
+            file_explorer_table,
+            options
         }
     }
 
@@ -84,39 +84,39 @@ impl App {
     }
 
     pub fn general_text_color(&self) -> Color {
-        self.selected_color_scheme.colors().general_text_color
+        self.options.selected_color_scheme.colors().general_text_color
     }
 
     pub fn alt_text_color_1(&self) -> Color {
-        self.selected_color_scheme.colors().alt_text_color_1
+        self.options.selected_color_scheme.colors().alt_text_color_1
     }
 
     pub fn alt_text_color_2(&self) -> Color {
-        self.selected_color_scheme.colors().alt_text_color_2
+        self.options.selected_color_scheme.colors().alt_text_color_2
     }
 
     pub fn general_page_bg_color(&self) -> Color {
-        self.selected_color_scheme.colors().general_page_bg_color
+        self.options.selected_color_scheme.colors().general_page_bg_color
     }
 
     pub fn quit_popup_bg_col(&self) -> Color {
-        self.selected_color_scheme.colors().quit_popup_bg_col
+        self.options.selected_color_scheme.colors().quit_popup_bg_col
     }
 
     pub fn file_exp_pg_selected_col(&self) -> Color {
-        self.selected_color_scheme.colors().file_exp_pg_selected_col
+        self.options.selected_color_scheme.colors().file_exp_pg_selected_col
     }
 
     pub fn table_row_normal_col(&self) -> Color {
-        self.selected_color_scheme.colors().table_row_normal_col
+        self.options.selected_color_scheme.colors().table_row_normal_col
     }
 
     pub fn table_row_alt_color(&self) -> Color {
-        self.selected_color_scheme.colors().table_row_alt_color
+        self.options.selected_color_scheme.colors().table_row_alt_color
     }
 
     pub fn info_block_bg_col(&self) -> Color {
-        self.selected_color_scheme.colors().info_block_bg_col
+        self.options.selected_color_scheme.colors().info_block_bg_col
     }
 
     pub fn switch_to_screen(&mut self, screen: Screen) {
@@ -127,4 +127,11 @@ impl App {
         self.current_popup = popup;
     }
 
+    pub fn update_color_scheme(&mut self, new_color_scheme: ColorScheme) {
+        self.options.select_color_scheme(new_color_scheme);
+    }
+
+    pub fn list_available_color_schemes(&self) -> &Vec<ColorScheme> {
+        self.options.list_color_schemes()
+    }
 }
