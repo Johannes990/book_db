@@ -10,7 +10,7 @@ use ratatui::{
     Frame,
     Terminal
 };
-use std::{io, rc::Rc};
+use std::{io, rc::Rc, vec};
 use crate::{app::{App, PopUp, Screen}, fex::fexdata::FileExplorerData};
 
 
@@ -48,12 +48,10 @@ where
 }
 
 fn render_splash_screen(frame: &mut Frame, app: &App) {
-    let chunks = get_vertical_chunks(frame, 75);
-
+    let chunks = get_chunks(frame, Direction::Vertical, vec![75, 25]);
     let main_page_style = Style::default()
         .bg(app.general_page_bg_color())
         .fg(app.general_text_color());
-
     let main_page_content = Paragraph::new(
         "Database terminal app v0.0.1".to_owned()
     ).style(main_page_style);
@@ -80,7 +78,7 @@ frame.render_widget(info_text, chunks[1]);
 }
 
 fn render_file_explorer(frame: &mut Frame, app: &mut App) {
-    let chunks = get_vertical_chunks(frame, 75);
+    let chunks = get_chunks(frame, Direction::Vertical, vec![75, 25]);
     let fexp_page_style = Style::default()
         .bg(app.general_page_bg_color())
         .fg(app.general_text_color());
@@ -139,7 +137,7 @@ fn render_database_view(frame: &mut Frame, app: &mut App) {
     let general_text_style = Style::default().fg(app.general_text_color());
     let alt_text_style_1 = Style::default().fg(app.alt_text_color_1());
     let alt_text_style_2 = Style::default().fg(app.alt_text_color_2());
-    let chunks = get_vertical_chunks(frame, 75);
+    let chunks = get_chunks(frame, Direction::Vertical, vec![75, 25]);
     let db_name = Option::expect(app.selected_db.as_ref(), "No DB Option found").get_db_name();
     let db_page_style = Style::default()
         .bg(app.general_page_bg_color())
@@ -147,14 +145,12 @@ fn render_database_view(frame: &mut Frame, app: &mut App) {
     let outer_block = Block::bordered().title("DB view").style(db_page_style);
     let inner_block = Block::bordered().title("TABLES").style(db_page_style);
     let inner_area = outer_block.inner(chunks[0]);
-
     let table_names: Vec<String> = app.get_db().get_table_list().unwrap();
     let table_names_content: Vec<ListItem> = table_names
         .into_iter()
         .map(|table_name| ListItem::from(format!("{}\n", table_name)))
         .collect();
     let table_names_paragraph = List::new(table_names_content).style(db_page_style).block(inner_block);
-
     let text = Paragraph::new(Line::from(vec![
         Span::styled("Selected Database file: ", general_text_style),
         Span::styled(format!("{}.db", db_name), alt_text_style_2),
@@ -259,13 +255,13 @@ fn centered_rect(percent_x: u16, percent_y: u16, r: ratatui::layout::Rect) -> ra
         .split(layout[1])[1]
 }
 
-fn get_vertical_chunks(frame: &Frame, percent_y: u16) -> Rc<[Rect]> {
+fn get_chunks(frame: &Frame, direction: Direction, percentages: Vec<u16>) -> Rc<[Rect]> {
+    let constraints: Vec<Constraint> = percentages.iter().map(|value| Constraint::Percentage(*value)).collect();
     let chunks = Layout::default()
-        .direction(Direction::Vertical)
-        .constraints([
-            Constraint::Percentage(percent_y),
-            Constraint::Percentage(100 - percent_y),
-        ])
+        .direction(direction)
+        .constraints(
+            constraints
+        )
         .split(frame.area());
 
     chunks
