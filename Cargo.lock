@@ -786,6 +786,8 @@ dependencies = [
  "palette",
  "ratatui",
  "rusqlite",
+ "strum",
+ "strum_macros",
  "unicode-width 0.2.0",
 ]
 
