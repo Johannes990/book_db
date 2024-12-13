@@ -1,7 +1,7 @@
 use std::io;
 use crossterm::event::{KeyModifiers, KeyboardEnhancementFlags, PushKeyboardEnhancementFlags};
 use ratatui::crossterm::event::{self, Event, KeyCode, KeyEventKind};
-use crate::{app::{App, PopUp, Screen}, db::{DBError::{self, ConnectionCreationError}, DB}};
+use crate::app::{App, PopUp, Screen};
 
 
 pub fn setup_keyboard_enchancements() {
@@ -39,12 +39,14 @@ pub fn handle_key_events(app: &mut App) -> io::Result<bool> {
                             }
                         }
                     }
+                    PopUp::SaveDialog => {}
                 }
             },
             Screen::FileExplorerView => {
                 if key_event.kind == KeyEventKind::Press {
                     match (key_event.code, key_event.modifiers) {
-                        (KeyCode::Esc, KeyModifiers::NONE) => app.switch_to_screen(Screen::SplashScreenView),
+                        (KeyCode::Esc, KeyModifiers::NONE) | 
+                        (KeyCode::Char('q'), KeyModifiers::NONE) => app.switch_to_screen(Screen::SplashScreenView),
                         (KeyCode::Up, KeyModifiers::NONE) => app.file_explorer_table.previous(),
                         (KeyCode::Down, KeyModifiers::NONE) => app.file_explorer_table.next(),
                         (KeyCode::Enter, KeyModifiers::NONE) => {
@@ -69,7 +71,7 @@ pub fn handle_key_events(app: &mut App) -> io::Result<bool> {
                                     app.file_explorer_table.update_scrollbar_state();
                                 } else {
                                     // handle file opening...
-                                    if let Err(e) = app.open_db_file(new_path) {
+                                    if let Err(_e) = app.open_db_file(new_path) {
                                         app.switch_to_screen(Screen::SplashScreenView);
                                     } else {
                                         app.switch_to_screen(Screen::OpenDataBaseView);
@@ -91,7 +93,15 @@ pub fn handle_key_events(app: &mut App) -> io::Result<bool> {
                 }
             }
             Screen::OptionsView => {
-
+                if key_event.kind == KeyEventKind::Press {
+                    match (key_event.code, key_event.modifiers) {
+                        (KeyCode::Char('q'), KeyModifiers::NONE) |
+                        (KeyCode::Esc, KeyModifiers::NONE) => app.switch_to_screen(Screen::SplashScreenView),
+                        (KeyCode::Up, KeyModifiers::NONE) => app.options.previous_color_scheme(),
+                        (KeyCode::Down, KeyModifiers::NONE) => app.options.next_color_scheme(),
+                        _ => {}
+                    }
+                }
             },
             Screen::CreateNewFileView => {
 

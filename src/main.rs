@@ -1,5 +1,6 @@
 mod domain;
 mod db;
+mod options;
 mod ui;
 mod app;
 mod fex;

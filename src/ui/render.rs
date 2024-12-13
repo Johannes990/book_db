@@ -1,7 +1,7 @@
 use ratatui::{
     layout::{Constraint, Direction, Layout},
     prelude::{Margin, Rect},
-    style::{Color, Style},
+    style::{Color, Modifier, Style},
     text::{Line, Span, Text},
     widgets::{Block, Borders, Cell, Clear, 
         HighlightSpacing, List, ListItem, Paragraph, 
@@ -12,6 +12,8 @@ use ratatui::{
 };
 use std::{io, rc::Rc, vec};
 use crate::{app::{App, PopUp, Screen}, fex::fexdata::FileExplorerData};
+
+use super::colorscheme::ColorScheme;
 
 
 pub fn render<B>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<()>
@@ -25,6 +27,7 @@ where
                 match app.current_popup {
                     PopUp::None => render_splash_screen(frame, app),
                     PopUp::QuitDialog => render_quit_dialog(frame, app),
+                    PopUp::SaveDialog => {}
                 }
             },
             Screen::CreateNewFileView => {},
@@ -37,10 +40,17 @@ where
             Screen::OpenDataBaseView => {
                 match app.current_popup {
                     PopUp::None => render_database_view(frame, app),
-                    PopUp::QuitDialog => todo!()
+                    PopUp::QuitDialog => todo!(),
+                    PopUp::SaveDialog => {},
                 }
             },
-            Screen::OptionsView => {},
+            Screen::OptionsView => {
+                match app.current_popup {
+                    PopUp::None => render_options_view(frame, app),
+                    PopUp::SaveDialog => {},
+                    PopUp::QuitDialog => {}
+                }
+            },
         }
         
     })?;
@@ -120,7 +130,7 @@ fn render_file_explorer(frame: &mut Frame, app: &mut App) {
         Span::styled("Commands: ", Style::default().fg(app.general_text_color())),
         Span::styled("Up / Down", Style::default().fg(app.alt_text_color_1())),
         Span::styled(" - Navigate, ", Style::default().fg(app.general_text_color())),
-        Span::styled("Esc", Style::default().fg(app.alt_text_color_1())),
+        Span::styled("Esc / q", Style::default().fg(app.alt_text_color_1())),
         Span::styled(" - Back to splash screen", Style::default().fg(app.general_text_color())),
     ]))
     .wrap(Wrap {trim: true})
@@ -176,19 +186,57 @@ fn render_database_view(frame: &mut Frame, app: &mut App) {
     frame.render_widget(info_text, chunks[1]);
 }
 
+fn render_options_view(frame: &mut Frame, app: &mut App) {
+    let general_text_style = Style::default().fg(app.general_text_color());
+    let alt_text_style_1 = Style::default().fg(app.alt_text_color_1());
+    let chunks = get_chunks(frame, Direction::Vertical, vec![75, 25]);
+    let color_schemes: &Vec<ColorScheme> = app.list_available_color_schemes();
+    let color_scheme_items: Vec<ListItem> = color_schemes.into_iter()
+        .map(|scheme| {
+            let scheme_name = format!("{:?}", scheme);
+            let style = if *scheme == app.options.selected_color_scheme {
+                Style::default()
+                .fg(app.file_exp_pg_selected_col())
+                .add_modifier(Modifier::BOLD)
+            } else {
+                general_text_style
+            };
+            ListItem::new(scheme_name).style(style)
+        })
+        .collect();
+    let color_scheme_list = List::new(color_scheme_items)
+        .block(Block::default().borders(Borders::ALL).title("Color Schemes"))
+        .highlight_style(Style::default().bg(app.general_page_bg_color()));
+
+    frame.render_widget(color_scheme_list, chunks[0]);
+
+    let info_text = Paragraph::new(Line::from(vec![
+        Span::styled("Commands: ", general_text_style),
+        Span::styled("Up / Down", alt_text_style_1),
+        Span::styled(" - Navigate, ", general_text_style),
+        Span::styled("Esc / q", alt_text_style_1),
+        Span::styled(" - Back to splash screen", general_text_style),
+    ]))
+    .wrap(Wrap {trim: true})
+    .style(Style::default().bg(app.info_block_bg_col()))
+    .block(Block::default()
+        .borders(Borders::ALL)
+        .title("Info")
+    );
+
+    frame.render_widget(info_text, chunks[1]);
+}
+
 fn render_quit_dialog(frame: &mut Frame, app: &App) {
     frame.render_widget(Clear, frame.area());
 
     let quit_popup_style = Style::default()
         .bg(app.quit_popup_bg_col())
         .fg(app.general_text_color());
-
     let popup_block = Block::default()
         .title("Are you sure you want to quit?")
         .borders(Borders::ALL)
         .style(quit_popup_style);
-
-    
     let exit_text = Line::from(vec![
         Span::styled("Press ", Style::default().fg(app.general_text_color())),
         Span::styled("y", Style::default().fg(app.alt_text_color_2())),
@@ -196,11 +244,9 @@ fn render_quit_dialog(frame: &mut Frame, app: &App) {
         Span::styled("Esc / n", Style::default().fg(app.alt_text_color_1())),
         Span::styled(" to return to main window", Style::default().fg(app.general_text_color())),
     ]);
-
     let exit_paragraph = Paragraph::new(exit_text)
         .block(popup_block)
         .wrap(Wrap { trim: false });
-
     let area = centered_rect(55, 30, frame.area());
 
     frame.render_widget(exit_paragraph, area);
@@ -219,7 +265,6 @@ fn render_vertical_scrollbar(frame: &mut Frame, area: Rect, app: &mut App, endpo
         }),
         &mut app.file_explorer_table.scroll_state,
     );
-
 }
 
 fn render_table(frame: &mut Frame, state: &mut TableState, header: Row, rows: Vec<Row>, col_widths: Vec<Constraint>, area: Rect, highlight_col: Color) {
