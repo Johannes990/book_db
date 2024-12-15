@@ -11,7 +11,7 @@ use ratatui::{
     Terminal
 };
 use std::{io, rc::Rc, vec};
-use crate::{app::{App, PopUp, Screen}, fex::fexdata::FileExplorerData};
+use crate::{app::{App, PopUp, Screen}, fex::fexdata::FileExplorerData, options};
 
 use super::colorscheme::ColorScheme;
 
@@ -189,7 +189,7 @@ fn render_database_view(frame: &mut Frame, app: &mut App) {
 fn render_options_view(frame: &mut Frame, app: &mut App) {
     let general_text_style = Style::default().fg(app.general_text_color());
     let alt_text_style_1 = Style::default().fg(app.alt_text_color_1());
-    let chunks = get_chunks(frame, Direction::Vertical, vec![75, 25]);
+    let chunks = get_chunks(frame, Direction::Horizontal, vec![33, 33, 34]);
     let color_schemes: &Vec<ColorScheme> = app.list_available_color_schemes();
     let color_scheme_items: Vec<ListItem> = color_schemes.into_iter()
         .map(|scheme| {
@@ -207,8 +207,8 @@ fn render_options_view(frame: &mut Frame, app: &mut App) {
     let color_scheme_list = List::new(color_scheme_items)
         .block(Block::default().borders(Borders::ALL).title("Color Schemes"))
         .highlight_style(Style::default().bg(app.general_page_bg_color()));
-
     frame.render_widget(color_scheme_list, chunks[0]);
+    options::Options::render_color_scheme_preview(frame, chunks[1], &app.options.selected_color_scheme);
 
     let info_text = Paragraph::new(Line::from(vec![
         Span::styled("Commands: ", general_text_style),
@@ -224,7 +224,7 @@ fn render_options_view(frame: &mut Frame, app: &mut App) {
         .title("Info")
     );
 
-    frame.render_widget(info_text, chunks[1]);
+    frame.render_widget(info_text, chunks[2]);
 }
 
 fn render_quit_dialog(frame: &mut Frame, app: &App) {

@@ -8,7 +8,7 @@ use ratatui::{
     style::Color,
     Terminal,
 };
-use std::{fs, io, path::PathBuf};
+use std::{io, path::PathBuf};
 
 pub enum Screen {
     SplashScreenView,
