@@ -1,4 +1,4 @@
-use ratatui::widgets::{ScrollbarState, Table, TableState};
+use ratatui::widgets::{ScrollbarState, TableState};
 use crate::fex::fex_table::ITEM_HEIGHT;
 use super::column_info::ColumnInfo;
 

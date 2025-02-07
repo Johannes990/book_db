@@ -33,7 +33,7 @@ impl From<Error> for DBError {
 
 pub struct DB {
     db_name: String,
-    db_conn: Connection,
+    pub db_conn: Connection,
     db_tab_col_map: HashMap<String, Vec<String>>,
 }
 

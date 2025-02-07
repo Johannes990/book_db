@@ -1,9 +1,5 @@
 use crate::{
-    db::{DBError, DB}, 
-    fex::fex_table::FileExplorerTable, 
-    handle_key_events, options::Options, 
-    ui::{colorscheme::ColorScheme, render},
-    column::column_info::ColumnInfo,
+    column::{column_info::ColumnInfo, column_list::ColumnListView}, db::{DBError, DB}, fex::fex_table::FileExplorerTable, handle_key_events, options::Options, table::table_list::TableListView, ui::{colorscheme::ColorScheme, render}
 };
 use ratatui::{
     style::Color,
@@ -31,14 +27,14 @@ pub struct App {
     pub selected_db: Option<DB>,
     pub selected_db_table: Option<String>,
     pub selected_table_columns: Vec<ColumnInfo>,
-    pub terminal_height: u16,
-    pub terminal_width: u16,
     pub file_explorer_table: FileExplorerTable,
+    pub table_list_view: Option<TableListView>,
+    pub column_list_view: Option<ColumnListView>,
     pub options: Options
 }
 
 impl App {
-    pub fn new(color_scheme: ColorScheme, terminal_height: u16, terminal_width: u16) -> Self {
+    pub fn new(color_scheme: ColorScheme) -> Self {
         let file_explorer_table = FileExplorerTable::new();
         let options = Options::new(color_scheme);
 
@@ -48,9 +44,9 @@ impl App {
             selected_db: None,
             selected_db_table: None,
             selected_table_columns: Vec::new(),
-            terminal_height,
-            terminal_width,
             file_explorer_table,
+            table_list_view: None,
+            column_list_view: None,
             options
         }
     }
@@ -74,12 +70,30 @@ impl App {
                 Ok(db) => {
                     match db.get_table_list() {
                         Ok(tables) => {
-                            if let Some(first_table) = tables.first() {
-                                self.selected_db_table = Some(first_table.clone())
+                            if let Some(first_table) = &tables.first() {
+                                self.selected_db_table = Some(first_table.to_string());
+                                self.table_list_view = Some(TableListView::new(tables.clone()));
+
+                                match db.get_table_columns(first_table) {
+                                    Ok(columns) => {
+                                        self.selected_table_columns = columns.clone();
+                                        self.column_list_view = Some(ColumnListView::new(columns));
+                                    },
+                                    Err(_) => {
+                                        self.selected_table_columns.clear();
+                                        self.column_list_view = None;
+                                    }
+                                }
+                            } else {
+                                self.selected_db_table = None;
+                                self.table_list_view = None;
+                                self.column_list_view = None;
                             }
                         },
                         Err(_) => {
                             self.selected_db_table = None;
+                            self.table_list_view = None;
+                            self.column_list_view = None;
                         }
                     }
                     self.selected_db = Some(db);
@@ -99,15 +113,71 @@ impl App {
     }
 
     pub fn select_table(&mut self, table_name: String) {
-        if let Some(db) = &self.selected_db {
-            match db.get_table_columns(&table_name) {
+        if let Some(_db) = &self.selected_db {
+            match self.get_table_columns(&table_name) {
                 Ok(columns) => {
                     self.selected_db_table = Some(table_name);
-                    self.selected_table_columns = columns;
+                    self.selected_table_columns = columns.clone();
+                    self.column_list_view = Some(ColumnListView::new(columns));
                 }
                 Err(_) => {
                     self.selected_table_columns.clear();
+                    self.column_list_view = None;
                 }
+            }
+        }
+    }
+
+    pub fn get_table_columns(&self, table_name: &str) -> Result<Vec<ColumnInfo>, DBError> {
+        if let Some(db) = &self.selected_db {
+            let mut statement = db.db_conn.prepare(&format!(
+                "PRAGMA table_info({})",
+                table_name
+            ))?;
+            let mut columns = statement.query_map([], |row| {
+                Ok(ColumnInfo { 
+                    name: row.get(1)?,
+                    col_type: row.get(2)?,
+                    is_pk: row.get::<_, i32>(5)? != 0,
+                    is_fk: false,
+                    references_table: None,
+                })
+            })?.collect::<Result<Vec<_>, _>>()?;
+            
+            let mut fk_statement = db.db_conn.prepare(&format!("
+                PRAGMA foreign_key_list({})",
+                table_name
+            ))?;
+    
+            let foreign_keys: Vec<(String, String)> = fk_statement
+                .query_map([], |row| {
+                    let from_col: String = row.get(3)?;
+                    let ref_table: String = row.get(2)?;
+                    //println!("FK found: {} references {}", from_col, ref_table);
+                    Ok((from_col, ref_table))
+                })?
+                .collect::<Result<Vec<_>, _>>()?;
+    
+            for col in &mut columns {
+                if let Some((_, ref_table)) = foreign_keys
+                    .iter()
+                    .find(|(col_name, _)| col_name == &col.name) {
+                    col.is_fk = true;
+                    col.references_table = Some(ref_table.clone());
+                    //println!("Column '{}' is a foreing key referencing '{}'", col.name, ref_table);
+                }
+            }
+
+            Ok(columns)
+        } else {
+            Ok(Vec::new())
+        }       
+    }
+
+    pub fn update_column_list(&mut self) {
+        if let Some(table_list_view) = &self.table_list_view {
+            if let Some(selected_table) = table_list_view.items.get(table_list_view.index) {
+                self.column_list_view = Some(ColumnListView::new(self.get_table_columns(selected_table).unwrap()));
             }
         }
     }

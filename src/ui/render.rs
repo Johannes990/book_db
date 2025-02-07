@@ -58,7 +58,7 @@ where
 }
 
 fn render_splash_screen(frame: &mut Frame, app: &App) {
-    let chunks = get_chunks(frame, Direction::Vertical, vec![75, 25]);
+    let chunks = get_chunks(frame.area(), Direction::Vertical, vec![75, 25]);
     let main_page_style = Style::default()
         .bg(app.general_page_bg_color())
         .fg(app.general_text_color());
@@ -88,7 +88,7 @@ frame.render_widget(info_text, chunks[1]);
 }
 
 fn render_file_explorer(frame: &mut Frame, app: &mut App) {
-    let chunks = get_chunks(frame, Direction::Vertical, vec![75, 25]);
+    let chunks = get_chunks(frame.area(), Direction::Vertical, vec![75, 25]);
     let fexp_page_style = Style::default()
         .bg(app.general_page_bg_color())
         .fg(app.general_text_color());
@@ -146,62 +146,20 @@ fn render_file_explorer(frame: &mut Frame, app: &mut App) {
 fn render_database_view(frame: &mut Frame, app: &mut App) {
     let general_text_style = Style::default().fg(app.general_text_color());
     let alt_text_style_1 = Style::default().fg(app.alt_text_color_1());
-    let alt_text_style_2 = Style::default().fg(app.alt_text_color_2());
-    let chunks = get_chunks(frame, Direction::Vertical, vec![50, 25, 25]);
-
-    let db_name = Option::expect(app.selected_db.as_ref(), "No DB Option found").get_db_name();
     let db_page_style = Style::default().bg(app.general_page_bg_color()).fg(app.general_text_color());
-    let outer_block = Block::bordered().title("DB view").style(db_page_style);
-    let inner_block = Block::bordered().title("TABLES").style(db_page_style);
+
+    let chunks = get_chunks(frame.area(), Direction::Vertical, vec![75, 25]);
+
+    let db_name = app.selected_db.as_ref().expect("No DB option found").get_db_name();
+    let outer_block = Block::bordered().title(format!("Selected file: {}.db", db_name)).style(db_page_style);
     let inner_area = outer_block.inner(chunks[0]);
+    let table_column_chunks = get_chunks(inner_area, Direction::Horizontal, vec![35, 65]);
 
-    let table_names: Vec<String> = app.get_db().get_table_list().unwrap();
-    let table_names_content: Vec<ListItem> = table_names.into_iter().map(|table_name| {
-        let marker = if Some(&table_name) == app.selected_db_table.as_ref() {
-            "▶ "
-        } else {
-            "  "
-        };
-        ListItem::from(format!("{}{}\n", marker, table_name))
-    }).collect();
+    frame.render_widget(outer_block, chunks[0]);
 
-    let table_names_paragraph = List::new(table_names_content).style(db_page_style).block(inner_block);
-    
-    let text = Paragraph::new(Line::from(vec![
-        Span::styled("Selected Database file: ", general_text_style),
-        Span::styled(format!("{}.db", db_name), alt_text_style_2),
-    ]))
-    .style(db_page_style)
-    .block(outer_block);
+    render_table_list(frame, app, table_column_chunks[0]);
 
-    frame.render_widget(text, chunks[0]);
-    frame.render_widget(table_names_paragraph, inner_area);
-
-    if let Some(selected_table) = &app.selected_db_table {
-        let columns_block = Block::bordered().title(format!("COLUMNS: {}", selected_table)).style(db_page_style);
-        let inner_columns_area = columns_block.inner(chunks[1]);
-
-        let column_content: Vec<ListItem> = app.selected_table_columns
-            .iter()
-            .map(|col| {
-                let mut col_description = format!("{} ({})", col.name, col.col_type);
-                if col.is_pk {
-                    col_description.push_str(" [PK]");
-                }
-                if col.is_fk {
-                    if let Some(ref_table) = &col.references_table {
-                        col_description.push_str(&format!(" [FK -> {}]", ref_table))
-                    } else {
-                        col_description.push_str(" [FK]");
-                    }
-                }
-                col_description.push_str("\n");
-            ListItem::new(col_description)
-        }).collect();
-
-        let column_list = List::new(column_content).style(db_page_style).block(columns_block);
-        frame.render_widget(column_list, inner_columns_area);
-    }
+    render_column_list(frame, app, table_column_chunks[1]);
 
     let info_text = Paragraph::new(Line::from(vec![
         Span::styled("Commands: ", general_text_style),
@@ -216,13 +174,86 @@ fn render_database_view(frame: &mut Frame, app: &mut App) {
     .style(Style::default().bg(app.info_block_bg_col()))
     .block(Block::default().borders(Borders::ALL).title("Info"));
 
-    frame.render_widget(info_text, chunks[2]);
+    frame.render_widget(info_text, chunks[1]);
+}
+
+fn render_table_list(frame: &mut Frame, app: &mut App, area: Rect) {
+    let header = ["Tables"]
+        .into_iter()
+        .map(Cell::from)
+        .collect::<Row>()
+        .style(Style::default().fg(app.general_text_color()));
+
+    let row_color = app.table_row_normal_col();
+
+    let rows: Vec<Row> = app.table_list_view.as_ref().unwrap().items.iter().enumerate().map(|(i, table_name)| {
+        Row::new(vec![Cell::from(Text::from(table_name.clone()))])
+            .style(Style::default().bg(row_color).fg(app.general_text_color()))
+    }).collect();
+
+    let col_constraints = [Constraint::Percentage(100)];
+    let highlight_color = app.file_exp_pg_selected_col();
+
+    render_table(
+        frame,
+        &mut app.table_list_view.as_mut().unwrap().state,
+        header,
+        rows,
+        col_constraints.to_vec(),
+        area,
+        highlight_color,
+    );
+
+    render_vertical_scrollbar(frame, area, app, None);
+}
+
+fn render_column_list(frame: &mut Frame, app: &mut App, area: Rect) {
+    let header = ["Column Name", "Type", "Constraints"]
+        .into_iter()
+        .map(Cell::from)
+        .collect::<Row>()
+        .style(Style::default().fg(app.general_text_color()));
+
+    let rows: Vec<Row> = app.column_list_view.as_ref().unwrap().items.iter().map(|col| {
+        let mut col_constraint_text = "".to_string();
+        if col.is_pk {
+            col_constraint_text.push_str("[PK]");
+        }
+        if col.is_fk {
+            let ref_table = col.references_table.as_deref().unwrap_or("Unknown");
+            col_constraint_text.push_str(&format!("[FK -> {}]", ref_table).to_string());
+        }
+        Row::new(vec![
+            Cell::from(Text::from(col.name.clone())),
+            Cell::from(Text::from(col.col_type.clone())),
+            Cell::from(Text::from(col_constraint_text)),
+        ])
+    }).collect();
+
+    let col_constraints = [
+        Constraint::Percentage(40),
+        Constraint::Percentage(30),
+        Constraint::Percentage(30),
+    ];
+    let highlight_color = app.file_exp_pg_selected_col();
+
+    render_table(
+        frame,
+        &mut app.column_list_view.as_mut().unwrap().state,
+        header,
+        rows,
+        col_constraints.to_vec(),
+        area,
+        highlight_color,
+    );
+
+    render_vertical_scrollbar(frame, area, app, None);
 }
 
 fn render_options_view(frame: &mut Frame, app: &mut App) {
     let general_text_style = Style::default().fg(app.general_text_color());
     let alt_text_style_1 = Style::default().fg(app.alt_text_color_1());
-    let chunks = get_chunks(frame, Direction::Horizontal, vec![33, 33, 34]);
+    let chunks = get_chunks(frame.area(), Direction::Horizontal, vec![33, 33, 34]);
     let color_schemes: &Vec<ColorScheme> = app.list_available_color_schemes();
     let color_scheme_items: Vec<ListItem> = color_schemes.into_iter()
         .map(|scheme| {
@@ -333,14 +364,14 @@ fn centered_rect(percent_x: u16, percent_y: u16, r: ratatui::layout::Rect) -> ra
         .split(layout[1])[1]
 }
 
-fn get_chunks(frame: &Frame, direction: Direction, percentages: Vec<u16>) -> Rc<[Rect]> {
+fn get_chunks(area: Rect, direction: Direction, percentages: Vec<u16>) -> Rc<[Rect]> {
     let constraints: Vec<Constraint> = percentages.iter().map(|value| Constraint::Percentage(*value)).collect();
     let chunks = Layout::default()
         .direction(direction)
         .constraints(
             constraints
         )
-        .split(frame.area());
+        .split(area);
 
     chunks
 }

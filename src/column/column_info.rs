@@ -1,3 +1,4 @@
+#[derive(Clone)]
 pub struct ColumnInfo {
     pub name: String,
     pub col_type: String,

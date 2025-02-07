@@ -67,7 +67,7 @@ where
 {
     let terminal_height = terminal.size()?.height;
     let terminal_width = terminal.size()?.width;
-    let app = App::new(color_scheme, terminal_height, terminal_width);
+    let app = App::new(color_scheme);
 
     Ok(app)
 }
