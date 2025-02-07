@@ -1,9 +1,6 @@
 use crate::ui::colorscheme::ColorScheme;
 use ratatui::{
-    Frame, 
-    prelude::Rect,
-    style::Style,
-    widgets::Block
+    prelude::Rect, style::Style, widgets::Block, Frame
 };
 use strum::IntoEnumIterator;
 
@@ -70,10 +67,10 @@ impl Options {
         let block_width = area.width / color_vec.len() as u16;
         for (i, color) in color_vec.iter().enumerate() {
             let color_area = Rect::new(
-                area.width + i as u16 * block_width,
+                area.width + (i + 1) as u16 * block_width,
                 area.y, 
                 block_width,
-                area.height
+                block_width / 2
             );
             frame.render_widget(Block::default().style(Style::default().bg(*color)), color_area);
         }
