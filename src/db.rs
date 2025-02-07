@@ -69,6 +69,24 @@ impl DB {
         Ok(rows)
     }
 
+    pub fn get_table_columns(&self, table_name: &str) -> Result<Vec<(String, String)>, DBError> {
+        let mut statement = self.db_conn.prepare(&format!(
+            "PRAGMA table_info({})",
+            table_name
+        ))?;
+        let column_iter = statement.query_map([], |row| {
+            let column_name = row.get(1)?;
+            let column_type = row.get(2)?;
+            Ok((column_name, column_type))
+        })?;
+        let mut columns = Vec::new();
+        for column in column_iter {
+            columns.push(column?);
+        }
+
+        Ok(columns)
+    }
+
     pub fn create_table(&mut self, table_name: String, columns: Vec<String>, constraints: Vec<String>) -> Result<(), DBError> {
         let _ = self.check_table_does_not_exist(table_name.clone());
 

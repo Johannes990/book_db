@@ -28,6 +28,8 @@ pub struct App {
     pub current_screen: Screen,
     pub current_popup: PopUp,
     pub selected_db: Option<DB>,
+    pub selected_db_table: Option<String>,
+    pub selected_table_columns: Vec<(String, String)>,
     pub terminal_height: u16,
     pub terminal_width: u16,
     pub file_explorer_table: FileExplorerTable,
@@ -43,6 +45,8 @@ impl App {
             current_screen: Screen::SplashScreenView,
             current_popup: PopUp::None,
             selected_db: None,
+            selected_db_table: None,
+            selected_table_columns: Vec::new(),
             terminal_height,
             terminal_width,
             file_explorer_table,
@@ -67,6 +71,16 @@ impl App {
 
             match DB::new(db_name) {
                 Ok(db) => {
+                    match db.get_table_list() {
+                        Ok(tables) => {
+                            if let Some(first_table) = tables.first() {
+                                self.selected_db_table = Some(first_table.clone())
+                            }
+                        },
+                        Err(_) => {
+                            self.selected_db_table = None;
+                        }
+                    }
                     self.selected_db = Some(db);
                     Ok(())
                 },
@@ -81,6 +95,21 @@ impl App {
 
     pub fn get_db(&mut self) -> &mut DB {
         Option::expect(self.selected_db.as_mut(), "No db loaded")
+    }
+
+    pub fn select_table(&mut self, table_name: String) -> Result<(), DBError> {
+        if let Some(db) = &self.selected_db {
+            match db.get_table_columns(&table_name) {
+                Ok(columns) => {
+                    self.selected_db_table = Some(table_name);
+                    self.selected_table_columns = columns;
+                    Ok(())
+                }
+                Err(e) => Err(e),
+            }
+        } else {
+            Err(DBError::ConnectionCreationError("No database loaded".to_string()))
+        }
     }
 
     pub fn general_text_color(&self) -> Color {

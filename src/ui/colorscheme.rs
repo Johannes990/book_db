@@ -24,7 +24,7 @@ impl ColorScheme {
         match self {
             ColorScheme::Autumn => Colors {
                 general_text_color: Color::Rgb(0, 0, 0),
-                alt_text_color_1: Color::Rgb(255, 255, 255),
+                alt_text_color_1: Color::Rgb(200, 255, 200),
                 alt_text_color_2: Color::Rgb(255, 0, 0),
                 quit_popup_bg_col: Color::Rgb(200, 140, 30),
                 general_page_bg_color: Color::Rgb(190, 190, 40),

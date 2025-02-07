@@ -88,6 +88,39 @@ pub fn handle_key_events(app: &mut App) -> io::Result<bool> {
                     match (key_event.code, key_event.modifiers) {
                         (KeyCode::Char('q'), KeyModifiers::NONE) |
                         (KeyCode::Esc, KeyModifiers::NONE) => app.switch_to_screen(Screen::SplashScreenView),
+                        (KeyCode::Up, KeyModifiers::NONE) => {
+                            if let Some(db) = &app.selected_db {
+                                let tables = db.get_table_list().unwrap_or_default();
+                                if let Some(selected_table) = &app.selected_db_table {
+                                    let current_idx = tables.iter().position(|t| t == selected_table).unwrap_or(0);
+                                    if current_idx > 0 {
+                                        app.select_table(tables[current_idx - 1].clone()).ok();
+                                    } else if current_idx == 0 {
+                                        app.select_table(tables[tables.len() - 1].clone()).ok();
+                                    } else if !tables.is_empty() {
+                                        app.select_table(tables[0].clone()).ok();
+                                    }
+                                }
+                            }
+                        },
+                        (KeyCode::Down, KeyModifiers::NONE) => {
+                            if let Some(db) = &app.selected_db {
+                                let tables = db.get_table_list().unwrap_or_default();
+                                if let Some(selected_table) = &app.selected_db_table {
+                                    let current_idx = tables.iter().position(|t| t == selected_table).unwrap_or(0);
+                                    if current_idx < tables.len() - 1 {
+                                        app.select_table(tables[current_idx + 1].clone()).ok();
+                                    } else if !tables.is_empty() {
+                                        app.select_table(tables[0].clone()).ok();
+                                    }
+                                }
+                            }
+                        },
+                        (KeyCode::Enter, KeyModifiers::NONE) => {
+                            if let Some(selected_table) = &app.selected_db_table {
+                                app.select_table(selected_table.clone()).ok();
+                            }
+                        }
                         _ => {}
                     }
                 }

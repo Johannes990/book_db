@@ -147,20 +147,26 @@ fn render_database_view(frame: &mut Frame, app: &mut App) {
     let general_text_style = Style::default().fg(app.general_text_color());
     let alt_text_style_1 = Style::default().fg(app.alt_text_color_1());
     let alt_text_style_2 = Style::default().fg(app.alt_text_color_2());
-    let chunks = get_chunks(frame, Direction::Vertical, vec![75, 25]);
+    let chunks = get_chunks(frame, Direction::Vertical, vec![50, 25, 25]);
+
     let db_name = Option::expect(app.selected_db.as_ref(), "No DB Option found").get_db_name();
-    let db_page_style = Style::default()
-        .bg(app.general_page_bg_color())
-        .fg(app.general_text_color());
+    let db_page_style = Style::default().bg(app.general_page_bg_color()).fg(app.general_text_color());
     let outer_block = Block::bordered().title("DB view").style(db_page_style);
     let inner_block = Block::bordered().title("TABLES").style(db_page_style);
     let inner_area = outer_block.inner(chunks[0]);
+
     let table_names: Vec<String> = app.get_db().get_table_list().unwrap();
-    let table_names_content: Vec<ListItem> = table_names
-        .into_iter()
-        .map(|table_name| ListItem::from(format!("{}\n", table_name)))
-        .collect();
+    let table_names_content: Vec<ListItem> = table_names.into_iter().map(|table_name| {
+        let marker = if Some(&table_name) == app.selected_db_table.as_ref() {
+            "▶ "
+        } else {
+            "  "
+        };
+        ListItem::from(format!("{}{}\n", marker, table_name))
+    }).collect();
+
     let table_names_paragraph = List::new(table_names_content).style(db_page_style).block(inner_block);
+    
     let text = Paragraph::new(Line::from(vec![
         Span::styled("Selected Database file: ", general_text_style),
         Span::styled(format!("{}.db", db_name), alt_text_style_2),
@@ -171,19 +177,32 @@ fn render_database_view(frame: &mut Frame, app: &mut App) {
     frame.render_widget(text, chunks[0]);
     frame.render_widget(table_names_paragraph, inner_area);
 
+    if let Some(selected_table) = &app.selected_db_table {
+        let columns_block = Block::bordered().title(format!("COLUMNS: {}", selected_table)).style(db_page_style);
+        let inner_columns_area = columns_block.inner(chunks[1]);
+
+        let column_content: Vec<ListItem> = app.selected_table_columns.iter().map(|(name, column_type)| {
+            ListItem::from(format!("{} ({})\n", name, column_type))
+        }).collect();
+
+        let column_list = List::new(column_content).style(db_page_style).block(columns_block);
+        frame.render_widget(column_list, inner_columns_area);
+    }
+
     let info_text = Paragraph::new(Line::from(vec![
         Span::styled("Commands: ", general_text_style),
+        Span::styled("Arrow keys", alt_text_style_1),
+        Span::styled(" - Navigate tables, ", general_text_style),
+        Span::styled("Enter", alt_text_style_1),
+        Span::styled(" - Select table, ", general_text_style),
         Span::styled("Esc / q", alt_text_style_1),
         Span::styled(" - Back to splash screen", general_text_style),
     ]))
     .wrap(Wrap {trim: true})
     .style(Style::default().bg(app.info_block_bg_col()))
-    .block(Block::default()
-        .borders(Borders::ALL)
-        .title("Info")
-    );
+    .block(Block::default().borders(Borders::ALL).title("Info"));
 
-    frame.render_widget(info_text, chunks[1]);
+    frame.render_widget(info_text, chunks[2]);
 }
 
 fn render_options_view(frame: &mut Frame, app: &mut App) {
