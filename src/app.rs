@@ -1,5 +1,5 @@
 use crate::{
-    db::{DBError, DB}, fex::fextable::FileExplorerTable, handle_key_events, options::Options, ui::{
+    db::{DBError, DB, ColumnInfo}, fex::fextable::FileExplorerTable, handle_key_events, options::Options, ui::{
         colorscheme::ColorScheme,
         render,
     }
@@ -29,7 +29,7 @@ pub struct App {
     pub current_popup: PopUp,
     pub selected_db: Option<DB>,
     pub selected_db_table: Option<String>,
-    pub selected_table_columns: Vec<(String, String)>,
+    pub selected_table_columns: Vec<ColumnInfo>,
     pub terminal_height: u16,
     pub terminal_width: u16,
     pub file_explorer_table: FileExplorerTable,
@@ -97,18 +97,17 @@ impl App {
         Option::expect(self.selected_db.as_mut(), "No db loaded")
     }
 
-    pub fn select_table(&mut self, table_name: String) -> Result<(), DBError> {
+    pub fn select_table(&mut self, table_name: String) {
         if let Some(db) = &self.selected_db {
             match db.get_table_columns(&table_name) {
                 Ok(columns) => {
                     self.selected_db_table = Some(table_name);
                     self.selected_table_columns = columns;
-                    Ok(())
                 }
-                Err(e) => Err(e),
+                Err(_) => {
+                    self.selected_table_columns.clear();
+                }
             }
-        } else {
-            Err(DBError::ConnectionCreationError("No database loaded".to_string()))
         }
     }
 

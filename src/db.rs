@@ -1,5 +1,4 @@
 use rusqlite::{Connection, Result, Error, Statement, ToSql};
-use ratatui::widgets::Row;
 use std::collections::HashMap;
 use std::fmt;
 
@@ -37,6 +36,13 @@ pub struct DB {
     db_tab_col_map: HashMap<String, Vec<String>>,
 }
 
+pub struct ColumnInfo {
+    pub name: String,
+    pub col_type: String,
+    pub is_pk: bool,
+    pub is_fk: bool,
+}
+
 impl DB {
     pub fn new(name: String) -> Result<Self, DBError> {
         let db_string = name.to_owned() + ".db";
@@ -69,22 +75,40 @@ impl DB {
         Ok(rows)
     }
 
-    pub fn get_table_columns(&self, table_name: &str) -> Result<Vec<(String, String)>, DBError> {
+    pub fn get_table_columns(&self, table_name: &str) -> Result<Vec<ColumnInfo>, DBError> {
         let mut statement = self.db_conn.prepare(&format!(
             "PRAGMA table_info({})",
             table_name
         ))?;
-        let column_iter = statement.query_map([], |row| {
-            let column_name = row.get(1)?;
-            let column_type = row.get(2)?;
-            Ok((column_name, column_type))
-        })?;
-        let mut columns = Vec::new();
-        for column in column_iter {
-            columns.push(column?);
-        }
+        let columns = statement.query_map([], |row| {
+            Ok(ColumnInfo { 
+                name: row.get(1)?,
+                col_type: row.get(2)?,
+                is_pk: row.get::<_, i32>(5)? != 0,
+                is_fk: false,
+            })
+        })?.collect::<Result<Vec<_>, _>>()?;
+        
+        let mut fk_statement = self.db_conn.prepare(&format!("
+            PRAGMA foreign_key_list({})",
+            table_name
+        ))?;
 
-        Ok(columns)
+        let foreign_keys: Vec<String> = fk_statement
+            .query_map([], |row| row.get(3))?
+            .collect::<Result<Vec<_>, _>>()?;
+
+        let columns_with_fk = columns
+            .into_iter()
+            .map(|mut col| {
+                if foreign_keys.contains(&col.name) {
+                    col.is_fk = true;
+                }
+                col
+            })
+            .collect();
+
+        Ok(columns_with_fk)
     }
 
     pub fn create_table(&mut self, table_name: String, columns: Vec<String>, constraints: Vec<String>) -> Result<(), DBError> {

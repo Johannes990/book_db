@@ -181,8 +181,18 @@ fn render_database_view(frame: &mut Frame, app: &mut App) {
         let columns_block = Block::bordered().title(format!("COLUMNS: {}", selected_table)).style(db_page_style);
         let inner_columns_area = columns_block.inner(chunks[1]);
 
-        let column_content: Vec<ListItem> = app.selected_table_columns.iter().map(|(name, column_type)| {
-            ListItem::from(format!("{} ({})\n", name, column_type))
+        let column_content: Vec<ListItem> = app.selected_table_columns
+            .iter()
+            .map(|col| {
+                let mut col_description = format!("{} ({})", col.name, col.col_type);
+                if col.is_pk {
+                    col_description.push_str(" [PK]");
+                }
+                if col.is_fk {
+                    col_description.push_str(" [FK]");
+                }
+                col_description.push_str("\n");
+            ListItem::new(col_description)
         }).collect();
 
         let column_list = List::new(column_content).style(db_page_style).block(columns_block);
