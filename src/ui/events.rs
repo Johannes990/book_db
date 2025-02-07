@@ -104,7 +104,12 @@ pub fn handle_key_events(app: &mut App) -> io::Result<bool> {
                 }
             },
             Screen::CreateNewFileView => {
-
+                if key_event.kind == KeyEventKind::Press {
+                    match (key_event.code, key_event.modifiers) {
+                        (KeyCode::Esc, KeyModifiers::NONE) => app.switch_to_screen(Screen::SplashScreenView),
+                        _ => {}
+                    }
+                }
             },
             
         }
