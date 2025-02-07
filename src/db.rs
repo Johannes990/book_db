@@ -1,6 +1,7 @@
 use rusqlite::{Connection, Result, Error, Statement, ToSql};
 use std::collections::HashMap;
 use std::fmt;
+use crate::column::column_info::ColumnInfo;
 
 
 #[derive(Debug)]
@@ -34,14 +35,6 @@ pub struct DB {
     db_name: String,
     db_conn: Connection,
     db_tab_col_map: HashMap<String, Vec<String>>,
-}
-
-pub struct ColumnInfo {
-    pub name: String,
-    pub col_type: String,
-    pub is_pk: bool,
-    pub is_fk: bool,
-    pub references_table: Option<String>,
 }
 
 impl DB {

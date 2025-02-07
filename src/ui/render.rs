@@ -11,7 +11,7 @@ use ratatui::{
     Terminal
 };
 use std::{io, rc::Rc, vec};
-use crate::{app::{App, PopUp, Screen}, fex::fexdata::FileExplorerData, options};
+use crate::{app::{App, PopUp, Screen}, fex::fex_data::FileExplorerData, options};
 
 use super::colorscheme::ColorScheme;
 

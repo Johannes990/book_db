@@ -1,2 +1,2 @@
-pub mod fexdata;
-pub mod fextable;
+pub mod fex_data;
+pub mod fex_table;

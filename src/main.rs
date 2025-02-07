@@ -3,6 +3,8 @@ mod db;
 mod options;
 mod ui;
 mod app;
+mod column;
+mod table;
 mod fex;
 
 use crossterm::{

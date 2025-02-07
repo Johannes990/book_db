@@ -1,4 +1,4 @@
-use crate::fex::fexdata::FileExplorerData;
+use crate::fex::fex_data::FileExplorerData;
 use ratatui::widgets::{ScrollbarState, TableState};
 use unicode_width::UnicodeWidthStr;
 use std::{fs::{self}, io, path::PathBuf};
