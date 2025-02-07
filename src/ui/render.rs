@@ -219,10 +219,17 @@ fn render_column_list(frame: &mut Frame, app: &mut App, area: Rect) {
         if col.is_pk {
             col_constraint_text.push_str("[PK]");
         }
+        if col.is_unique {
+            col_constraint_text.push_str("[UNIQUE]");
+        }
+        if col.is_not_null {
+            col_constraint_text.push_str("[NOT NULL]");
+        }
         if col.is_fk {
             let ref_table = col.references_table.as_deref().unwrap_or("Unknown");
             col_constraint_text.push_str(&format!("[FK -> {}]", ref_table).to_string());
         }
+        
         Row::new(vec![
             Cell::from(Text::from(col.name.clone())),
             Cell::from(Text::from(col.col_type.clone())),
@@ -231,9 +238,9 @@ fn render_column_list(frame: &mut Frame, app: &mut App, area: Rect) {
     }).collect();
 
     let col_constraints = [
-        Constraint::Percentage(40),
-        Constraint::Percentage(30),
-        Constraint::Percentage(30),
+        Constraint::Percentage(35),
+        Constraint::Percentage(15),
+        Constraint::Percentage(50),
     ];
     let highlight_color = app.file_exp_pg_selected_col();
 

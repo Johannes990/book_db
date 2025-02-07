@@ -113,8 +113,8 @@ impl App {
     }
 
     pub fn select_table(&mut self, table_name: String) {
-        if let Some(_db) = &self.selected_db {
-            match self.get_table_columns(&table_name) {
+        if let Some(db) = &self.selected_db {
+            match db.get_table_columns(&table_name) {
                 Ok(columns) => {
                     self.selected_db_table = Some(table_name);
                     self.selected_table_columns = columns.clone();
@@ -128,56 +128,12 @@ impl App {
         }
     }
 
-    pub fn get_table_columns(&self, table_name: &str) -> Result<Vec<ColumnInfo>, DBError> {
-        if let Some(db) = &self.selected_db {
-            let mut statement = db.db_conn.prepare(&format!(
-                "PRAGMA table_info({})",
-                table_name
-            ))?;
-            let mut columns = statement.query_map([], |row| {
-                Ok(ColumnInfo { 
-                    name: row.get(1)?,
-                    col_type: row.get(2)?,
-                    is_pk: row.get::<_, i32>(5)? != 0,
-                    is_fk: false,
-                    references_table: None,
-                })
-            })?.collect::<Result<Vec<_>, _>>()?;
-            
-            let mut fk_statement = db.db_conn.prepare(&format!("
-                PRAGMA foreign_key_list({})",
-                table_name
-            ))?;
-    
-            let foreign_keys: Vec<(String, String)> = fk_statement
-                .query_map([], |row| {
-                    let from_col: String = row.get(3)?;
-                    let ref_table: String = row.get(2)?;
-                    //println!("FK found: {} references {}", from_col, ref_table);
-                    Ok((from_col, ref_table))
-                })?
-                .collect::<Result<Vec<_>, _>>()?;
-    
-            for col in &mut columns {
-                if let Some((_, ref_table)) = foreign_keys
-                    .iter()
-                    .find(|(col_name, _)| col_name == &col.name) {
-                    col.is_fk = true;
-                    col.references_table = Some(ref_table.clone());
-                    //println!("Column '{}' is a foreing key referencing '{}'", col.name, ref_table);
-                }
-            }
-
-            Ok(columns)
-        } else {
-            Ok(Vec::new())
-        }       
-    }
-
     pub fn update_column_list(&mut self) {
-        if let Some(table_list_view) = &self.table_list_view {
-            if let Some(selected_table) = table_list_view.items.get(table_list_view.index) {
-                self.column_list_view = Some(ColumnListView::new(self.get_table_columns(selected_table).unwrap()));
+        if let Some(db) = &self.selected_db {
+            if let Some(table_list_view) = &self.table_list_view {
+                if let Some(selected_table) = table_list_view.items.get(table_list_view.index) {
+                    self.column_list_view = Some(ColumnListView::new(db.get_table_columns(selected_table).unwrap()));
+                }
             }
         }
     }

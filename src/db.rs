@@ -78,12 +78,15 @@ impl DB {
             Ok(ColumnInfo { 
                 name: row.get(1)?,
                 col_type: row.get(2)?,
-                is_pk: row.get::<_, i32>(5)? != 0,
+                is_pk: row.get::<_, i32>(5)? != 0, // checks if column has PK constraint
                 is_fk: false,
                 references_table: None,
+                is_unique: false,
+                is_not_null: row.get::<_, i32>(3)? != 0, // checks if column has NOT NULL constraint
             })
         })?.collect::<Result<Vec<_>, _>>()?;
         
+        // foreign key constraints
         let mut fk_statement = self.db_conn.prepare(&format!("
             PRAGMA foreign_key_list({})",
             table_name
@@ -91,14 +94,54 @@ impl DB {
 
         let foreign_keys: Vec<(String, String)> = fk_statement
             .query_map([], |row| {
-                Ok((row.get(3)?, row.get(2)?))
+                let from_col: String = row.get(3)?;
+                let ref_table: String = row.get(2)?;
+                Ok((from_col, ref_table))
             })?
             .collect::<Result<Vec<_>, _>>()?;
 
         for col in &mut columns {
-            if let Some((_, ref_table)) = foreign_keys.iter().find(|(col_name, _)| col_name == &col.name) {
+            if let Some((_, ref_table)) = foreign_keys
+                .iter()
+                .find(|(col_name, _)| col_name == &col.name) {
                 col.is_fk = true;
                 col.references_table = Some(ref_table.clone());
+            }
+        }
+
+        // unique constraints
+        let mut unique_statement = self.db_conn.prepare(&format!(
+            "PRAGMA index_list({})",
+            table_name
+        ))?;
+
+        let unique_indexes: Vec<String> = unique_statement
+            .query_map([], |row| {
+                let is_unique: i32 = row.get(2)?;
+                if is_unique == 1 {
+                    row.get(1) // column 1 contains index name
+                } else {
+                    Ok(String::new())
+                }
+            })?
+            .filter_map(Result::ok)
+            .filter(|s| !s.is_empty())
+            .collect();
+
+        for idx in unique_indexes {
+            let mut index_info_statement = self.db_conn.prepare(&format!(
+                "PRAGMA index_info({})",
+                idx
+            ))?;
+
+            let unique_columns: Vec<String> = index_info_statement
+                .query_map([], |row| row.get(2))?
+                .collect::<Result<Vec<_>, _>>()?;
+
+            for col in &mut columns {
+                if unique_columns.contains(&col.name) {
+                    col.is_unique = true;
+                }
             }
         }
 
