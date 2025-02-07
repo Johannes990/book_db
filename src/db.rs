@@ -41,6 +41,7 @@ pub struct ColumnInfo {
     pub col_type: String,
     pub is_pk: bool,
     pub is_fk: bool,
+    pub references_table: Option<String>,
 }
 
 impl DB {
@@ -80,12 +81,13 @@ impl DB {
             "PRAGMA table_info({})",
             table_name
         ))?;
-        let columns = statement.query_map([], |row| {
+        let mut columns = statement.query_map([], |row| {
             Ok(ColumnInfo { 
                 name: row.get(1)?,
                 col_type: row.get(2)?,
                 is_pk: row.get::<_, i32>(5)? != 0,
                 is_fk: false,
+                references_table: None,
             })
         })?.collect::<Result<Vec<_>, _>>()?;
         
@@ -94,21 +96,20 @@ impl DB {
             table_name
         ))?;
 
-        let foreign_keys: Vec<String> = fk_statement
-            .query_map([], |row| row.get(3))?
+        let foreign_keys: Vec<(String, String)> = fk_statement
+            .query_map([], |row| {
+                Ok((row.get(3)?, row.get(2)?))
+            })?
             .collect::<Result<Vec<_>, _>>()?;
 
-        let columns_with_fk = columns
-            .into_iter()
-            .map(|mut col| {
-                if foreign_keys.contains(&col.name) {
-                    col.is_fk = true;
-                }
-                col
-            })
-            .collect();
+        for col in &mut columns {
+            if let Some((_, ref_table)) = foreign_keys.iter().find(|(col_name, _)| col_name == &col.name) {
+                col.is_fk = true;
+                col.references_table = Some(ref_table.clone());
+            }
+        }
 
-        Ok(columns_with_fk)
+        Ok(columns)
     }
 
     pub fn create_table(&mut self, table_name: String, columns: Vec<String>, constraints: Vec<String>) -> Result<(), DBError> {

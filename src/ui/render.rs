@@ -189,7 +189,11 @@ fn render_database_view(frame: &mut Frame, app: &mut App) {
                     col_description.push_str(" [PK]");
                 }
                 if col.is_fk {
-                    col_description.push_str(" [FK]");
+                    if let Some(ref_table) = &col.references_table {
+                        col_description.push_str(&format!(" [FK -> {}]", ref_table))
+                    } else {
+                        col_description.push_str(" [FK]");
+                    }
                 }
                 col_description.push_str("\n");
             ListItem::new(col_description)
