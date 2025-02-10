@@ -1,5 +1,11 @@
 use crate::{
-    column::{column_info::ColumnInfo, column_list::ColumnListView}, db::{DBError, DB}, fex::fex_table::FileExplorerTable, handle_key_events, options::Options, table::table_list::TableListView, ui::{colorscheme::ColorScheme, render}
+    column::{column_info::ColumnInfo, column_list::ColumnListView},
+    db::{DBError, DB},
+    fex::fex_table::FileExplorerTable,
+    handle_key_events,
+    options::Options,
+    table::table_list::TableListView,
+    ui::{colorscheme::ColorScheme, render}
 };
 use ratatui::{
     style::Color,

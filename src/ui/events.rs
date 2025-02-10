@@ -1,7 +1,7 @@
 use std::io;
 use crossterm::event::{KeyModifiers, KeyboardEnhancementFlags, PushKeyboardEnhancementFlags};
 use ratatui::crossterm::event::{self, Event, KeyCode, KeyEventKind};
-use crate::{app::{App, PopUp, Screen}, column::column_list::ColumnListView};
+use crate::app::{App, PopUp, Screen};
 
 
 pub fn setup_keyboard_enchancements() {
