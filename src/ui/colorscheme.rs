@@ -42,7 +42,7 @@ impl ColorScheme {
                 file_exp_pg_selected_col: Color::Rgb(255, 255, 0),
                 table_row_normal_col: Color::Rgb(10, 10, 20),
                 table_row_alt_color: Color::Rgb(10, 10, 25),
-                info_block_bg_col: Color::Rgb(255, 255, 255),
+                info_block_bg_col: Color::Rgb(30, 30, 255),
             }
         }
     }
