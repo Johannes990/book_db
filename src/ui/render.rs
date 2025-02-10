@@ -188,25 +188,18 @@ fn render_table_list(frame: &mut Frame, app: &mut App, area: Rect) {
 
     let row_color = app.table_row_normal_col();
 
-    let rows: Vec<Row> = app.table_list_view.as_ref().unwrap().items.iter().enumerate().map(|(i, table_name)| {
+    let rows: Vec<Row> = app.table_list_view.as_ref().unwrap().items.iter().enumerate().map(|(_, table_name)| {
         Row::new(vec![Cell::from(Text::from(table_name.clone()))])
             .style(Style::default().bg(row_color).fg(app.general_text_color()))
     }).collect();
 
     let col_constraints = [Constraint::Percentage(100)];
     let highlight_color = app.file_exp_pg_selected_col();
+    let unwrapped_table_list = app.table_list_view.as_mut().unwrap();
 
-    render_table(
-        frame,
-        &mut app.table_list_view.as_mut().unwrap().state,
-        header,
-        rows,
-        col_constraints.to_vec(),
-        area,
-        highlight_color,
-    );
+    render_table(frame, &mut unwrapped_table_list.state, header, rows, col_constraints.to_vec(), area, highlight_color);
 
-    render_vertical_scrollbar(frame, area, None, &mut app.table_list_view.as_mut().unwrap().scroll_state);
+    render_vertical_scrollbar(frame, area, None, &mut unwrapped_table_list.scroll_state);
 }
 
 fn render_column_list(frame: &mut Frame, app: &mut App, area: Rect) {
@@ -246,17 +239,11 @@ fn render_column_list(frame: &mut Frame, app: &mut App, area: Rect) {
     ];
     let highlight_color = app.file_exp_pg_selected_col();
 
-    render_table(
-        frame,
-        &mut app.column_list_view.as_mut().unwrap().state,
-        header,
-        rows,
-        col_constraints.to_vec(),
-        area,
-        highlight_color,
-    );
+    let unwrapped_column_list = app.column_list_view.as_mut().unwrap();
 
-    render_vertical_scrollbar(frame, area, None, &mut app.column_list_view.as_mut().unwrap().scroll_state);
+    render_table(frame, &mut unwrapped_column_list.state, header, rows, col_constraints.to_vec(), area, highlight_color);
+
+    render_vertical_scrollbar(frame, area, None, &mut unwrapped_column_list.scroll_state);
 }
 
 fn render_options_view(frame: &mut Frame, app: &mut App) {
