@@ -18,11 +18,20 @@ pub fn handle_key_events(app: &mut App) -> io::Result<bool> {
                 match app.current_popup {
                     PopUp::None => {
                         if key_event.kind == KeyEventKind::Press {
-                            match key_event.code {
-                                KeyCode::Esc | KeyCode::Char('q') => app.switch_to_popup(PopUp::QuitDialog),
-                                KeyCode::Char('f') => app.switch_to_screen(Screen::FileExplorerView),
-                                KeyCode::Char('c') => app.switch_to_screen(Screen::CreateNewFileView),
-                                KeyCode::Char('o') => app.switch_to_screen(Screen::OptionsView),
+                            match (key_event.code, key_event.modifiers) {
+                                (KeyCode::Esc, KeyModifiers::NONE) | 
+                                (KeyCode::Char('q'), KeyModifiers::CONTROL) => app.switch_to_popup(PopUp::QuitDialog),
+                                (KeyCode::Char('f'), KeyModifiers::CONTROL) => app.switch_to_screen(Screen::FileExplorerView),
+                                (KeyCode::Char('n'), KeyModifiers::CONTROL) => app.switch_to_screen(Screen::CreateNewFileView),
+                                (KeyCode::Char('o'), KeyModifiers::CONTROL) => app.switch_to_screen(Screen::OptionsView),
+                                (KeyCode::Char('d'), KeyModifiers::CONTROL) => {
+                                    if app.selected_db.is_some() {
+                                        app.switch_to_screen(Screen::OpenDataBaseView);
+                                    } else {
+                                        app.switch_to_popup(PopUp::NoDBLoadedDialog);
+                                    }
+                                    
+                                }
                                 _ => {}
                             }
                         }
@@ -31,15 +40,25 @@ pub fn handle_key_events(app: &mut App) -> io::Result<bool> {
                         if key_event.kind == KeyEventKind::Press {
                             match (key_event.code, key_event.modifiers) {
                                 (KeyCode::Esc, KeyModifiers::NONE) |
-                                (KeyCode::Char('n'), KeyModifiers::NONE) => {
-                                    app.switch_to_popup(PopUp::None);
-                                }
+                                (KeyCode::Char('n'), KeyModifiers::NONE) => app.switch_to_popup(PopUp::None),
                                 (KeyCode::Char('y'), KeyModifiers::NONE) => return Ok(true),
                                 _ => {}
                             }
                         }
                     }
-                    PopUp::SaveDialog => {}
+                    PopUp::SaveDialog => {},
+                    PopUp::NoDBLoadedDialog => {
+                        if key_event.kind == KeyEventKind::Press {
+                            match (key_event.code, key_event.modifiers) {
+                                (KeyCode::Esc, KeyModifiers::NONE) => app.switch_to_popup(PopUp::None),
+                                (KeyCode::Char('f'), KeyModifiers::CONTROL) => {
+                                    app.switch_to_popup(PopUp::None);
+                                    app.switch_to_screen(Screen::FileExplorerView);
+                                }
+                                _ => {}
+                            }
+                        }
+                    }
                 }
             },
             Screen::FileExplorerView => {

@@ -18,6 +18,7 @@ pub enum Screen {
 pub enum PopUp {
     None,
     QuitDialog,
+    NoDBLoadedDialog,
     SaveDialog,
 }
 

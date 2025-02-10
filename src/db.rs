@@ -227,6 +227,3 @@ impl DB {
         col_names
     }
 }
-
-
-

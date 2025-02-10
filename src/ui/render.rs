@@ -27,7 +27,8 @@ where
                 match app.current_popup {
                     PopUp::None => render_splash_screen(frame, app),
                     PopUp::QuitDialog => render_quit_dialog(frame, app),
-                    PopUp::SaveDialog => {}
+                    PopUp::SaveDialog => {},
+                    PopUp::NoDBLoadedDialog => render_no_db_loaded_dialog(frame, app),
                 }
             },
             Screen::CreateNewFileView => {},
@@ -42,13 +43,15 @@ where
                     PopUp::None => render_database_view(frame, app),
                     PopUp::QuitDialog => todo!(),
                     PopUp::SaveDialog => {},
+                    PopUp::NoDBLoadedDialog => {},
                 }
             },
             Screen::OptionsView => {
                 match app.current_popup {
                     PopUp::None => render_options_view(frame, app),
                     PopUp::SaveDialog => {},
-                    PopUp::QuitDialog => {}
+                    PopUp::QuitDialog => {},
+                    PopUp::NoDBLoadedDialog => {},
                 }
             },
         }
@@ -69,13 +72,15 @@ fn render_splash_screen(frame: &mut Frame, app: &App) {
     frame.render_widget(main_page_content, chunks[0]);
 
     let info_text = Paragraph::new(Line::from(vec![
-        Span::styled("f", Style::default().fg(app.alt_text_color_1())),
+        Span::styled("CTRL + f", Style::default().fg(app.alt_text_color_1())),
         Span::styled(" - open file explorer to load existing database file, ", Style::default().fg(app.general_text_color())),
-        Span::styled("c", Style::default().fg(app.alt_text_color_1())),
+        Span::styled("CTRL + d", Style::default().fg(app.alt_text_color_1())),
+        Span::styled(" - open loaded database file, ", Style::default().fg(app.general_text_color())),
+        Span::styled("CTRL + n", Style::default().fg(app.alt_text_color_1())),
         Span::styled(" - create new database file, ", Style::default().fg(app.general_text_color())),
-        Span::styled("o", Style::default().fg(app.alt_text_color_1())),
+        Span::styled("CTRL + o", Style::default().fg(app.alt_text_color_1())),
         Span::styled(" - open options page, ", Style::default().fg(app.general_text_color())),
-        Span::styled("ESC / q", Style::default().fg(app.alt_text_color_1())),
+        Span::styled("ESC / CTRL + q", Style::default().fg(app.alt_text_color_1())),
         Span::styled(" - quit app.", Style::default().fg(app.general_text_color()))
     ]))
     .wrap(Wrap {trim: true})
@@ -321,6 +326,29 @@ fn render_quit_dialog(frame: &mut Frame, app: &App) {
     let area = centered_rect(55, 30, frame.area());
 
     frame.render_widget(exit_paragraph, area);
+}
+
+fn render_no_db_loaded_dialog(frame: &mut Frame, app: &mut App) {
+    let popup_style = Style::default()
+        .bg(app.quit_popup_bg_col())
+        .fg(app.general_text_color());
+    let popup_block = Block::default()
+        .title("No database file loaded!")
+        .borders(Borders::ALL)
+        .style(popup_style);
+    let info_text = Line::from(vec![
+        Span::styled("No database file has been loaded. ", Style::default().fg(app.general_text_color())),
+        Span::styled("CTRL + f", Style::default().fg(app.alt_text_color_1())),
+        Span::styled(" - open file explorer to load a .db file, ", Style::default().fg(app.general_text_color())),
+        Span::styled("Esc", Style::default().fg(app.alt_text_color_1())),
+        Span::styled(" - return to splash screen.", Style::default().fg(app.general_text_color())),
+    ]);
+    let info_paragraph = Paragraph::new(info_text)
+        .block(popup_block)
+        .wrap(Wrap { trim: false } );
+    let area = centered_rect(55, 30, frame.area());
+
+    frame.render_widget(info_paragraph, area);
 }
 
 fn render_vertical_scrollbar(frame: &mut Frame, area: Rect, app: &mut App, endpoints: Option<&str>) {
