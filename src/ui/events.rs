@@ -119,6 +119,7 @@ pub fn handle_key_events(app: &mut App) -> io::Result<bool> {
                                     } else if !tables.is_empty() {
                                         app.select_table(tables[0].clone());
                                     }
+                                    let _ = &app.table_list_view.as_mut().unwrap().previous();
                                 }
                             }
                         },
@@ -132,6 +133,7 @@ pub fn handle_key_events(app: &mut App) -> io::Result<bool> {
                                     } else if !tables.is_empty() {
                                         app.select_table(tables[0].clone());
                                     }
+                                    let _ = &app.table_list_view.as_mut().unwrap().next();
                                 }
                             }
                         },
