@@ -1,7 +1,7 @@
 use std::io;
 use crossterm::event::{KeyModifiers, KeyboardEnhancementFlags, PushKeyboardEnhancementFlags};
 use ratatui::crossterm::event::{self, Event, KeyCode, KeyEventKind};
-use crate::app::{App, PopUp, Screen};
+use crate::{app::{App, PopUp, Screen}, column::column_list::ColumnListView};
 
 
 pub fn setup_keyboard_enchancements() {
@@ -137,11 +137,25 @@ pub fn handle_key_events(app: &mut App) -> io::Result<bool> {
                                 }
                             }
                         },
+                        (KeyCode::Char('s'), KeyModifiers::NONE) => {
+                            if let Some(_) = &app.selected_db {
+                                if let Some(_) = &app.column_list_view {
+                                    let _ = &app.column_list_view.as_mut().unwrap().previous();
+                                }
+                            }
+                        },
+                        (KeyCode::Char('x'), KeyModifiers::NONE) => {
+                            if let Some(_) = &app.selected_db {
+                                if let Some(_) = &app.column_list_view {
+                                    let _ = &app.column_list_view.as_mut().unwrap().next();
+                                }
+                            }
+                        },
                         (KeyCode::Enter, KeyModifiers::NONE) => {
                             if let Some(selected_table) = &app.selected_db_table {
                                 app.select_table(selected_table.clone());
                             }
-                        }
+                        },
                         _ => {}
                     }
                 }

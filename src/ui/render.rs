@@ -3,10 +3,7 @@ use ratatui::{
     prelude::{Margin, Rect},
     style::{Color, Modifier, Style},
     text::{Line, Span, Text},
-    widgets::{Block, Borders, Cell, Clear, 
-        HighlightSpacing, List, ListItem, Paragraph, 
-        Row, Scrollbar, ScrollbarOrientation, Table, 
-        TableState, Wrap},
+    widgets::{Block, Borders, Cell, Clear, HighlightSpacing, List, ListItem, Paragraph, Row, Scrollbar, ScrollbarOrientation, ScrollbarState, Table, TableState, Wrap},
     Frame,
     Terminal
 };
@@ -129,7 +126,7 @@ fn render_file_explorer(frame: &mut Frame, app: &mut App) {
     let highlight_col = app.file_exp_pg_selected_col();
 
     render_table(frame, &mut app.file_explorer_table.state, header, rows, col_constraints.to_vec(), chunks[0], highlight_col);
-    render_vertical_scrollbar(frame, chunks[0], app, None);
+    render_vertical_scrollbar(frame, chunks[0], None, &mut app.file_explorer_table.scroll_state);
 
     let info_text = Paragraph::new(Line::from(vec![
         Span::styled("Commands: ", Style::default().fg(app.general_text_color())),
@@ -209,7 +206,7 @@ fn render_table_list(frame: &mut Frame, app: &mut App, area: Rect) {
         highlight_color,
     );
 
-    render_vertical_scrollbar(frame, area, app, None);
+    render_vertical_scrollbar(frame, area, None, &mut app.table_list_view.as_mut().unwrap().scroll_state);
 }
 
 fn render_column_list(frame: &mut Frame, app: &mut App, area: Rect) {
@@ -259,7 +256,7 @@ fn render_column_list(frame: &mut Frame, app: &mut App, area: Rect) {
         highlight_color,
     );
 
-    render_vertical_scrollbar(frame, area, app, None);
+    render_vertical_scrollbar(frame, area, None, &mut app.column_list_view.as_mut().unwrap().scroll_state);
 }
 
 fn render_options_view(frame: &mut Frame, app: &mut App) {
@@ -351,7 +348,7 @@ fn render_no_db_loaded_dialog(frame: &mut Frame, app: &mut App) {
     frame.render_widget(info_paragraph, area);
 }
 
-fn render_vertical_scrollbar(frame: &mut Frame, area: Rect, app: &mut App, endpoints: Option<&str>) {
+fn render_vertical_scrollbar(frame: &mut Frame, area: Rect, endpoints: Option<&str>, scroll_bar_state: &mut ScrollbarState) {
     frame.render_stateful_widget(
         Scrollbar::default()
             .orientation(ScrollbarOrientation::VerticalRight)
@@ -362,7 +359,7 @@ fn render_vertical_scrollbar(frame: &mut Frame, area: Rect, app: &mut App, endpo
             vertical: 1,
             horizontal: 1,
         }),
-        &mut app.file_explorer_table.scroll_state,
+        scroll_bar_state,
     );
 }
 
