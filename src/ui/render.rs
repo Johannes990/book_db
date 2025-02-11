@@ -1,7 +1,7 @@
 use ratatui::{
     layout::{Constraint, Direction, Layout},
     prelude::{Margin, Rect},
-    style::{Color, Modifier, Style},
+    style::{Color, Modifier, Style, Stylize},
     text::{Line, Span, Text},
     widgets::{Block, Borders, Cell, Clear, HighlightSpacing, List, ListItem, Paragraph, Row, Scrollbar, ScrollbarOrientation, ScrollbarState, Table, TableState, Wrap},
     Frame,
@@ -125,7 +125,10 @@ fn render_file_explorer(frame: &mut Frame, app: &mut App) {
     ];
     let highlight_col = app.file_exp_pg_selected_col();
 
-    render_table(frame, &mut app.file_explorer_table.state, header, rows, col_constraints.to_vec(), chunks[0], highlight_col);
+    render_table(frame, &mut app.file_explorer_table.state, 
+                 Some(header), rows, 
+                 col_constraints.to_vec(), chunks[0], 
+                 highlight_col, Borders::NONE, None);
     render_vertical_scrollbar(frame, chunks[0], None, &mut app.file_explorer_table.scroll_state);
 
     let info_text = Paragraph::new(Line::from(vec![
@@ -153,7 +156,10 @@ fn render_database_view(frame: &mut Frame, app: &mut App) {
     let chunks = get_chunks(frame.area(), Direction::Vertical, vec![75, 25]);
 
     let db_name = app.selected_db.as_ref().expect("No DB option found").get_db_name();
-    let outer_block = Block::bordered().title(format!("Selected file: {}.db", db_name)).style(db_page_style);
+    let outer_block = Block::default()
+        .title("Database View")
+        .title(Line::from(format!("Currently viewing: {}.db", db_name)).right_aligned())
+        .style(db_page_style);
     let inner_area = outer_block.inner(chunks[0]);
     let table_column_chunks = get_chunks(inner_area, Direction::Horizontal, vec![35, 65]);
 
@@ -180,30 +186,40 @@ fn render_database_view(frame: &mut Frame, app: &mut App) {
 }
 
 fn render_table_list(frame: &mut Frame, app: &mut App, area: Rect) {
-    let header = ["Tables"]
-        .into_iter()
-        .map(Cell::from)
-        .collect::<Row>()
-        .style(Style::default().fg(app.general_text_color()));
+    let row_style = Style::default().bg(app.general_page_bg_color()).fg(app.general_text_color());
+    let header = Row::new(vec![
+        Cell::new("Name"),
+        Cell::new("Rows"),
+        Cell::new("Type"),
+    ]).style(row_style);
 
-    let row_color = app.table_row_normal_col();
-
-    let rows: Vec<Row> = app.table_list_view.as_ref().unwrap().items.iter().enumerate().map(|(_, table_name)| {
-        Row::new(vec![Cell::from(Text::from(table_name.clone()))])
-            .style(Style::default().bg(row_color).fg(app.general_text_color()))
+    let rows: Vec<Row> = app.table_list_view.as_ref().unwrap().items.iter().map(|table| {
+        Row::new(vec![
+            Cell::from(Text::from(table.name.clone())),
+            Cell::from(Text::from(table.row_count.to_string())),
+            Cell::from(Text::from(if table.is_view { "View" } else { "Table" })),
+        ])
+        .style(row_style)
     }).collect();
 
-    let col_constraints = [Constraint::Percentage(100)];
+    let col_constraints = [
+        Constraint::Percentage(50), // table name
+        Constraint::Percentage(25), // row count
+        Constraint::Percentage(25), // type (table, view)
+    ];
     let highlight_color = app.file_exp_pg_selected_col();
     let unwrapped_table_list = app.table_list_view.as_mut().unwrap();
 
-    render_table(frame, &mut unwrapped_table_list.state, header, rows, col_constraints.to_vec(), area, highlight_color);
+    render_table(frame, &mut unwrapped_table_list.state,
+        Some(header), rows,
+        col_constraints.to_vec(), area,
+        highlight_color, Borders::ALL, Some("Tables".to_string()));
 
     render_vertical_scrollbar(frame, area, None, &mut unwrapped_table_list.scroll_state);
 }
 
 fn render_column_list(frame: &mut Frame, app: &mut App, area: Rect) {
-    let header = ["Column Name", "Type", "Constraints"]
+    let header = ["Name", "Type", "Constraints"]
         .into_iter()
         .map(Cell::from)
         .collect::<Row>()
@@ -241,7 +257,10 @@ fn render_column_list(frame: &mut Frame, app: &mut App, area: Rect) {
 
     let unwrapped_column_list = app.column_list_view.as_mut().unwrap();
 
-    render_table(frame, &mut unwrapped_column_list.state, header, rows, col_constraints.to_vec(), area, highlight_color);
+    render_table(frame, &mut unwrapped_column_list.state,
+                 Some(header), rows,
+                 col_constraints.to_vec(), area,
+                 highlight_color, Borders::ALL, Some("Columns".to_string()));
 
     render_vertical_scrollbar(frame, area, None, &mut unwrapped_column_list.scroll_state);
 }
@@ -350,16 +369,27 @@ fn render_vertical_scrollbar(frame: &mut Frame, area: Rect, endpoints: Option<&s
     );
 }
 
-fn render_table(frame: &mut Frame, state: &mut TableState, header: Row, rows: Vec<Row>, col_widths: Vec<Constraint>, area: Rect, highlight_col: Color) {
+fn render_table(frame: &mut Frame, state: &mut TableState, 
+                header: Option<Row>, rows: Vec<Row>,
+                col_widths: Vec<Constraint>, area: Rect, 
+                highlight_col: Color, borders: Borders,
+                title: Option<String>) {
+    let table_title = title.unwrap_or_default();
+    let block_style = Block::new().borders(borders).title(table_title);
     let selected_style = Style::default()
         .bg(highlight_col);
-    let table = Table::new(
+    let mut table = Table::new(
         rows,
         col_widths,
     )
-    .header(header)
+    .block(block_style)
     .row_highlight_style(selected_style)
     .highlight_spacing(HighlightSpacing::Always);
+
+    if let Some(table_header) = header {
+        table = table.header(table_header);
+    }
+
     frame.render_stateful_widget(table, area, state);
 }
 

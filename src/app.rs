@@ -4,7 +4,7 @@ use crate::{
     fex::fex_table::FileExplorerTable,
     handle_key_events,
     options::Options,
-    table::table_list::TableListView,
+    table::{table_info::TableInfo, table_list::TableListView},
     ui::{colorscheme::ColorScheme, render}
 };
 use ratatui::{
@@ -75,40 +75,11 @@ impl App {
 
             match DB::new(db_name) {
                 Ok(db) => {
-                    match db.get_table_list() {
-                        Ok(tables) => {
-                            if let Some(first_table) = &tables.first() {
-                                self.selected_db_table = Some(first_table.to_string());
-                                self.table_list_view = Some(TableListView::new(tables.clone()));
-
-                                match db.get_table_columns(first_table) {
-                                    Ok(columns) => {
-                                        self.selected_table_columns = columns.clone();
-                                        self.column_list_view = Some(ColumnListView::new(columns));
-                                    },
-                                    Err(_) => {
-                                        self.selected_table_columns.clear();
-                                        self.column_list_view = None;
-                                    }
-                                }
-                            } else {
-                                self.selected_db_table = None;
-                                self.table_list_view = None;
-                                self.column_list_view = None;
-                            }
-                        },
-                        Err(_) => {
-                            self.selected_db_table = None;
-                            self.table_list_view = None;
-                            self.column_list_view = None;
-                        }
-                    }
                     self.selected_db = Some(db);
+                    self.fetch_table_list();
                     Ok(())
                 },
-                Err(e) => {
-                    Err(e)
-                }
+                Err(e) => Err(e),
             }
         } else {
             Err(DBError::ConnectionCreationError("Invalid .db file path".to_string()))
@@ -117,6 +88,50 @@ impl App {
 
     pub fn get_db(&mut self) -> &mut DB {
         Option::expect(self.selected_db.as_mut(), "No db loaded")
+    }
+
+    fn fetch_table_list(&mut self) {
+        if let Some(db) = &self.selected_db {
+            match db.get_table_list() {
+                Ok(tables) => {
+                    let mut table_info_vec: Vec<TableInfo> = Vec::new();
+                    for table_name in &tables {
+                        let is_view = db.is_table_view(&table_name).unwrap_or(false);
+                        let row_count = if !is_view {
+                            db.get_table_row_count(&table_name).unwrap_or(0)
+                        } else {
+                            0 // views dont store rows, so we keep this 0, if table is a view
+                        };
+
+                        table_info_vec.push(TableInfo {
+                            name: table_name.to_string(),
+                            row_count,
+                            is_view 
+                        });
+                    }
+
+                    if let Some(first_table) = table_info_vec.first() {
+                        self.selected_db_table = Some(first_table.name.to_string());
+                        self.selected_table_columns = db.get_table_columns(&first_table.name).unwrap_or_default();
+                        self.column_list_view = Some(ColumnListView::new(self.selected_table_columns.clone()))
+                    } else {
+                        self.selected_db_table = None;
+                        self.column_list_view = None;
+                    }
+
+                    self.table_list_view = Some(TableListView::new(table_info_vec));
+                },
+                Err(_) => {
+                    self.selected_db_table = None;
+                    self.table_list_view = None;
+                    self.column_list_view = None;
+                }
+            }
+        } else {
+            self.selected_db_table = None;
+            self.table_list_view = None;
+            self.column_list_view = None;
+        }
     }
 
     pub fn select_table(&mut self, table_name: String) {
@@ -138,8 +153,8 @@ impl App {
     pub fn update_column_list(&mut self) {
         if let Some(db) = &self.selected_db {
             if let Some(table_list_view) = &self.table_list_view {
-                if let Some(selected_table) = table_list_view.items.get(table_list_view.index) {
-                    self.column_list_view = Some(ColumnListView::new(db.get_table_columns(selected_table).unwrap()));
+                if let Some(selected_table_info) = table_list_view.items.get(table_list_view.index) {
+                    self.column_list_view = Some(ColumnListView::new(db.get_table_columns(&selected_table_info.name).unwrap()));
                 }
             }
         }

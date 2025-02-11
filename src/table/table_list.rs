@@ -1,15 +1,17 @@
 use ratatui::widgets::{ScrollbarState, TableState};
 use crate::fex::fex_table::ITEM_HEIGHT;
 
+use super::table_info::TableInfo;
+
 pub struct TableListView {
     pub state: TableState,
-    pub items: Vec<String>, // these hold the tables that are loaded with the .db file
+    pub items: Vec<TableInfo>, // these hold the tables that are loaded with the .db file
     pub scroll_state: ScrollbarState,
     pub index: usize,
 }
 
 impl TableListView {
-    pub fn new(items: Vec<String>) -> Self {
+    pub fn new(items: Vec<TableInfo>) -> Self {
         let item_count = items.len();
         Self {
             state: TableState::default().with_selected(0),

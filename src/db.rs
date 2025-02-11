@@ -69,6 +69,21 @@ impl DB {
         Ok(rows)
     }
 
+    pub fn is_table_view(&self, table_name: &str) -> Result<bool> {
+        let mut statement = self.db_conn.prepare(
+            "SELECT type FROM sqlite_master WHERE name = ?"
+        )?;
+        let table_type: String = statement.query_row([table_name], |row| row.get(0))?;
+        Ok(table_type == "view")
+    }
+
+    pub fn get_table_row_count(&self, table_name: &str) -> Result<u64> {
+        let query = format!("SELECT COUNT(*) FROM {}", table_name);
+        let mut statement = self.db_conn.prepare(&query)?;
+        let count: u64 = statement.query_row([], |row| row.get(0))?;
+        Ok(count)
+    }
+
     pub fn get_table_columns(&self, table_name: &str) -> Result<Vec<ColumnInfo>, DBError> {
         let mut statement = self.db_conn.prepare(&format!(
             "PRAGMA table_info({})",
