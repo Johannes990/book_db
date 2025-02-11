@@ -242,8 +242,8 @@ fn render_column_list(frame: &mut Frame, app: &mut App, area: Rect) {
         }
         
         Row::new(vec![
-            Cell::from(Text::from(col.name.clone())),
-            Cell::from(Text::from(col.col_type.clone())),
+            Cell::from(Text::from(col.name.to_string())),
+            Cell::from(Text::from(col.col_type.to_string())),
             Cell::from(Text::from(col_constraint_text)),
         ])
     }).collect();
