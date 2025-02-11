@@ -161,7 +161,7 @@ fn render_database_view(frame: &mut Frame, app: &mut App) {
         .title(Line::from(format!("Currently viewing: {}.db", db_name)).right_aligned())
         .style(db_page_style);
     let inner_area = outer_block.inner(chunks[0]);
-    let table_column_chunks = get_chunks(inner_area, Direction::Horizontal, vec![35, 65]);
+    let table_column_chunks = get_chunks(inner_area, Direction::Horizontal, vec![50, 50]);
 
     frame.render_widget(outer_block, chunks[0]);
 
@@ -203,9 +203,9 @@ fn render_table_list(frame: &mut Frame, app: &mut App, area: Rect) {
     }).collect();
 
     let col_constraints = [
-        Constraint::Percentage(50), // table name
-        Constraint::Percentage(25), // row count
-        Constraint::Percentage(25), // type (table, view)
+        Constraint::Min(15), // table name
+        Constraint::Min(7), // row count
+        Constraint::Length(7), // type (table, view)
     ];
     let highlight_color = app.file_exp_pg_selected_col();
     let unwrapped_table_list = app.table_list_view.as_mut().unwrap();
@@ -249,9 +249,9 @@ fn render_column_list(frame: &mut Frame, app: &mut App, area: Rect) {
     }).collect();
 
     let col_constraints = [
-        Constraint::Percentage(35),
-        Constraint::Percentage(15),
-        Constraint::Percentage(50),
+        Constraint::Min(15),
+        Constraint::Length(8),
+        Constraint::Min(10),
     ];
     let highlight_color = app.file_exp_pg_selected_col();
 
