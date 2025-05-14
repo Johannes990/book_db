@@ -1,4 +1,4 @@
-use rusqlite::{Connection, Result, Error, Statement, ToSql};
+use rusqlite::{Connection, Result, Error, Statement, ToSql, types::ValueRef};
 use std::collections::HashMap;
 use std::fmt;
 use crate::column::column_info::ColumnInfo;
@@ -92,8 +92,14 @@ impl DB {
         let rows = statement.query_map([], |row| {
             let mut values = Vec::new();
             for i in 0..column_count {
-                let value: Result<String, _> = row.get(i);
-                values.push(value.unwrap_or_else(|_| "NULL".to_string()));
+                let value = match row.get_ref(i)? {
+                    ValueRef::Null => "NULL".to_string(),
+                    ValueRef::Integer(v) => v.to_string(),
+                    ValueRef::Real(v) => v.to_string(),
+                    ValueRef::Text(v) => String::from_utf8_lossy(v).to_string(),
+                    ValueRef::Blob(_) => "[BLOB]".to_string(),
+                };
+                values.push(value);
             }
             Ok(RowInfo {
                 values
