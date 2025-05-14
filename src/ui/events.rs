@@ -147,12 +147,22 @@ pub fn handle_key_events(app: &mut App) -> io::Result<bool> {
                         (KeyCode::Enter, KeyModifiers::NONE) => {
                             if let Some(selected_table) = &app.selected_db_table {
                                 app.select_table(selected_table.clone());
+                                app.switch_to_screen(Screen::DataBaseTableView);
                             }
                         },
                         _ => {}
                     }
                 }
-            }
+            },
+            Screen::DataBaseTableView => {
+                if key_event.kind == KeyEventKind::Press {
+                    match (key_event.code, key_event.modifiers) {
+                        (KeyCode::Char('b'), KeyModifiers::NONE) |
+                        (KeyCode::Esc, KeyModifiers::NONE) => app.switch_to_screen(Screen::OpenDataBaseView),
+                        _ => {}
+                    }
+                }
+            },
             Screen::OptionsView => {
                 if key_event.kind == KeyEventKind::Press {
                     match (key_event.code, key_event.modifiers) {

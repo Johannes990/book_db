@@ -1,7 +1,7 @@
 use ratatui::{
     layout::{Constraint, Direction, Layout},
     prelude::{Margin, Rect},
-    style::{Color, Modifier, Style, Stylize},
+    style::{Color, Modifier, Style},
     text::{Line, Span, Text},
     widgets::{Block, Borders, Cell, Clear, HighlightSpacing, List, ListItem, Paragraph, Row, Scrollbar, ScrollbarOrientation, ScrollbarState, Table, TableState, Wrap},
     Frame,
@@ -37,10 +37,16 @@ where
             },
             Screen::OpenDataBaseView => {
                 match app.current_popup {
-                    PopUp::None => render_database_view(frame, app),
+                    PopUp::None => render_database_schema_view(frame, app),
                     PopUp::QuitDialog => todo!(),
                     PopUp::SaveDialog => {},
                     PopUp::NoDBLoadedDialog => {},
+                }
+            },
+            Screen::DataBaseTableView => {
+                match app.current_popup {
+                    PopUp::None => render_database_table_view(frame, app),
+                    _ => {}
                 }
             },
             Screen::OptionsView => {
@@ -148,7 +154,7 @@ fn render_file_explorer(frame: &mut Frame, app: &mut App) {
     frame.render_widget(info_text, chunks[1]);
 }
 
-fn render_database_view(frame: &mut Frame, app: &mut App) {
+fn render_database_schema_view(frame: &mut Frame, app: &mut App) {
     let general_text_style = Style::default().fg(app.general_text_color());
     let alt_text_style_1 = Style::default().fg(app.alt_text_color_1());
     let db_page_style = Style::default().bg(app.general_page_bg_color()).fg(app.general_text_color());
@@ -157,8 +163,8 @@ fn render_database_view(frame: &mut Frame, app: &mut App) {
 
     let db_name = app.selected_db.as_ref().expect("No DB option found").get_db_name();
     let outer_block = Block::default()
-        .title("Database View")
-        .title(Line::from(format!("Currently viewing: {}.db", db_name)).right_aligned())
+        .title(" Database View")
+        .title(Line::from(format!("Currently viewing DATABASE: {}.db ", db_name)).right_aligned())
         .style(db_page_style);
     let inner_area = outer_block.inner(chunks[0]);
     let table_column_chunks = get_chunks(inner_area, Direction::Horizontal, vec![50, 50]);
@@ -169,20 +175,20 @@ fn render_database_view(frame: &mut Frame, app: &mut App) {
 
     render_column_list(frame, app, table_column_chunks[1]);
 
-    let info_text = Paragraph::new(Line::from(vec![
-        Span::styled("Commands: ", general_text_style),
-        Span::styled("Arrow keys", alt_text_style_1),
-        Span::styled(" - Navigate tables, ", general_text_style),
-        Span::styled("Enter", alt_text_style_1),
-        Span::styled(" - Select table, ", general_text_style),
-        Span::styled("Esc / q", alt_text_style_1),
-        Span::styled(" - Back to splash screen", general_text_style),
-    ]))
+    let mut info_text = Text::from(Span::styled("Commands:", general_text_style));
+    info_text.push_line(Span::styled("Arrow keys", alt_text_style_1));
+    info_text.push_span(Span::styled(" - Navigate tables\n", general_text_style));
+    info_text.push_line(Span::styled("Enter", alt_text_style_1));
+    info_text.push_span(Span::styled(" - Select table", general_text_style));
+    info_text.push_line(Span::styled("Esc / q", alt_text_style_1));
+    info_text.push_span(Span::styled(" - Back to splash screen", general_text_style));
+
+    let info_paragraph = Paragraph::new(info_text)
     .wrap(Wrap {trim: true})
     .style(Style::default().bg(app.info_block_bg_col()))
     .block(Block::default().borders(Borders::ALL).title("Info"));
 
-    frame.render_widget(info_text, chunks[1]);
+    frame.render_widget(info_paragraph, chunks[1]);
 }
 
 fn render_table_list(frame: &mut Frame, app: &mut App, area: Rect) {
@@ -263,6 +269,33 @@ fn render_column_list(frame: &mut Frame, app: &mut App, area: Rect) {
                  highlight_color, Borders::ALL, Some("Columns".to_string()));
 
     render_vertical_scrollbar(frame, area, None, &mut unwrapped_column_list.scroll_state);
+}
+
+fn render_database_table_view(frame: &mut Frame, app: &mut App) {
+    let general_text_style = Style::default().fg(app.general_text_color());
+    let alt_text_style_1 = Style::default().fg(app.alt_text_color_1());
+    let db_page_style = Style::default().bg(app.general_page_bg_color()).fg(app.general_text_color());
+
+    let chunks = get_chunks(frame.area(), Direction::Vertical, vec![75, 25]);
+
+    let table_name = app.selected_db_table.as_ref().expect("No Table Name to show :( ...");
+    let outer_block = Block::default()
+        .title(" Table View")
+        .title(Line::from(format!("Currently viewing TABLE: {} ", table_name)).right_aligned())
+        .style(db_page_style);
+
+    frame.render_widget(outer_block, chunks[0]);
+
+    let mut info_text = Text::from(Span::styled("Commands:", general_text_style));
+    info_text.push_line(Span::styled("Esc / b", alt_text_style_1));
+    info_text.push_span(Span::styled(" - Back to database view", general_text_style));
+
+    let info_paragraph = Paragraph::new(info_text)
+    .wrap(Wrap {trim: true})
+    .style(Style::default().bg(app.info_block_bg_col()))
+    .block(Block::default().borders(Borders::ALL).title("Info"));
+
+    frame.render_widget(info_paragraph, chunks[1]);
 }
 
 fn render_options_view(frame: &mut Frame, app: &mut App) {

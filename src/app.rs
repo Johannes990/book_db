@@ -17,6 +17,7 @@ pub enum Screen {
     SplashScreenView,
     FileExplorerView,
     OpenDataBaseView,
+    DataBaseTableView,
     CreateNewFileView,
     OptionsView,
 }
