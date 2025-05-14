@@ -204,10 +204,6 @@ impl App {
         self.current_popup = popup;
     }
 
-    pub fn update_color_scheme(&mut self, new_color_scheme: ColorScheme) {
-        self.options.select_color_scheme(new_color_scheme);
-    }
-
     pub fn list_available_color_schemes(&self) -> &Vec<ColorScheme> {
         self.options.list_color_schemes()
     }

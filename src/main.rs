@@ -8,6 +8,7 @@ mod table;
 mod fex;
 
 use crossterm::{
+    event::{KeyboardEnhancementFlags, PushKeyboardEnhancementFlags, PopKeyboardEnhancementFlags},
     execute,
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
@@ -32,20 +33,31 @@ use db::{
 };
 use ui::{
     colorscheme::ColorScheme,
-    events::{handle_key_events, setup_keyboard_enchancements},
+    events::handle_key_events,
 };
 use app::App;
 use std::io;
 
 
 fn main() -> io::Result<()> {
-    setup_keyboard_enchancements();
+    let mut stdout = std::io::stdout();
+
+    let _ = execute!(
+        stdout,
+        PushKeyboardEnhancementFlags(
+            KeyboardEnhancementFlags::DISAMBIGUATE_ESCAPE_CODES |
+            KeyboardEnhancementFlags::REPORT_ALL_KEYS_AS_ESCAPE_CODES
+        )
+    );
+
     let backend = CrosstermBackend::new(io::stdout());
     let mut terminal = setup_terminal(backend)?;
     let mut app = setup_app(&terminal, ColorScheme::Autumn)?;
     let res = app.run(&mut terminal);
     handle_errors(res);
     teardown_terminal(&mut terminal)?;
+
+    let _ = execute!(stdout, PopKeyboardEnhancementFlags);
 
     Ok(())
 }

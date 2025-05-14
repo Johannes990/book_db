@@ -1,15 +1,8 @@
 use std::io;
-use crossterm::event::{KeyModifiers, KeyboardEnhancementFlags, PushKeyboardEnhancementFlags};
+use crossterm::event::KeyModifiers;
 use ratatui::crossterm::event::{self, Event, KeyCode, KeyEventKind};
 use crate::app::{App, PopUp, Screen};
 
-
-pub fn setup_keyboard_enchancements() {
-    PushKeyboardEnhancementFlags(
-        KeyboardEnhancementFlags::DISAMBIGUATE_ESCAPE_CODES |
-        KeyboardEnhancementFlags::REPORT_ALL_KEYS_AS_ESCAPE_CODES
-    );
-}
 
 pub fn handle_key_events(app: &mut App) -> io::Result<bool> {
     if let Event::Key(key_event) = event::read()? {
