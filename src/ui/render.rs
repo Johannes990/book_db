@@ -74,25 +74,23 @@ fn render_splash_screen(frame: &mut Frame, app: &App) {
 
     frame.render_widget(main_page_content, chunks[0]);
 
-    let info_text = Paragraph::new(Line::from(vec![
-        Span::styled("CTRL + f", Style::default().fg(app.alt_text_color_1())),
-        Span::styled(" - open file explorer to load existing database file, ", Style::default().fg(app.general_text_color())),
-        Span::styled("CTRL + d", Style::default().fg(app.alt_text_color_1())),
-        Span::styled(" - open loaded database file, ", Style::default().fg(app.general_text_color())),
-        Span::styled("CTRL + n", Style::default().fg(app.alt_text_color_1())),
-        Span::styled(" - create new database file, ", Style::default().fg(app.general_text_color())),
-        Span::styled("CTRL + o", Style::default().fg(app.alt_text_color_1())),
-        Span::styled(" - open options page, ", Style::default().fg(app.general_text_color())),
-        Span::styled("ESC / CTRL + q", Style::default().fg(app.alt_text_color_1())),
-        Span::styled(" - quit app.", Style::default().fg(app.general_text_color()))
-    ]))
-    .wrap(Wrap {trim: true})
-    .style(Style::default().bg(app.info_block_bg_col()))
-    .block(Block::default()
-    .borders(Borders::ALL)
-    .title("Info"));
+    let text_bits = vec![
+        "Commands:",
+        "CTRL + f", " - open file explorer",
+        "CTRL + d", " - open loaded database",
+        "CTRL + n", " - create new database",
+        "CTRL + o", " - open options",
+        "ESC / CTRL + q", " - quit app",
+    ];
+    let info_text = format_info_text(&text_bits, app);
+    let info_paragraph = Paragraph::new(info_text)
+        .wrap(Wrap {trim: true})
+        .style(Style::default().bg(app.info_block_bg_col()))
+        .block(Block::default()
+        .borders(Borders::ALL)
+        .title("Info"));
 
-frame.render_widget(info_text, chunks[1]);
+frame.render_widget(info_paragraph, chunks[1]);
 }
 
 fn render_file_explorer(frame: &mut Frame, app: &mut App) {
@@ -135,32 +133,29 @@ fn render_file_explorer(frame: &mut Frame, app: &mut App) {
                  Some(header), rows, 
                  col_constraints.to_vec(), chunks[0], 
                  highlight_col, Borders::NONE, None);
+
     render_vertical_scrollbar(frame, chunks[0], None, &mut app.file_explorer_table.scroll_state);
 
-    let info_text = Paragraph::new(Line::from(vec![
-        Span::styled("Commands: ", Style::default().fg(app.general_text_color())),
-        Span::styled("Up / Down", Style::default().fg(app.alt_text_color_1())),
-        Span::styled(" - Navigate, ", Style::default().fg(app.general_text_color())),
-        Span::styled("Esc / q", Style::default().fg(app.alt_text_color_1())),
-        Span::styled(" - Back to splash screen", Style::default().fg(app.general_text_color())),
-    ]))
-    .wrap(Wrap {trim: true})
-    .style(Style::default().bg(app.info_block_bg_col()))
-    .block(Block::default()
-        .borders(Borders::ALL)
-        .title("Info")
-    );
+    let text_bits = vec![
+        "Commands:",
+        "Arrow Keys" , " - navigate",
+        "ESC / q", " - return to splash screen",
+    ];
+    let info_text = format_info_text(&text_bits, app);
+    let info_paragraph = Paragraph::new(info_text)
+        .wrap(Wrap {trim: true})
+        .style(Style::default().bg(app.info_block_bg_col()))
+        .block(Block::default()
+            .borders(Borders::ALL)
+            .title("Info")
+        );
 
-    frame.render_widget(info_text, chunks[1]);
+    frame.render_widget(info_paragraph, chunks[1]);
 }
 
 fn render_database_schema_view(frame: &mut Frame, app: &mut App) {
-    let general_text_style = Style::default().fg(app.general_text_color());
-    let alt_text_style_1 = Style::default().fg(app.alt_text_color_1());
     let db_page_style = Style::default().bg(app.general_page_bg_color()).fg(app.general_text_color());
-
     let chunks = get_chunks(frame.area(), Direction::Vertical, vec![75, 25]);
-
     let db_name = app.selected_db.as_ref().expect("No DB option found").get_db_name();
     let outer_block = Block::default()
         .title(" Database View")
@@ -175,18 +170,17 @@ fn render_database_schema_view(frame: &mut Frame, app: &mut App) {
 
     render_column_list(frame, app, table_column_chunks[1]);
 
-    let mut info_text = Text::from(Span::styled("Commands:", general_text_style));
-    info_text.push_line(Span::styled("Arrow keys", alt_text_style_1));
-    info_text.push_span(Span::styled(" - Navigate tables\n", general_text_style));
-    info_text.push_line(Span::styled("Enter", alt_text_style_1));
-    info_text.push_span(Span::styled(" - Select table", general_text_style));
-    info_text.push_line(Span::styled("Esc / q", alt_text_style_1));
-    info_text.push_span(Span::styled(" - Back to splash screen", general_text_style));
-
+    let text_bits = vec![
+        "Commands:", 
+        "Arrow Keys", " - navigate", 
+        "Enter" , " - select table", 
+        "ESC / q", " - return to splash screen",
+    ];
+    let info_text = format_info_text(&text_bits, app);
     let info_paragraph = Paragraph::new(info_text)
-    .wrap(Wrap {trim: true})
-    .style(Style::default().bg(app.info_block_bg_col()))
-    .block(Block::default().borders(Borders::ALL).title("Info"));
+        .wrap(Wrap {trim: true})
+        .style(Style::default().bg(app.info_block_bg_col()))
+        .block(Block::default().borders(Borders::ALL).title("Info"));
 
     frame.render_widget(info_paragraph, chunks[1]);
 }
@@ -198,7 +192,6 @@ fn render_table_list(frame: &mut Frame, app: &mut App, area: Rect) {
         Cell::new("Rows"),
         Cell::new("Type"),
     ]).style(row_style);
-
     let rows: Vec<Row> = app.table_list_view.as_ref().unwrap().items.iter().map(|table| {
         Row::new(vec![
             Cell::from(Text::from(table.name.clone())),
@@ -207,7 +200,6 @@ fn render_table_list(frame: &mut Frame, app: &mut App, area: Rect) {
         ])
         .style(row_style)
     }).collect();
-
     let col_constraints = [
         Constraint::Min(15), // table name
         Constraint::Min(7), // row count
@@ -230,7 +222,6 @@ fn render_column_list(frame: &mut Frame, app: &mut App, area: Rect) {
         .map(Cell::from)
         .collect::<Row>()
         .style(Style::default().fg(app.general_text_color()));
-
     let rows: Vec<Row> = app.column_list_view.as_ref().unwrap().items.iter().map(|col| {
         let mut col_constraint_text = "".to_string();
         if col.is_pk {
@@ -253,14 +244,12 @@ fn render_column_list(frame: &mut Frame, app: &mut App, area: Rect) {
             Cell::from(Text::from(col_constraint_text)),
         ])
     }).collect();
-
     let col_constraints = [
         Constraint::Min(15),
         Constraint::Length(8),
         Constraint::Min(10),
     ];
     let highlight_color = app.file_exp_pg_selected_col();
-
     let unwrapped_column_list = app.column_list_view.as_mut().unwrap();
 
     render_table(frame, &mut unwrapped_column_list.state,
@@ -272,12 +261,8 @@ fn render_column_list(frame: &mut Frame, app: &mut App, area: Rect) {
 }
 
 fn render_database_table_view(frame: &mut Frame, app: &mut App) {
-    let general_text_style = Style::default().fg(app.general_text_color());
-    let alt_text_style_1 = Style::default().fg(app.alt_text_color_1());
     let db_page_style = Style::default().bg(app.general_page_bg_color()).fg(app.general_text_color());
-
     let chunks = get_chunks(frame.area(), Direction::Vertical, vec![75, 25]);
-
     let table_name = app.selected_db_table.as_ref().expect("No Table Name to show :( ...");
     let outer_block = Block::default()
         .title(" Table View")
@@ -286,21 +271,21 @@ fn render_database_table_view(frame: &mut Frame, app: &mut App) {
 
     frame.render_widget(outer_block, chunks[0]);
 
-    let mut info_text = Text::from(Span::styled("Commands:", general_text_style));
-    info_text.push_line(Span::styled("Esc / b", alt_text_style_1));
-    info_text.push_span(Span::styled(" - Back to database view", general_text_style));
-
+    let text_bits = vec![
+        "Commands:", 
+        "ESC / b", " - return to database view",
+    ];
+    let info_text = format_info_text(&text_bits, app);
     let info_paragraph = Paragraph::new(info_text)
-    .wrap(Wrap {trim: true})
-    .style(Style::default().bg(app.info_block_bg_col()))
-    .block(Block::default().borders(Borders::ALL).title("Info"));
+        .wrap(Wrap {trim: true})
+        .style(Style::default().bg(app.info_block_bg_col()))
+        .block(Block::default().borders(Borders::ALL).title("Info"));
 
     frame.render_widget(info_paragraph, chunks[1]);
 }
 
 fn render_options_view(frame: &mut Frame, app: &mut App) {
     let general_text_style = Style::default().fg(app.general_text_color());
-    let alt_text_style_1 = Style::default().fg(app.alt_text_color_1());
     let chunks = get_chunks(frame.area(), Direction::Horizontal, vec![33, 33, 34]);
     let color_schemes: &Vec<ColorScheme> = app.list_available_color_schemes();
     let color_scheme_items: Vec<ListItem> = color_schemes.into_iter()
@@ -319,24 +304,26 @@ fn render_options_view(frame: &mut Frame, app: &mut App) {
     let color_scheme_list = List::new(color_scheme_items)
         .block(Block::default().borders(Borders::ALL).title("Color Schemes"))
         .highlight_style(Style::default().bg(app.general_page_bg_color()));
+
     frame.render_widget(color_scheme_list, chunks[0]);
+
     options::Options::render_color_scheme_preview(frame, chunks[1], &app.options.selected_color_scheme);
 
-    let info_text = Paragraph::new(Line::from(vec![
-        Span::styled("Commands: ", general_text_style),
-        Span::styled("Up / Down", alt_text_style_1),
-        Span::styled(" - Navigate, ", general_text_style),
-        Span::styled("Esc / q", alt_text_style_1),
-        Span::styled(" - Back to splash screen", general_text_style),
-    ]))
-    .wrap(Wrap {trim: true})
-    .style(Style::default().bg(app.info_block_bg_col()))
-    .block(Block::default()
-        .borders(Borders::ALL)
-        .title("Info")
-    );
+    let text_bits = vec![
+        "Commands: ", 
+        "Arrow Keys", " - navigate", 
+        "ESC / q" , " - return to splash screen",
+    ];
+    let info_text = format_info_text(&text_bits, app);
+    let info_paragraph = Paragraph::new(info_text)
+        .wrap(Wrap {trim: true})
+        .style(Style::default().bg(app.info_block_bg_col()))
+        .block(Block::default()
+            .borders(Borders::ALL)
+            .title("Info")
+        );
 
-    frame.render_widget(info_text, chunks[2]);
+    frame.render_widget(info_paragraph, chunks[2]);
 }
 
 fn render_quit_dialog(frame: &mut Frame, app: &App) {
@@ -349,13 +336,12 @@ fn render_quit_dialog(frame: &mut Frame, app: &App) {
         .title("Are you sure you want to quit?")
         .borders(Borders::ALL)
         .style(quit_popup_style);
-    let exit_text = Line::from(vec![
-        Span::styled("Press ", Style::default().fg(app.general_text_color())),
-        Span::styled("y", Style::default().fg(app.alt_text_color_2())),
-        Span::styled(" to quit, ", Style::default().fg(app.general_text_color())),
-        Span::styled("Esc / n", Style::default().fg(app.alt_text_color_1())),
-        Span::styled(" to return to main window", Style::default().fg(app.general_text_color())),
-    ]);
+    let text_bits = vec![
+        "", 
+        "y", " - quit app", 
+        "ESC / n", " - return to splash screen",
+    ];
+    let exit_text = format_info_text(&text_bits, app);
     let exit_paragraph = Paragraph::new(exit_text)
         .block(popup_block)
         .wrap(Wrap { trim: false });
@@ -369,16 +355,14 @@ fn render_no_db_loaded_dialog(frame: &mut Frame, app: &mut App) {
         .bg(app.quit_popup_bg_col())
         .fg(app.general_text_color());
     let popup_block = Block::default()
-        .title("No database file loaded!")
         .borders(Borders::ALL)
         .style(popup_style);
-    let info_text = Line::from(vec![
-        Span::styled("No database file has been loaded. ", Style::default().fg(app.general_text_color())),
-        Span::styled("CTRL + f", Style::default().fg(app.alt_text_color_1())),
-        Span::styled(" - open file explorer to load a .db file, ", Style::default().fg(app.general_text_color())),
-        Span::styled("Esc", Style::default().fg(app.alt_text_color_1())),
-        Span::styled(" - return to splash screen.", Style::default().fg(app.general_text_color())),
-    ]);
+    let text_bits = vec![
+        "No database file loaded!", 
+        "CTRL + f", " - open file explorer", 
+        "ESC", " - return to splash screen"
+    ];
+    let info_text = format_info_text(&text_bits, app);
     let info_paragraph = Paragraph::new(info_text)
         .block(popup_block)
         .wrap(Wrap { trim: false } );
@@ -456,4 +440,27 @@ fn get_chunks(area: Rect, direction: Direction, percentages: Vec<u16>) -> Rc<[Re
         .split(area);
 
     chunks
+}
+
+fn format_info_text<'a>(text_bits: &'a Vec<&'a str>, app: &App) -> Text<'a> {
+    let general_text_style = Style::default().fg(app.general_text_color());
+    let alt_text_style_1 = Style::default().fg(app.alt_text_color_1());
+
+    let mut info_text = Text::default();
+
+    for (i, bit) in text_bits.iter().enumerate() {
+        if i == 0 {
+            info_text = Text::from(Span::styled::<&str, Style>(bit.as_ref(), general_text_style));
+        }
+        else {
+            if i % 2 != 0 {
+                info_text.push_line(Span::styled::<&str, Style>(bit.as_ref(), alt_text_style_1));
+            }
+            else {
+                info_text.push_span(Span::styled::<&str, Style>(bit.as_ref(), general_text_style));
+            }
+        }
+    }
+
+    info_text
 }
