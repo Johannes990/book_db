@@ -8,7 +8,7 @@ use ratatui::{
     Terminal
 };
 use std::{io, rc::Rc, vec};
-use crate::{app::{App, PopUp, Screen}, fex::fex_data::FileExplorerData, options};
+use crate::{app::{App, PopUp, Screen}, column::column_info::ColumnInfo, fex::fex_data::FileExplorerData, options, row::row_info::RowInfo};
 
 use super::colorscheme::ColorScheme;
 
@@ -263,10 +263,9 @@ fn render_column_list(frame: &mut Frame, app: &mut App, area: Rect) {
 fn render_database_table_view(frame: &mut Frame, app: &mut App) {
     let db_page_style = Style::default().bg(app.general_page_bg_color()).fg(app.general_text_color());
     let chunks = get_chunks(frame.area(), Direction::Vertical, vec![75, 25]);
-    let table_name = app.selected_db_table.as_ref().expect("No Table Name to show :( ...");
+    let table_name = app.selected_db_table.as_ref().expect("unknown");
     let outer_block = Block::default()
         .title(" Table View")
-        .title(Line::from(format!("Currently viewing TABLE: {} ", table_name)).right_aligned())
         .style(db_page_style);
     let inner_area = outer_block.inner(chunks[0]);
 
@@ -284,8 +283,15 @@ fn render_database_table_view(frame: &mut Frame, app: &mut App) {
         Row::new(row_cells).style(db_page_style)
     }).collect();
     let unwrapped_row_list = app.row_list_view.as_mut().unwrap();
+    let min = 5;
+    let max = 40;
     let col_count = app.selected_table_columns.len();
-    let col_constraints = vec![Constraint::Min(10); col_count];
+    let col_constraints = compute_col_widths(
+        &app.selected_table_columns,
+        &unwrapped_row_list.items,
+        min,
+        max
+    );
 
     render_table(frame,
         &mut unwrapped_row_list.state,
@@ -490,4 +496,17 @@ fn format_info_text<'a>(text_bits: &'a Vec<&'a str>, app: &App) -> Text<'a> {
     }
 
     info_text
+}
+
+fn compute_col_widths(cols: &[ColumnInfo], rows: &[RowInfo], min: usize, max: usize) -> Vec<Constraint> {
+    cols.iter().enumerate().map(|(i, col)| {
+        let header_len = col.name_with_metainfo(true).len();
+        let max_data_len = rows.iter()
+            .map(|row| row.values.get(i).map_or(0, |val| val.len()))
+            .max()
+            .unwrap_or(0);
+        let width = header_len.max(max_data_len).clamp(min, max);
+
+        Constraint::Length(width as u16)
+    }).collect()
 }
