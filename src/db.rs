@@ -2,6 +2,7 @@ use rusqlite::{Connection, Result, Error, Statement, ToSql};
 use std::collections::HashMap;
 use std::fmt;
 use crate::column::column_info::ColumnInfo;
+use crate::row::row_info::RowInfo;
 
 
 #[derive(Debug)]
@@ -82,6 +83,24 @@ impl DB {
         let mut statement = self.db_conn.prepare(&query)?;
         let count: u64 = statement.query_row([], |row| row.get(0))?;
         Ok(count)
+    }
+
+    pub fn get_table_rows(&self, table_name: &str) -> Result<Vec<RowInfo>, DBError> {
+        let query = format!("SELECT * FROM {}", table_name);
+        let mut statement = self.db_conn.prepare(&query)?;
+        let column_count = statement.column_count();
+        let rows = statement.query_map([], |row| {
+            let mut values = Vec::new();
+            for i in 0..column_count {
+                let value: Result<String, _> = row.get(i);
+                values.push(value.unwrap_or_else(|_| "NULL".to_string()));
+            }
+            Ok(RowInfo {
+                values
+            })
+        })?.collect::<Result<Vec<_>, _>>()?;
+
+        Ok(rows)
     }
 
     pub fn get_table_columns(&self, table_name: &str) -> Result<Vec<ColumnInfo>, DBError> {

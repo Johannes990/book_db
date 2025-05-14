@@ -146,7 +146,7 @@ pub fn handle_key_events(app: &mut App) -> io::Result<bool> {
                         },
                         (KeyCode::Enter, KeyModifiers::NONE) => {
                             if let Some(selected_table) = &app.selected_db_table {
-                                app.select_table(selected_table.clone());
+                                app.select_table_rows(selected_table.to_string());
                                 app.switch_to_screen(Screen::DataBaseTableView);
                             }
                         },

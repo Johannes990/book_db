@@ -6,6 +6,7 @@ mod app;
 mod column;
 mod table;
 mod fex;
+mod row;
 
 use crossterm::{
     event::{KeyboardEnhancementFlags, PushKeyboardEnhancementFlags, PopKeyboardEnhancementFlags},

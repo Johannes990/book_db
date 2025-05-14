@@ -268,8 +268,35 @@ fn render_database_table_view(frame: &mut Frame, app: &mut App) {
         .title(" Table View")
         .title(Line::from(format!("Currently viewing TABLE: {} ", table_name)).right_aligned())
         .style(db_page_style);
+    let inner_area = outer_block.inner(chunks[0]);
 
     frame.render_widget(outer_block, chunks[0]);
+
+    let header_cells: Vec<Cell> = app
+        .selected_table_columns
+        .iter()
+        .map(|col| Cell::from(col.name_with_metainfo(true)))
+        .collect();
+    let header = Row::new(header_cells).style(db_page_style);
+    let highlight_col = app.file_exp_pg_selected_col();
+    let rows: Vec<_> = app.row_list_view.as_ref().unwrap().items.iter().map(|row| {
+        let row_cells = row.values.iter().map(|val| Cell::from(val.clone())).collect::<Vec<_>>();
+        Row::new(row_cells).style(db_page_style)
+    }).collect();
+    let unwrapped_row_list = app.row_list_view.as_mut().unwrap();
+    let col_count = app.selected_table_columns.len();
+    let col_constraints = vec![Constraint::Min(10); col_count];
+
+    render_table(frame,
+        &mut unwrapped_row_list.state,
+        Some(header),
+        rows,
+        col_constraints,
+        inner_area,
+        highlight_col,
+        Borders::ALL,
+        Some(table_name.to_string())
+    );
 
     let text_bits = vec![
         "Commands:", 

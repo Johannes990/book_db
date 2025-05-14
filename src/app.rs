@@ -4,8 +4,9 @@ use crate::{
     fex::fex_table::FileExplorerTable,
     handle_key_events,
     options::Options,
+    row::row_list::RowListView,
     table::{table_info::TableInfo, table_list::TableListView},
-    ui::{colorscheme::ColorScheme, render}
+    ui::{colorscheme::ColorScheme, render},
 };
 use ratatui::{
     style::Color,
@@ -38,6 +39,7 @@ pub struct App {
     pub file_explorer_table: FileExplorerTable,
     pub table_list_view: Option<TableListView>,
     pub column_list_view: Option<ColumnListView>,
+    pub row_list_view: Option<RowListView>,
     pub options: Options
 }
 
@@ -55,6 +57,7 @@ impl App {
             file_explorer_table,
             table_list_view: None,
             column_list_view: None,
+            row_list_view: None,
             options
         }
     }
@@ -114,10 +117,12 @@ impl App {
                     if let Some(first_table) = table_info_vec.first() {
                         self.selected_db_table = Some(first_table.name.to_string());
                         self.selected_table_columns = db.get_table_columns(&first_table.name).unwrap_or_default();
-                        self.column_list_view = Some(ColumnListView::new(self.selected_table_columns.clone()))
+                        self.column_list_view = Some(ColumnListView::new(self.selected_table_columns.clone()));
+                        self.row_list_view = None;
                     } else {
                         self.selected_db_table = None;
                         self.column_list_view = None;
+                        self.row_list_view = None;
                     }
 
                     self.table_list_view = Some(TableListView::new(table_info_vec));
@@ -126,12 +131,14 @@ impl App {
                     self.selected_db_table = None;
                     self.table_list_view = None;
                     self.column_list_view = None;
+                    self.row_list_view = None;
                 }
             }
         } else {
             self.selected_db_table = None;
             self.table_list_view = None;
             self.column_list_view = None;
+            self.row_list_view = None;
         }
     }
 
@@ -142,10 +149,25 @@ impl App {
                     self.selected_db_table = Some(table_name);
                     self.selected_table_columns = columns.clone();
                     self.column_list_view = Some(ColumnListView::new(columns));
+                    self.row_list_view = None
                 }
                 Err(_) => {
                     self.selected_table_columns.clear();
                     self.column_list_view = None;
+                    self.row_list_view = None;
+                }
+            }
+        }
+    }
+
+    pub fn select_table_rows(&mut self, table_name: String) {
+        if let Some(db) = &self.selected_db {
+            match db.get_table_rows(&table_name) {
+                Ok(rows) => {
+                    self.row_list_view = Some(RowListView::new(rows));
+                }
+                Err(_) => {
+                    self.row_list_view = None;
                 }
             }
         }
