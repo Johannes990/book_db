@@ -261,7 +261,7 @@ fn render_column_list(frame: &mut Frame, app: &mut App, area: Rect) {
 }
 
 fn render_database_table_view(frame: &mut Frame, app: &mut App) {
-    let db_page_style = Style::default().bg(app.general_page_bg_color()).fg(app.general_text_color()).bold();
+    let db_page_style = Style::default().bg(app.general_page_bg_color()).fg(app.general_text_color());
     let chunks = get_chunks(frame.area(), Direction::Vertical, vec![75, 25]);
     let table_name = app.selected_db_table.as_ref().expect("unknown");
     let outer_block = Block::default()
