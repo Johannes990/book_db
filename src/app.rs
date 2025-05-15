@@ -90,10 +90,6 @@ impl App {
         }
     }
 
-    pub fn get_db(&mut self) -> &mut DB {
-        Option::expect(self.selected_db.as_mut(), "No db loaded")
-    }
-
     fn fetch_table_list(&mut self) {
         if let Some(db) = &self.selected_db {
             match db.get_table_list() {
@@ -168,16 +164,6 @@ impl App {
                 }
                 Err(_) => {
                     self.row_list_view = None;
-                }
-            }
-        }
-    }
-
-    pub fn update_column_list(&mut self) {
-        if let Some(db) = &self.selected_db {
-            if let Some(table_list_view) = &self.table_list_view {
-                if let Some(selected_table_info) = table_list_view.items.get(table_list_view.index) {
-                    self.column_list_view = Some(ColumnListView::new(db.get_table_columns(&selected_table_info.name).unwrap()));
                 }
             }
         }

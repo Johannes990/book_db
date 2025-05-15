@@ -159,6 +159,24 @@ pub fn handle_key_events(app: &mut App) -> io::Result<bool> {
                     match (key_event.code, key_event.modifiers) {
                         (KeyCode::Char('b'), KeyModifiers::NONE) |
                         (KeyCode::Esc, KeyModifiers::NONE) => app.switch_to_screen(Screen::OpenDataBaseView),
+                        (KeyCode::Up, KeyModifiers::NONE) => {
+                            if let Some(_) = &app.selected_db {
+                                if let Some(_) = &app.selected_db_table {
+                                    if let Some(_) = &app.row_list_view {
+                                        let _ = &app.row_list_view.as_mut().unwrap().previous();
+                                    }
+                                }
+                            }
+                        },
+                        (KeyCode::Down, KeyModifiers::NONE) => {
+                            if let Some(_) = &app.selected_db {
+                                if let Some(_) = &app.selected_db_table {
+                                    if let Some(_) = &app.row_list_view {
+                                        let _ = &app.row_list_view.as_mut().unwrap().next();
+                                    }
+                                }
+                            }
+                        }
                         _ => {}
                     }
                 }

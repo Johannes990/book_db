@@ -1,7 +1,7 @@
 use ratatui::{
     layout::{Constraint, Direction, Layout},
     prelude::{Margin, Rect},
-    style::{Color, Modifier, Style, Stylize},
+    style::{Color, Modifier, Style},
     text::{Line, Span, Text},
     widgets::{Block, Borders, Cell, Clear, HighlightSpacing, List, ListItem, Paragraph, Row, Scrollbar, ScrollbarOrientation, ScrollbarState, Table, TableState, Wrap},
     Frame,
@@ -262,6 +262,8 @@ fn render_column_list(frame: &mut Frame, app: &mut App, area: Rect) {
 
 fn render_database_table_view(frame: &mut Frame, app: &mut App) {
     let db_page_style = Style::default().bg(app.general_page_bg_color()).fg(app.general_text_color());
+    let col_name_style = Style::default().fg(app.general_text_color()).add_modifier(Modifier::ITALIC | Modifier::UNDERLINED);
+    let metadata_style = Style::default().fg(app.alt_text_color_2()).add_modifier(Modifier::ITALIC);
     let chunks = get_chunks(frame.area(), Direction::Vertical, vec![75, 25]);
     let table_name = app.selected_db_table.as_ref().expect("unknown");
     let outer_block = Block::default()
@@ -274,7 +276,14 @@ fn render_database_table_view(frame: &mut Frame, app: &mut App) {
     let header_cells: Vec<Cell> = app
         .selected_table_columns
         .iter()
-        .map(|col| Cell::from(col.name_with_metainfo(&app.options.display_col_metainfo_in_table_view)))
+        .map(|col| {
+            let line = col.column_name_spans(
+                &app.options.display_col_metainfo_in_table_view,
+                col_name_style,
+                metadata_style,
+            );
+            Cell::from(line)
+        })
         .collect();
     let header = Row::new(header_cells).style(db_page_style);
     let highlight_col = app.file_exp_pg_selected_col();
@@ -303,6 +312,8 @@ fn render_database_table_view(frame: &mut Frame, app: &mut App) {
         Borders::ALL,
         Some(table_name.to_string())
     );
+
+    render_vertical_scrollbar(frame, inner_area, None, &mut unwrapped_row_list.scroll_state);
 
     let text_bits = vec![
         "Commands:", 
@@ -383,28 +394,28 @@ fn render_options_view(frame: &mut Frame, app: &mut App) {
 }
 
 fn render_color_scheme_preview(frame: &mut Frame, area: Rect, color_scheme: &ColorScheme) {
-        let colors = color_scheme.colors();
-        let color_vec = vec![
-            colors.general_text_color,
-            colors.alt_text_color_1,
-            colors.alt_text_color_2,
-            colors.quit_popup_bg_col,
-            colors.general_page_bg_color,
-            colors.file_exp_pg_selected_col,
-            colors.table_row_normal_col,
-            colors.table_row_alt_color,
-            colors.info_block_bg_col,
-        ];
-        let block_width = area.width / color_vec.len() as u16;
-        for (i, color) in color_vec.iter().enumerate() {
-            let color_area = Rect::new(
-                area.width + (i + 1) as u16 * block_width,
-                area.y, 
-                block_width,
-                block_width / 2
-            );
-            frame.render_widget(Block::default().style(Style::default().bg(*color)), color_area);
-        }
+    let colors = color_scheme.colors();
+    let color_vec = vec![
+        colors.general_text_color,
+        colors.alt_text_color_1,
+        colors.alt_text_color_2,
+        colors.quit_popup_bg_col,
+        colors.general_page_bg_color,
+        colors.file_exp_pg_selected_col,
+        colors.table_row_normal_col,
+        colors.table_row_alt_color,
+        colors.info_block_bg_col,
+    ];
+    let block_width = area.width / color_vec.len() as u16;
+    for (i, color) in color_vec.iter().enumerate() {
+        let color_area = Rect::new(
+            area.width + (i + 1) as u16 * block_width,
+            area.y, 
+            block_width,
+            block_width / 2
+        );
+        frame.render_widget(Block::default().style(Style::default().bg(*color)), color_area);
+    }
 }
 
 fn render_quit_dialog(frame: &mut Frame, app: &App) {
@@ -548,7 +559,7 @@ fn format_info_text<'a>(text_bits: &'a Vec<&'a str>, app: &App) -> Text<'a> {
 
 fn compute_col_widths(cols: &[ColumnInfo], rows: &[RowInfo], min: usize, max: usize, display_metainfo: &bool) -> Vec<Constraint> {
     cols.iter().enumerate().map(|(i, col)| {
-        let header_len = col.name_with_metainfo(display_metainfo).len();
+        let header_len = col.col_name_length(display_metainfo);
         let max_data_len = rows.iter()
             .map(|row| row.values.get(i).map_or(0, |val| val.len()))
             .max()
