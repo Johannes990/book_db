@@ -1,16 +1,16 @@
 use ratatui::{
     layout::{Constraint, Direction, Layout},
     prelude::{Margin, Rect},
-    style::{Color, Modifier, Style},
+    style::{Color, Modifier, Style, Stylize},
     text::{Line, Span, Text},
     widgets::{Block, Borders, Cell, Clear, HighlightSpacing, List, ListItem, Paragraph, Row, Scrollbar, ScrollbarOrientation, ScrollbarState, Table, TableState, Wrap},
     Frame,
     Terminal
 };
 use std::{io, rc::Rc, vec};
-use crate::{app::{App, PopUp, Screen}, column::column_info::ColumnInfo, fex::fex_data::FileExplorerData, options, row::row_info::RowInfo};
+use crate::{app::{App, PopUp, Screen}, column::column_info::ColumnInfo, fex::fex_data::FileExplorerData, row::row_info::RowInfo};
 
-use super::colorscheme::ColorScheme;
+use super::{colorscheme::ColorScheme, utils::ToggleButton};
 
 
 pub fn render<B>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<()>
@@ -90,7 +90,7 @@ fn render_splash_screen(frame: &mut Frame, app: &App) {
         .borders(Borders::ALL)
         .title("Info"));
 
-frame.render_widget(info_paragraph, chunks[1]);
+    frame.render_widget(info_paragraph, chunks[1]);
 }
 
 fn render_file_explorer(frame: &mut Frame, app: &mut App) {
@@ -261,7 +261,7 @@ fn render_column_list(frame: &mut Frame, app: &mut App, area: Rect) {
 }
 
 fn render_database_table_view(frame: &mut Frame, app: &mut App) {
-    let db_page_style = Style::default().bg(app.general_page_bg_color()).fg(app.general_text_color());
+    let db_page_style = Style::default().bg(app.general_page_bg_color()).fg(app.general_text_color()).bold();
     let chunks = get_chunks(frame.area(), Direction::Vertical, vec![75, 25]);
     let table_name = app.selected_db_table.as_ref().expect("unknown");
     let outer_block = Block::default()
@@ -274,7 +274,7 @@ fn render_database_table_view(frame: &mut Frame, app: &mut App) {
     let header_cells: Vec<Cell> = app
         .selected_table_columns
         .iter()
-        .map(|col| Cell::from(col.name_with_metainfo(true)))
+        .map(|col| Cell::from(col.name_with_metainfo(&app.options.display_col_metainfo_in_table_view)))
         .collect();
     let header = Row::new(header_cells).style(db_page_style);
     let highlight_col = app.file_exp_pg_selected_col();
@@ -285,12 +285,12 @@ fn render_database_table_view(frame: &mut Frame, app: &mut App) {
     let unwrapped_row_list = app.row_list_view.as_mut().unwrap();
     let min = 5;
     let max = 40;
-    let col_count = app.selected_table_columns.len();
     let col_constraints = compute_col_widths(
         &app.selected_table_columns,
         &unwrapped_row_list.items,
         min,
-        max
+        max,
+        &app.options.display_col_metainfo_in_table_view,
     );
 
     render_table(frame,
@@ -319,7 +319,9 @@ fn render_database_table_view(frame: &mut Frame, app: &mut App) {
 
 fn render_options_view(frame: &mut Frame, app: &mut App) {
     let general_text_style = Style::default().fg(app.general_text_color());
-    let chunks = get_chunks(frame.area(), Direction::Horizontal, vec![33, 33, 34]);
+    let vertical_chunks = get_chunks(frame.area(), Direction::Vertical, vec![50, 25, 25]);
+    let horizontal_chunks = get_chunks(vertical_chunks[1], Direction::Horizontal, vec![50, 50]);
+
     let color_schemes: &Vec<ColorScheme> = app.list_available_color_schemes();
     let color_scheme_items: Vec<ListItem> = color_schemes.into_iter()
         .map(|scheme| {
@@ -338,9 +340,30 @@ fn render_options_view(frame: &mut Frame, app: &mut App) {
         .block(Block::default().borders(Borders::ALL).title("Color Schemes"))
         .highlight_style(Style::default().bg(app.general_page_bg_color()));
 
-    frame.render_widget(color_scheme_list, chunks[0]);
+    frame.render_widget(color_scheme_list, horizontal_chunks[0]);
 
-    options::Options::render_color_scheme_preview(frame, chunks[1], &app.options.selected_color_scheme);
+    render_color_scheme_preview(frame, horizontal_chunks[1], &app.options.selected_color_scheme);
+
+    let toggle_button = ToggleButton {
+        label: if app.options.display_col_metainfo_in_table_view {
+            "Display column metadata in table view: ON"
+        } else {
+            "Display column metadata in table view: OFF"
+        },
+        active: app.options.display_col_metainfo_in_table_view,
+        selected: true,
+        on_style: Style::default().fg(Color::Green),
+        off_style: Style::default().fg(Color::Red),
+        selected_border_style: Style::default().fg(Color::Yellow),
+    };
+    let button_area = Rect {
+        x: vertical_chunks[0].x + 1,
+        y: vertical_chunks[0].y + 10,
+        width: 50,
+        height: 3,
+    };
+
+    frame.render_widget(toggle_button, button_area);
 
     let text_bits = vec![
         "Commands: ", 
@@ -356,7 +379,32 @@ fn render_options_view(frame: &mut Frame, app: &mut App) {
             .title("Info")
         );
 
-    frame.render_widget(info_paragraph, chunks[2]);
+    frame.render_widget(info_paragraph, vertical_chunks[2]);
+}
+
+fn render_color_scheme_preview(frame: &mut Frame, area: Rect, color_scheme: &ColorScheme) {
+        let colors = color_scheme.colors();
+        let color_vec = vec![
+            colors.general_text_color,
+            colors.alt_text_color_1,
+            colors.alt_text_color_2,
+            colors.quit_popup_bg_col,
+            colors.general_page_bg_color,
+            colors.file_exp_pg_selected_col,
+            colors.table_row_normal_col,
+            colors.table_row_alt_color,
+            colors.info_block_bg_col,
+        ];
+        let block_width = area.width / color_vec.len() as u16;
+        for (i, color) in color_vec.iter().enumerate() {
+            let color_area = Rect::new(
+                area.width + (i + 1) as u16 * block_width,
+                area.y, 
+                block_width,
+                block_width / 2
+            );
+            frame.render_widget(Block::default().style(Style::default().bg(*color)), color_area);
+        }
 }
 
 fn render_quit_dialog(frame: &mut Frame, app: &App) {
@@ -498,9 +546,9 @@ fn format_info_text<'a>(text_bits: &'a Vec<&'a str>, app: &App) -> Text<'a> {
     info_text
 }
 
-fn compute_col_widths(cols: &[ColumnInfo], rows: &[RowInfo], min: usize, max: usize) -> Vec<Constraint> {
+fn compute_col_widths(cols: &[ColumnInfo], rows: &[RowInfo], min: usize, max: usize, display_metainfo: &bool) -> Vec<Constraint> {
     cols.iter().enumerate().map(|(i, col)| {
-        let header_len = col.name_with_metainfo(true).len();
+        let header_len = col.name_with_metainfo(display_metainfo).len();
         let max_data_len = rows.iter()
             .map(|row| row.values.get(i).map_or(0, |val| val.len()))
             .max()

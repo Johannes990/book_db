@@ -170,6 +170,9 @@ pub fn handle_key_events(app: &mut App) -> io::Result<bool> {
                         (KeyCode::Esc, KeyModifiers::NONE) => app.switch_to_screen(Screen::SplashScreenView),
                         (KeyCode::Up, KeyModifiers::NONE) => app.options.previous_color_scheme(),
                         (KeyCode::Down, KeyModifiers::NONE) => app.options.next_color_scheme(),
+                        (KeyCode::Enter, KeyModifiers::NONE) => app.options.set_display_metainfo_in_table_view(
+                            !app.options.display_col_metainfo_in_table_view
+                        ),
                         _ => {}
                     }
                 }
