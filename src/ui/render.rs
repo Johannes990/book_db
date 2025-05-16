@@ -61,7 +61,7 @@ where
 }
 
 fn render_splash_screen(frame: &mut Frame, app: &App) {
-    let chunks = _get_chunks(frame.area(), Direction::Vertical, vec![75, 25]);
+    let chunks = get_chunks(frame.area(), Direction::Vertical, vec![75, 25]);
     let main_page_style = Style::default()
         .bg(app.general_page_bg_color())
         .fg(app.general_text_color());
@@ -79,7 +79,7 @@ fn render_splash_screen(frame: &mut Frame, app: &App) {
         "CTRL + o", " - open options",
         "ESC / CTRL + q", " - quit app",
     ];
-    let info_text = _format_info_text(&text_bits, app);
+    let info_text = format_info_text(&text_bits, app);
     let info_paragraph = Paragraph::new(info_text)
         .wrap(Wrap {trim: true})
         .style(Style::default().bg(app.info_block_bg_col()))
@@ -91,7 +91,7 @@ fn render_splash_screen(frame: &mut Frame, app: &App) {
 }
 
 fn render_file_explorer_screen(frame: &mut Frame, app: &mut App) {
-    let chunks = _get_chunks(frame.area(), Direction::Vertical, vec![75, 25]);
+    let chunks = get_chunks(frame.area(), Direction::Vertical, vec![75, 25]);
     let fexp_page_style = Style::default()
         .bg(app.general_page_bg_color())
         .fg(app.general_text_color());
@@ -126,19 +126,19 @@ fn render_file_explorer_screen(frame: &mut Frame, app: &mut App) {
     ];
     let highlight_col = app.file_exp_pg_selected_col();
 
-    _render_table(frame, &mut app.file_explorer_table.state, 
+    render_table(frame, &mut app.file_explorer_table.state, 
                  Some(header), rows, 
                  col_constraints.to_vec(), chunks[0], 
                  highlight_col, Borders::NONE, None);
 
-    _render_vertical_scrollbar(frame, chunks[0], None, &mut app.file_explorer_table.scroll_state);
+    render_vertical_scrollbar(frame, chunks[0], None, &mut app.file_explorer_table.scroll_state);
 
     let text_bits = vec![
         "Commands:",
         "Arrow Keys" , " - navigate",
         "ESC / q", " - return to splash screen",
     ];
-    let info_text = _format_info_text(&text_bits, app);
+    let info_text = format_info_text(&text_bits, app);
     let info_paragraph = Paragraph::new(info_text)
         .wrap(Wrap {trim: true})
         .style(Style::default().bg(app.info_block_bg_col()))
@@ -152,20 +152,20 @@ fn render_file_explorer_screen(frame: &mut Frame, app: &mut App) {
 
 fn render_database_schema_screen(frame: &mut Frame, app: &mut App) {
     let db_page_style = Style::default().bg(app.general_page_bg_color()).fg(app.general_text_color());
-    let chunks = _get_chunks(frame.area(), Direction::Vertical, vec![75, 25]);
+    let chunks = get_chunks(frame.area(), Direction::Vertical, vec![75, 25]);
     let db_name = app.selected_db.as_ref().expect("No DB option found").get_db_name();
     let outer_block = Block::default()
         .title(" Database View")
         .title(Line::from(format!("Currently viewing DATABASE: {}.db ", db_name)).right_aligned())
         .style(db_page_style);
     let inner_area = outer_block.inner(chunks[0]);
-    let table_column_chunks = _get_chunks(inner_area, Direction::Horizontal, vec![50, 50]);
+    let table_column_chunks = get_chunks(inner_area, Direction::Horizontal, vec![50, 50]);
 
     frame.render_widget(outer_block, chunks[0]);
 
-    _render_table_list(frame, app, table_column_chunks[0]);
+    render_table_list(frame, app, table_column_chunks[0]);
 
-    _render_column_list(frame, app, table_column_chunks[1]);
+    render_column_list(frame, app, table_column_chunks[1]);
 
     let text_bits = vec![
         "Commands:", 
@@ -173,7 +173,7 @@ fn render_database_schema_screen(frame: &mut Frame, app: &mut App) {
         "Enter" , " - select table", 
         "ESC / q", " - return to splash screen",
     ];
-    let info_text = _format_info_text(&text_bits, app);
+    let info_text = format_info_text(&text_bits, app);
     let info_paragraph = Paragraph::new(info_text)
         .wrap(Wrap {trim: true})
         .style(Style::default().bg(app.info_block_bg_col()))
@@ -186,7 +186,7 @@ fn render_database_table_screen(frame: &mut Frame, app: &mut App) {
     let db_page_style = Style::default().bg(app.general_page_bg_color()).fg(app.general_text_color());
     let col_name_style = Style::default().fg(app.general_text_color()).add_modifier(Modifier::ITALIC | Modifier::UNDERLINED);
     let metadata_style = Style::default().fg(app.alt_text_color_2()).add_modifier(Modifier::ITALIC);
-    let chunks = _get_chunks(frame.area(), Direction::Vertical, vec![75, 25]);
+    let chunks = get_chunks(frame.area(), Direction::Vertical, vec![75, 25]);
     let table_name = app.selected_db_table.as_ref().expect("unknown");
     let outer_block = Block::default()
         .title(" Table View")
@@ -216,7 +216,7 @@ fn render_database_table_screen(frame: &mut Frame, app: &mut App) {
     let unwrapped_row_list = app.row_list_view.as_mut().unwrap();
     let min = 5;
     let max = 40;
-    let col_constraints = _compute_col_widths(
+    let col_constraints = compute_col_widths(
         &app.selected_table_columns,
         &unwrapped_row_list.items,
         min,
@@ -224,7 +224,7 @@ fn render_database_table_screen(frame: &mut Frame, app: &mut App) {
         &app.options.display_col_metainfo_in_table_view,
     );
 
-    _render_table(frame,
+    render_table(frame,
         &mut unwrapped_row_list.state,
         Some(header),
         rows,
@@ -235,14 +235,14 @@ fn render_database_table_screen(frame: &mut Frame, app: &mut App) {
         Some(table_name.to_string())
     );
 
-    _render_vertical_scrollbar(frame, inner_area, None, &mut unwrapped_row_list.scroll_state);
+    render_vertical_scrollbar(frame, inner_area, None, &mut unwrapped_row_list.scroll_state);
 
     let text_bits = vec![
         "Commands:", 
         "i", " - create new entry",
         "ESC / b", " - return to database view",
     ];
-    let info_text = _format_info_text(&text_bits, app);
+    let info_text = format_info_text(&text_bits, app);
     let info_paragraph = Paragraph::new(info_text)
         .wrap(Wrap {trim: true})
         .style(Style::default().bg(app.info_block_bg_col()))
@@ -253,8 +253,8 @@ fn render_database_table_screen(frame: &mut Frame, app: &mut App) {
 
 fn render_options_screen(frame: &mut Frame, app: &mut App) {
     let general_text_style = Style::default().fg(app.general_text_color());
-    let vertical_chunks = _get_chunks(frame.area(), Direction::Vertical, vec![50, 25, 25]);
-    let horizontal_chunks = _get_chunks(vertical_chunks[1], Direction::Horizontal, vec![50, 50]);
+    let vertical_chunks = get_chunks(frame.area(), Direction::Vertical, vec![50, 25, 25]);
+    let horizontal_chunks = get_chunks(vertical_chunks[1], Direction::Horizontal, vec![50, 50]);
 
     let color_schemes: &Vec<ColorScheme> = app.list_available_color_schemes();
     let color_scheme_items: Vec<ListItem> = color_schemes.into_iter()
@@ -276,7 +276,7 @@ fn render_options_screen(frame: &mut Frame, app: &mut App) {
 
     frame.render_widget(color_scheme_list, horizontal_chunks[0]);
 
-    _render_color_scheme_preview(frame, horizontal_chunks[1], &app.options.selected_color_scheme);
+    render_color_scheme_preview(frame, horizontal_chunks[1], &app.options.selected_color_scheme);
 
     let toggle_button = ToggleButton {
         label: if app.options.display_col_metainfo_in_table_view {
@@ -304,7 +304,7 @@ fn render_options_screen(frame: &mut Frame, app: &mut App) {
         "Arrow Keys", " - navigate", 
         "ESC / q" , " - return to splash screen",
     ];
-    let info_text = _format_info_text(&text_bits, app);
+    let info_text = format_info_text(&text_bits, app);
     let info_paragraph = Paragraph::new(info_text)
         .wrap(Wrap {trim: true})
         .style(Style::default().bg(app.info_block_bg_col()))
@@ -317,7 +317,7 @@ fn render_options_screen(frame: &mut Frame, app: &mut App) {
 }
 
 fn render_quit_popup(frame: &mut Frame, app: &App) {
-    let area = _centered_rect(55, 30, frame.area());
+    let area = centered_rect(55, 30, frame.area());
     let quit_popup_style = Style::default()
         .bg(app.quit_popup_bg_col())
         .fg(app.general_text_color());
@@ -330,7 +330,7 @@ fn render_quit_popup(frame: &mut Frame, app: &App) {
         "y", " - quit app", 
         "ESC / n", " - return to splash screen",
     ];
-    let exit_text = _format_info_text(&text_bits, app);
+    let exit_text = format_info_text(&text_bits, app);
     let exit_paragraph = Paragraph::new(exit_text)
         .block(popup_block)
         .wrap(Wrap { trim: false });
@@ -351,19 +351,19 @@ fn render_no_db_loaded_popup(frame: &mut Frame, app: &mut App) {
         "CTRL + f", " - open file explorer", 
         "ESC", " - return to splash screen"
     ];
-    let info_text = _format_info_text(&text_bits, app);
+    let info_text = format_info_text(&text_bits, app);
     let info_paragraph = Paragraph::new(info_text)
         .block(popup_block)
         .wrap(Wrap { trim: false } );
-    let area = _centered_rect(55, 30, frame.area());
+    let area = centered_rect(55, 30, frame.area());
 
     frame.render_widget(Clear, area);
     frame.render_widget(info_paragraph, area);
 }
 
 fn render_insert_row_popup(frame: &mut Frame, app: &mut App) {
-    let area = _centered_rect(55, 55, frame.area());
-    let chunks = _get_chunks(area, Direction::Vertical, vec![70, 30]);
+    let area = centered_rect(55, 55, frame.area());
+    let chunks = get_chunks(area, Direction::Vertical, vec![70, 30]);
     let insert_row_popup_style = Style::default()
         .bg(app.quit_popup_bg_col())
         .fg(app.general_text_color());
@@ -372,7 +372,12 @@ fn render_insert_row_popup(frame: &mut Frame, app: &mut App) {
         .borders(Borders::ALL)
         .title(title_text)
         .style(insert_row_popup_style);
-    let content_paragraph = Paragraph::new("Dummy content.")
+    let mut column_text = Text::default();
+
+    for col_info in app.selected_table_columns.iter() {
+        column_text.push_line(col_info.name.clone());
+    }
+    let content_paragraph = Paragraph::new(column_text)
         .block(popup_block)
         .wrap(Wrap { trim: false } );
     let info_bits = vec![
@@ -380,7 +385,7 @@ fn render_insert_row_popup(frame: &mut Frame, app: &mut App) {
         "s", " - save entry",
         "ESC / q", " - return to database table view",
     ];
-    let info_text = _format_info_text(&info_bits, app);
+    let info_text = format_info_text(&info_bits, app);
     let info_paragraph = Paragraph::new(info_text)
         .wrap(Wrap {trim: true})
         .style(Style::default().bg(app.info_block_bg_col()))
@@ -393,7 +398,7 @@ fn render_insert_row_popup(frame: &mut Frame, app: &mut App) {
     frame.render_widget(info_paragraph, chunks[1]);
 }
 
-fn _render_table_list(frame: &mut Frame, app: &mut App, area: Rect) {
+fn render_table_list(frame: &mut Frame, app: &mut App, area: Rect) {
     let row_style = Style::default().bg(app.general_page_bg_color()).fg(app.general_text_color());
     let header = Row::new(vec![
         Cell::new("Name"),
@@ -416,15 +421,15 @@ fn _render_table_list(frame: &mut Frame, app: &mut App, area: Rect) {
     let highlight_color = app.file_exp_pg_selected_col();
     let unwrapped_table_list = app.table_list_view.as_mut().unwrap();
 
-    _render_table(frame, &mut unwrapped_table_list.state,
+    render_table(frame, &mut unwrapped_table_list.state,
         Some(header), rows,
         col_constraints.to_vec(), area,
         highlight_color, Borders::ALL, Some("Tables".to_string()));
 
-    _render_vertical_scrollbar(frame, area, None, &mut unwrapped_table_list.scroll_state);
+    render_vertical_scrollbar(frame, area, None, &mut unwrapped_table_list.scroll_state);
 }
 
-fn _render_column_list(frame: &mut Frame, app: &mut App, area: Rect) {
+fn render_column_list(frame: &mut Frame, app: &mut App, area: Rect) {
     let header = ["Name", "Type", "Constraints"]
         .into_iter()
         .map(Cell::from)
@@ -460,15 +465,15 @@ fn _render_column_list(frame: &mut Frame, app: &mut App, area: Rect) {
     let highlight_color = app.file_exp_pg_selected_col();
     let unwrapped_column_list = app.column_list_view.as_mut().unwrap();
 
-    _render_table(frame, &mut unwrapped_column_list.state,
+    render_table(frame, &mut unwrapped_column_list.state,
                  Some(header), rows,
                  col_constraints.to_vec(), area,
                  highlight_color, Borders::ALL, Some("Columns".to_string()));
 
-    _render_vertical_scrollbar(frame, area, None, &mut unwrapped_column_list.scroll_state);
+    render_vertical_scrollbar(frame, area, None, &mut unwrapped_column_list.scroll_state);
 }
 
-fn _render_color_scheme_preview(frame: &mut Frame, area: Rect, color_scheme: &ColorScheme) {
+fn render_color_scheme_preview(frame: &mut Frame, area: Rect, color_scheme: &ColorScheme) {
     let colors = color_scheme.colors();
     let color_vec = vec![
         colors.general_text_color,
@@ -493,7 +498,7 @@ fn _render_color_scheme_preview(frame: &mut Frame, area: Rect, color_scheme: &Co
     }
 }
 
-fn _render_vertical_scrollbar(frame: &mut Frame, area: Rect, endpoints: Option<&str>, scroll_bar_state: &mut ScrollbarState) {
+fn render_vertical_scrollbar(frame: &mut Frame, area: Rect, endpoints: Option<&str>, scroll_bar_state: &mut ScrollbarState) {
     frame.render_stateful_widget(
         Scrollbar::default()
             .orientation(ScrollbarOrientation::VerticalRight)
@@ -508,7 +513,7 @@ fn _render_vertical_scrollbar(frame: &mut Frame, area: Rect, endpoints: Option<&
     );
 }
 
-fn _render_table(frame: &mut Frame, state: &mut TableState, 
+fn render_table(frame: &mut Frame, state: &mut TableState, 
                 header: Option<Row>, rows: Vec<Row>,
                 col_widths: Vec<Constraint>, area: Rect, 
                 highlight_col: Color, borders: Borders,
@@ -532,7 +537,7 @@ fn _render_table(frame: &mut Frame, state: &mut TableState,
     frame.render_stateful_widget(table, area, state);
 }
 
-fn _centered_rect(percent_x: u16, percent_y: u16, area: ratatui::layout::Rect) -> ratatui::layout::Rect {
+fn centered_rect(percent_x: u16, percent_y: u16, area: ratatui::layout::Rect) -> ratatui::layout::Rect {
     let vertical = Layout::vertical([Constraint::Percentage(percent_y)]).flex(Flex::Center);
     let horizontal = Layout::horizontal([Constraint::Percentage(percent_x)]).flex(Flex::Center);
     let [area] = vertical.areas(area);
@@ -541,7 +546,7 @@ fn _centered_rect(percent_x: u16, percent_y: u16, area: ratatui::layout::Rect) -
     area
 }
 
-fn _get_chunks(area: Rect, direction: Direction, percentages: Vec<u16>) -> Rc<[Rect]> {
+fn get_chunks(area: Rect, direction: Direction, percentages: Vec<u16>) -> Rc<[Rect]> {
     let constraints: Vec<Constraint> = percentages.iter().map(|value| Constraint::Percentage(*value)).collect();
     let chunks = Layout::default()
         .direction(direction)
@@ -553,7 +558,7 @@ fn _get_chunks(area: Rect, direction: Direction, percentages: Vec<u16>) -> Rc<[R
     chunks
 }
 
-fn _format_info_text<'a>(text_bits: &'a Vec<&'a str>, app: &App) -> Text<'a> {
+fn format_info_text<'a>(text_bits: &'a Vec<&'a str>, app: &App) -> Text<'a> {
     let general_text_style = Style::default().fg(app.general_text_color());
     let alt_text_style_1 = Style::default().fg(app.alt_text_color_1());
 
@@ -576,7 +581,7 @@ fn _format_info_text<'a>(text_bits: &'a Vec<&'a str>, app: &App) -> Text<'a> {
     info_text
 }
 
-fn _compute_col_widths(cols: &[ColumnInfo], rows: &[RowInfo], min: usize, max: usize, display_metainfo: &bool) -> Vec<Constraint> {
+fn compute_col_widths(cols: &[ColumnInfo], rows: &[RowInfo], min: usize, max: usize, display_metainfo: &bool) -> Vec<Constraint> {
     cols.iter().enumerate().map(|(i, col)| {
         let header_len = col.col_name_length(display_metainfo);
         let max_data_len = rows.iter()
