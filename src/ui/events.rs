@@ -7,29 +7,29 @@ use crate::app::{App, PopUp, Screen};
 pub fn handle_key_events(app: &mut App) -> io::Result<bool> {
     if let Event::Key(key_event) = event::read()? {
         match app.current_screen {
-            Screen::SplashScreenView => {
+            Screen::Splash => {
                 match app.current_popup {
                     PopUp::None => {
                         if key_event.kind == KeyEventKind::Press {
                             match (key_event.code, key_event.modifiers) {
                                 (KeyCode::Esc, KeyModifiers::NONE) | 
-                                (KeyCode::Char('q'), KeyModifiers::CONTROL) => app.switch_to_popup(PopUp::QuitDialog),
-                                (KeyCode::Char('f'), KeyModifiers::CONTROL) => app.switch_to_screen(Screen::FileExplorerView),
-                                (KeyCode::Char('n'), KeyModifiers::CONTROL) => app.switch_to_screen(Screen::CreateNewFileView),
-                                (KeyCode::Char('o'), KeyModifiers::CONTROL) => app.switch_to_screen(Screen::OptionsView),
+                                (KeyCode::Char('q'), KeyModifiers::CONTROL) => app.switch_to_popup(PopUp::Quit),
+                                (KeyCode::Char('f'), KeyModifiers::CONTROL) => app.switch_to_screen(Screen::FileExplorer),
+                                (KeyCode::Char('n'), KeyModifiers::CONTROL) => app.switch_to_screen(Screen::CreateNewFile),
+                                (KeyCode::Char('o'), KeyModifiers::CONTROL) => app.switch_to_screen(Screen::Options),
                                 (KeyCode::Char('d'), KeyModifiers::CONTROL) => {
                                     if app.selected_db.is_some() {
-                                        app.switch_to_screen(Screen::OpenDataBaseView);
+                                        app.switch_to_screen(Screen::DatabaseSchema);
                                     } else {
-                                        app.switch_to_popup(PopUp::NoDBLoadedDialog);
+                                        app.switch_to_popup(PopUp::NoDBLoaded);
                                     }
                                     
                                 }
                                 _ => {}
                             }
                         }
-                    }
-                    PopUp::QuitDialog => {
+                    },
+                    PopUp::Quit => {
                         if key_event.kind == KeyEventKind::Press {
                             match (key_event.code, key_event.modifiers) {
                                 (KeyCode::Esc, KeyModifiers::NONE) |
@@ -38,27 +38,27 @@ pub fn handle_key_events(app: &mut App) -> io::Result<bool> {
                                 _ => {}
                             }
                         }
-                    }
-                    PopUp::SaveDialog => {},
-                    PopUp::NoDBLoadedDialog => {
+                    },
+                    PopUp::NoDBLoaded => {
                         if key_event.kind == KeyEventKind::Press {
                             match (key_event.code, key_event.modifiers) {
                                 (KeyCode::Esc, KeyModifiers::NONE) => app.switch_to_popup(PopUp::None),
                                 (KeyCode::Char('f'), KeyModifiers::CONTROL) => {
                                     app.switch_to_popup(PopUp::None);
-                                    app.switch_to_screen(Screen::FileExplorerView);
+                                    app.switch_to_screen(Screen::FileExplorer);
                                 }
                                 _ => {}
                             }
                         }
-                    }
+                    },
+                    _ => {}
                 }
             },
-            Screen::FileExplorerView => {
+            Screen::FileExplorer => {
                 if key_event.kind == KeyEventKind::Press {
                     match (key_event.code, key_event.modifiers) {
                         (KeyCode::Esc, KeyModifiers::NONE) | 
-                        (KeyCode::Char('q'), KeyModifiers::NONE) => app.switch_to_screen(Screen::SplashScreenView),
+                        (KeyCode::Char('q'), KeyModifiers::NONE) => app.switch_to_screen(Screen::Splash),
                         (KeyCode::Up, KeyModifiers::NONE) => app.file_explorer_table.previous(),
                         (KeyCode::Down, KeyModifiers::NONE) => app.file_explorer_table.next(),
                         (KeyCode::Enter, KeyModifiers::NONE) => {
@@ -84,9 +84,9 @@ pub fn handle_key_events(app: &mut App) -> io::Result<bool> {
                                 } else {
                                     // handle file opening...
                                     if let Err(_e) = app.open_db_file(new_path) {
-                                        app.switch_to_screen(Screen::SplashScreenView);
+                                        app.switch_to_screen(Screen::Splash);
                                     } else {
-                                        app.switch_to_screen(Screen::OpenDataBaseView);
+                                        app.switch_to_screen(Screen::DatabaseSchema);
                                     }
                                 }
                             }
@@ -95,11 +95,11 @@ pub fn handle_key_events(app: &mut App) -> io::Result<bool> {
                     }
                 }
             },
-            Screen::OpenDataBaseView => {
+            Screen::DatabaseSchema => {
                 if key_event.kind == KeyEventKind::Press {
                     match (key_event.code, key_event.modifiers) {
                         (KeyCode::Char('q'), KeyModifiers::NONE) |
-                        (KeyCode::Esc, KeyModifiers::NONE) => app.switch_to_screen(Screen::SplashScreenView),
+                        (KeyCode::Esc, KeyModifiers::NONE) => app.switch_to_screen(Screen::Splash),
                         (KeyCode::Up, KeyModifiers::NONE) => {
                             if let Some(db) = &app.selected_db {
                                 let tables = db.get_table_list().unwrap_or_default();
@@ -147,45 +147,63 @@ pub fn handle_key_events(app: &mut App) -> io::Result<bool> {
                         (KeyCode::Enter, KeyModifiers::NONE) => {
                             if let Some(selected_table) = &app.selected_db_table {
                                 app.select_table_rows(selected_table.to_string());
-                                app.switch_to_screen(Screen::DataBaseTableView);
+                                app.switch_to_screen(Screen::DataBaseTable);
                             }
                         },
                         _ => {}
                     }
                 }
             },
-            Screen::DataBaseTableView => {
-                if key_event.kind == KeyEventKind::Press {
-                    match (key_event.code, key_event.modifiers) {
-                        (KeyCode::Char('b'), KeyModifiers::NONE) |
-                        (KeyCode::Esc, KeyModifiers::NONE) => app.switch_to_screen(Screen::OpenDataBaseView),
-                        (KeyCode::Up, KeyModifiers::NONE) => {
-                            if let Some(_) = &app.selected_db {
-                                if let Some(_) = &app.selected_db_table {
-                                    if let Some(_) = &app.row_list_view {
-                                        let _ = &app.row_list_view.as_mut().unwrap().previous();
+            Screen::DataBaseTable => {
+                match app.current_popup {
+                    PopUp::None => {
+                        if key_event.kind == KeyEventKind::Press {
+                            match (key_event.code, key_event.modifiers) {
+                                (KeyCode::Char('b'), KeyModifiers::NONE) |
+                                (KeyCode::Esc, KeyModifiers::NONE) => app.switch_to_screen(Screen::DatabaseSchema),
+                                (KeyCode::Up, KeyModifiers::NONE) => {
+                                    if let Some(_) = &app.selected_db {
+                                        if let Some(_) = &app.selected_db_table {
+                                            if let Some(_) = &app.row_list_view {
+                                                let _ = &app.row_list_view.as_mut().unwrap().previous();
+                                            }
+                                        }
                                     }
-                                }
-                            }
-                        },
-                        (KeyCode::Down, KeyModifiers::NONE) => {
-                            if let Some(_) = &app.selected_db {
-                                if let Some(_) = &app.selected_db_table {
-                                    if let Some(_) = &app.row_list_view {
-                                        let _ = &app.row_list_view.as_mut().unwrap().next();
+                                },
+                                (KeyCode::Down, KeyModifiers::NONE) => {
+                                    if let Some(_) = &app.selected_db {
+                                        if let Some(_) = &app.selected_db_table {
+                                            if let Some(_) = &app.row_list_view {
+                                                let _ = &app.row_list_view.as_mut().unwrap().next();
+                                            }
+                                        }
                                     }
+                                },
+                                (KeyCode::Char('i'), KeyModifiers::NONE) => {
+                                    app.switch_to_popup(PopUp::InsertRow);
                                 }
+                                _ => {}
                             }
                         }
-                        _ => {}
-                    }
+                    },
+                    PopUp::InsertRow => {
+                        if key_event.kind == KeyEventKind::Press {
+                            match (key_event.code, key_event.modifiers) {
+                                (KeyCode::Esc, KeyModifiers::NONE) |
+                                (KeyCode::Char('q'), KeyModifiers::NONE) => app.switch_to_popup(PopUp::None),
+                                _ => {}
+                            }
+                        }
+                    },
+                    _ => {}
                 }
+                
             },
-            Screen::OptionsView => {
+            Screen::Options => {
                 if key_event.kind == KeyEventKind::Press {
                     match (key_event.code, key_event.modifiers) {
                         (KeyCode::Char('q'), KeyModifiers::NONE) |
-                        (KeyCode::Esc, KeyModifiers::NONE) => app.switch_to_screen(Screen::SplashScreenView),
+                        (KeyCode::Esc, KeyModifiers::NONE) => app.switch_to_screen(Screen::Splash),
                         (KeyCode::Up, KeyModifiers::NONE) => app.options.previous_color_scheme(),
                         (KeyCode::Down, KeyModifiers::NONE) => app.options.next_color_scheme(),
                         (KeyCode::Enter, KeyModifiers::NONE) => app.options.set_display_metainfo_in_table_view(
@@ -195,10 +213,10 @@ pub fn handle_key_events(app: &mut App) -> io::Result<bool> {
                     }
                 }
             },
-            Screen::CreateNewFileView => {
+            Screen::CreateNewFile => {
                 if key_event.kind == KeyEventKind::Press {
                     match (key_event.code, key_event.modifiers) {
-                        (KeyCode::Esc, KeyModifiers::NONE) => app.switch_to_screen(Screen::SplashScreenView),
+                        (KeyCode::Esc, KeyModifiers::NONE) => app.switch_to_screen(Screen::Splash),
                         _ => {}
                     }
                 }

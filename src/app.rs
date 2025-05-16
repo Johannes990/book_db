@@ -15,19 +15,20 @@ use ratatui::{
 use std::{io, path::PathBuf};
 
 pub enum Screen {
-    SplashScreenView,
-    FileExplorerView,
-    OpenDataBaseView,
-    DataBaseTableView,
-    CreateNewFileView,
-    OptionsView,
+    Splash,
+    FileExplorer,
+    DatabaseSchema,
+    DataBaseTable,
+    CreateNewFile,
+    Options,
 }
 
 pub enum PopUp {
     None,
-    QuitDialog,
-    NoDBLoadedDialog,
-    SaveDialog,
+    Quit,
+    NoDBLoaded,
+    InsertRow,
+    Save,
 }
 
 pub struct App {
@@ -49,7 +50,7 @@ impl App {
         let options = Options::new(color_scheme);
 
         Self {
-            current_screen: Screen::SplashScreenView,
+            current_screen: Screen::Splash,
             current_popup: PopUp::None,
             selected_db: None,
             selected_db_table: None,
