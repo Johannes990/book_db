@@ -499,7 +499,7 @@ fn render_color_scheme_preview(frame: &mut Frame, area: Rect, color_scheme: &Col
     let block_width = area.width / color_vec.len() as u16;
     for (i, color) in color_vec.iter().enumerate() {
         let color_area = Rect::new(
-            area.width + (i + 1) as u16 * block_width,
+            area.width + (i as u16) * block_width,
             area.y, 
             block_width,
             block_width / 2
