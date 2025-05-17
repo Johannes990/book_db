@@ -8,7 +8,7 @@ use ratatui::{
     Terminal
 };
 use std::{io, rc::Rc, vec};
-use crate::{app::{App, PopUp, Screen}, column::column_info::ColumnInfo, fex::fex_data::FileExplorerData, row::row_info::RowInfo};
+use crate::{app::{App, PopUp, Screen}, column::column_info::ColumnInfo, fex::fex_data::FileExplorerData, options::SelectedOption, row::row_info::RowInfo};
 
 use super::{colorscheme::ColorScheme, utils::ToggleButton};
 
@@ -135,7 +135,7 @@ fn render_file_explorer_screen(frame: &mut Frame, app: &mut App) {
 
     let text_bits = vec![
         "Commands:",
-        "Arrow Keys" , " - navigate",
+        "↑ / ↓" , " - navigate",
         "ESC / q", " - return to splash screen",
     ];
     let info_text = format_info_text(&text_bits, app);
@@ -169,7 +169,7 @@ fn render_database_schema_screen(frame: &mut Frame, app: &mut App) {
 
     let text_bits = vec![
         "Commands:", 
-        "Arrow Keys", " - navigate", 
+        "↑ / ↓", " - navigate", 
         "Enter" , " - select table", 
         "ESC / q", " - return to splash screen",
     ];
@@ -278,30 +278,36 @@ fn render_options_screen(frame: &mut Frame, app: &mut App) {
 
     render_color_scheme_preview(frame, horizontal_chunks[1], &app.options.selected_color_scheme);
 
-    let toggle_button = ToggleButton {
-        label: if app.options.display_col_metainfo_in_table_view {
-            "Display column metadata in table view: ON"
-        } else {
-            "Display column metadata in table view: OFF"
-        },
-        active: app.options.display_col_metainfo_in_table_view,
-        selected: true,
-        on_style: Style::default().fg(Color::Green),
-        off_style: Style::default().fg(Color::Red),
-        selected_border_style: Style::default().fg(Color::Yellow),
-    };
-    let button_area = Rect {
+    let table_metainfo_toggle_button = ToggleButton::default(
+        "Display column metadata in table view: ",
+        app.options.display_col_metainfo_in_table_view,
+        matches!(app.options.selected_option, SelectedOption::TableMetainfoToggle),
+    );
+    let table_metainfo_toggle_area = Rect {
         x: vertical_chunks[0].x + 1,
         y: vertical_chunks[0].y + 10,
         width: 50,
         height: 3,
     };
+    let insert_metainfo_toggle_button = ToggleButton::default(
+        "Display column metadata in insert view: ",
+        app.options.display_col_metainfo_in_insert_view,
+        matches!(app.options.selected_option, SelectedOption::InsertMetainfoToggle)
+    );
+    let insert_metainfo_toggle_area = Rect {
+        x: vertical_chunks[0].x + 1,
+        y: vertical_chunks[0].y + 12,
+        width: 50, 
+        height: 3,
+    };
 
-    frame.render_widget(toggle_button, button_area);
+    frame.render_widget(table_metainfo_toggle_button, table_metainfo_toggle_area);
+    frame.render_widget(insert_metainfo_toggle_button, insert_metainfo_toggle_area);
 
     let text_bits = vec![
         "Commands: ", 
-        "Arrow Keys", " - navigate", 
+        "← / →", " - switch between color schemes", 
+        "↑ / ↓", " - switch between options",
         "ESC / q" , " - return to splash screen",
     ];
     let info_text = format_info_text(&text_bits, app);
@@ -367,6 +373,7 @@ fn render_insert_row_popup(frame: &mut Frame, app: &mut App) {
     let insert_row_popup_style = Style::default()
         .bg(app.quit_popup_bg_col())
         .fg(app.general_text_color());
+    let metadata_style = Style::default().fg(app.alt_text_color_2()).add_modifier(Modifier::ITALIC);
     let title_text = format!("Enter new entry into table {}", app.selected_db_table.as_deref().unwrap());
     let popup_block = Block::default()
         .borders(Borders::ALL)
@@ -376,6 +383,9 @@ fn render_insert_row_popup(frame: &mut Frame, app: &mut App) {
 
     for col_info in app.selected_table_columns.iter() {
         column_text.push_line(col_info.name.clone());
+        if app.options.display_col_metainfo_in_insert_view {
+            column_text.push_span(Span::styled(format!(" [{}]", col_info.col_type.clone()), metadata_style));
+        }
     }
     let content_paragraph = Paragraph::new(column_text)
         .block(popup_block)

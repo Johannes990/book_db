@@ -1,7 +1,7 @@
 use std::io;
 use crossterm::event::KeyModifiers;
 use ratatui::crossterm::event::{self, Event, KeyCode, KeyEventKind};
-use crate::app::{App, PopUp, Screen};
+use crate::{app::{App, PopUp, Screen}, options::SelectedOption};
 
 
 pub fn handle_key_events(app: &mut App) -> io::Result<bool> {
@@ -204,11 +204,25 @@ pub fn handle_key_events(app: &mut App) -> io::Result<bool> {
                     match (key_event.code, key_event.modifiers) {
                         (KeyCode::Char('q'), KeyModifiers::NONE) |
                         (KeyCode::Esc, KeyModifiers::NONE) => app.switch_to_screen(Screen::Splash),
-                        (KeyCode::Up, KeyModifiers::NONE) => app.options.previous_color_scheme(),
-                        (KeyCode::Down, KeyModifiers::NONE) => app.options.next_color_scheme(),
-                        (KeyCode::Enter, KeyModifiers::NONE) => app.options.set_display_metainfo_in_table_view(
-                            !app.options.display_col_metainfo_in_table_view
-                        ),
+                        (KeyCode::Up, KeyModifiers::NONE) => app.options.previous_option(),
+                        (KeyCode::Down, KeyModifiers::NONE) => app.options.next_option(),
+                        (KeyCode::Left, KeyModifiers::NONE) => app.options.previous_color_scheme(),
+                        (KeyCode::Right, KeyModifiers::NONE) => app.options.next_color_scheme(),
+                        (KeyCode::Enter, KeyModifiers::NONE) => {
+                            match app.options.selected_option {
+                                SelectedOption::InsertMetainfoToggle => {
+                                    app.options.set_display_col_metainfo_in_insert_view(
+                                        !app.options.display_col_metainfo_in_insert_view
+                                    );
+                                },
+                                SelectedOption::TableMetainfoToggle => {
+                                    app.options.set_display_col_metainfo_in_table_view(
+                                        !app.options.display_col_metainfo_in_table_view
+                                    );
+                                },
+                                _ => {}
+                            }
+                        }
                         _ => {}
                     }
                 }
