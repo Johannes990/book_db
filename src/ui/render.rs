@@ -3,12 +3,34 @@ use ratatui::{
     prelude::{Margin, Rect},
     style::{Color, Modifier, Style},
     text::{Line, Span, Text},
-    widgets::{Block, Borders, Cell, Clear, HighlightSpacing, List, ListItem, Paragraph, Row, Scrollbar, ScrollbarOrientation, ScrollbarState, Table, TableState, Wrap},
+    widgets::{
+        Block,
+        Borders,
+        Cell,
+        Clear,
+        HighlightSpacing,
+        List,
+        ListItem,
+        Paragraph,
+        Row,
+        Scrollbar,
+        ScrollbarOrientation,
+        ScrollbarState,
+        Table,
+        TableState,
+        Wrap
+    },
     Frame,
     Terminal
 };
 use std::{io, rc::Rc, vec};
-use crate::{app::{App, PopUp, Screen}, column::column_info::ColumnInfo, fex::fex_data::FileExplorerData, options::SelectedOption, row::row_info::RowInfo};
+use crate::{
+    app::{App, PopUp, Screen},
+    column::column_info::ColumnInfo,
+    file_explorer::file_explorer_data::FileExplorerData,
+    options::SelectedOption,
+    row::row_info::RowInfo
+};
 
 use super::{colorscheme::ColorScheme, utils::ToggleButton};
 

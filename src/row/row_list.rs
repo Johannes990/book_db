@@ -1,5 +1,5 @@
 use ratatui::widgets::{ScrollbarState, TableState};
-use crate::fex::fex_table::ITEM_HEIGHT;
+use crate::file_explorer::file_explorer_table::ITEM_HEIGHT;
 use super::row_info::RowInfo;
 
 pub struct RowListView {

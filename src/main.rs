@@ -5,7 +5,7 @@ mod ui;
 mod app;
 mod column;
 mod table;
-mod fex;
+mod file_explorer;
 mod row;
 
 use crossterm::{
