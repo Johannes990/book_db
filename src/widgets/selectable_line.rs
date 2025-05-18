@@ -6,7 +6,7 @@ use ratatui::{
     widgets::{Block, Borders, Paragraph, Widget},
 };
 
-pub struct ToggleButton {
+pub struct SelectableLine {
     pub label: String,
     pub active: bool,
     pub selected: bool,
@@ -14,7 +14,7 @@ pub struct ToggleButton {
     pub off_style: Style,
 }
 
-impl Widget for ToggleButton {
+impl Widget for SelectableLine {
     fn render(self, area: Rect, buf: &mut Buffer) {
         let style = if self.active { self.on_style } else { self.off_style };
         let block = Block::default()
@@ -26,7 +26,7 @@ impl Widget for ToggleButton {
     }
 }
 
-impl ToggleButton {
+impl SelectableLine {
     pub fn default(
         label: &str,
         active: bool,
@@ -39,7 +39,7 @@ impl ToggleButton {
         };
         let postfix = if active { "ON" } else { "OFF" };
         let label = format!("{}{}{}", prefix, label, postfix);
-        ToggleButton {
+        SelectableLine {
             label,
             active,
             selected,

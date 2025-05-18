@@ -7,6 +7,7 @@ mod column;
 mod table;
 mod file_explorer;
 mod row;
+mod widgets;
 
 use crossterm::{
     event::{KeyboardEnhancementFlags, PushKeyboardEnhancementFlags, PopKeyboardEnhancementFlags},

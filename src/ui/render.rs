@@ -29,10 +29,11 @@ use crate::{
     column::column_info::ColumnInfo,
     file_explorer::file_explorer_data::FileExplorerData,
     options::SelectedOption,
-    row::row_info::RowInfo
+    row::row_info::RowInfo,
+    widgets::selectable_line::SelectableLine,
 };
 
-use super::{colorscheme::ColorScheme, utils::ToggleButton};
+use super::colorscheme::ColorScheme;
 
 
 pub fn render<B>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<()>
@@ -300,7 +301,7 @@ fn render_options_screen(frame: &mut Frame, app: &mut App) {
 
     render_color_scheme_preview(frame, horizontal_chunks[1], &app.options.selected_color_scheme);
 
-    let table_metainfo_toggle_button = ToggleButton::default(
+    let table_metainfo_toggle_button = SelectableLine::default(
         "Display column metadata in table view: ",
         app.options.display_col_metainfo_in_table_view,
         matches!(app.options.selected_option, SelectedOption::TableMetainfoToggle),
@@ -311,7 +312,7 @@ fn render_options_screen(frame: &mut Frame, app: &mut App) {
         width: 50,
         height: 3,
     };
-    let insert_metainfo_toggle_button = ToggleButton::default(
+    let insert_metainfo_toggle_button = SelectableLine::default(
         "Display column metadata in insert view: ",
         app.options.display_col_metainfo_in_insert_view,
         matches!(app.options.selected_option, SelectedOption::InsertMetainfoToggle)

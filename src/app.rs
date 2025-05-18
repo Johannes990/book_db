@@ -1,7 +1,7 @@
 use crate::{
     column::{column_info::ColumnInfo, column_list::ColumnListView},
     db::{DBError, DB},
-    fex::fex_table::FileExplorerTable,
+    file_explorer::file_explorer_table::FileExplorerTable,
     handle_key_events,
     options::Options,
     row::row_list::RowListView,
