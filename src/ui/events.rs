@@ -1,7 +1,7 @@
 use std::io;
 use crossterm::event::KeyModifiers;
-use ratatui::crossterm::event::{self, Event, KeyCode, KeyEventKind};
-use crate::{app::{App, PopUp, Screen}, options::SelectedOption};
+use ratatui::{crossterm::event::{self, Event, KeyCode, KeyEventKind}, style::Style};
+use crate::{app::{App, PopUp, Screen, AppMode}, options::SelectedOption};
 
 
 pub fn handle_key_events(app: &mut App) -> io::Result<bool> {
@@ -180,20 +180,39 @@ pub fn handle_key_events(app: &mut App) -> io::Result<bool> {
                                     }
                                 },
                                 (KeyCode::Char('i'), KeyModifiers::NONE) => {
-                                    app.switch_to_popup(PopUp::InsertRow);
+                                    let table_cols: Vec<String> = app.selected_table_columns
+                                        .iter()
+                                        .map(|col_info| col_info.name.clone())
+                                        .collect();
+                                    app.create_table_insert_form(table_cols);   // create table insert form before rendering
+                                    app.switch_app_mode(AppMode::Editing);
+                                    app.switch_to_popup(PopUp::InsertRow);  // rendering is done after switch to InsertRow pop-up
                                 }
                                 _ => {}
                             }
                         }
                     },
                     PopUp::InsertRow => {
-                        if key_event.kind == KeyEventKind::Press {
-                            match (key_event.code, key_event.modifiers) {
-                                (KeyCode::Esc, KeyModifiers::NONE) |
-                                (KeyCode::Char('q'), KeyModifiers::NONE) => app.switch_to_popup(PopUp::None),
-                                _ => {}
+                        match app.current_mode {
+                            AppMode::Browsing => {},
+                            AppMode::Editing => {
+                                if key_event.kind == KeyEventKind::Press {
+                                    match (key_event.code, key_event.modifiers) {
+                                        (KeyCode::Esc, KeyModifiers::NONE) |
+                                        (KeyCode::Char('q'), KeyModifiers::ALT) => {
+                                            app.switch_app_mode(AppMode::Browsing);
+                                            app.switch_to_popup(PopUp::None);
+                                        } ,
+                                        (KeyCode::Up, KeyModifiers::NONE) => app.table_insert_form.as_mut().unwrap().previous(),
+                                        (KeyCode::Down, KeyModifiers::NONE) => app.table_insert_form.as_mut().unwrap().next(),
+                                        (KeyCode::Char(c), KeyModifiers::NONE) => app.table_insert_form.as_mut().unwrap().enter_char(c),
+                                        (KeyCode::Backspace, KeyModifiers::NONE) => app.table_insert_form.as_mut().unwrap().pop_char(),
+                                        _ => {}
+                                    }
+                                }
                             }
                         }
+                        
                     },
                     _ => {}
                 }
@@ -220,7 +239,6 @@ pub fn handle_key_events(app: &mut App) -> io::Result<bool> {
                                         !app.options.display_col_metainfo_in_table_view
                                     );
                                 },
-                                _ => {}
                             }
                         }
                         _ => {}

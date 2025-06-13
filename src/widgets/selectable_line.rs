@@ -9,7 +9,6 @@ use ratatui::{
 pub struct SelectableLine {
     pub label: String,
     pub active: bool,
-    pub selected: bool,
     pub on_style: Style,
     pub off_style: Style,
 }
@@ -42,7 +41,6 @@ impl SelectableLine {
         SelectableLine {
             label,
             active,
-            selected,
             on_style: Style::default().fg(Color::Green),
             off_style: Style::default().fg(Color::Red),
         }

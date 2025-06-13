@@ -26,7 +26,7 @@ use ratatui::{
 use std::{io, rc::Rc, vec};
 use crate::{
     app::{App, PopUp, Screen},
-    column::column_info::ColumnInfo,
+    column::{self, column_info::ColumnInfo},
     file_explorer::file_explorer_data::FileExplorerData,
     options::SelectedOption,
     row::row_info::RowInfo,
@@ -397,6 +397,10 @@ fn render_insert_row_popup(frame: &mut Frame, app: &mut App) {
         .bg(app.quit_popup_bg_col())
         .fg(app.general_text_color());
     let metadata_style = Style::default().fg(app.alt_text_color_2()).add_modifier(Modifier::ITALIC);
+    let insert_text_area_on_style = Style::default().bg(app.text_entry_box_bg_col()).fg(app.general_text_color());
+    let insert_text_area_off_style = Style::default().bg(app.text_entry_box_bg_col()).fg(app.file_exp_pg_selected_col());
+    app.table_insert_form.as_mut().unwrap().set_off_style(insert_text_area_off_style);
+    app.table_insert_form.as_mut().unwrap().set_on_style(insert_text_area_on_style);
     let title_text = format!("Enter new entry into table {}", app.selected_db_table.as_deref().unwrap());
     let popup_block = Block::default()
         .borders(Borders::ALL)
@@ -404,19 +408,34 @@ fn render_insert_row_popup(frame: &mut Frame, app: &mut App) {
         .style(insert_row_popup_style);
     let mut column_text = Text::default();
 
-    for col_info in app.selected_table_columns.iter() {
+    // this is to calculate the correct spacing for entry text to line up, not yet implemented
+    let longest_col_name_len = app.selected_table_columns.iter()
+        .map(|c| c.name.len())
+        .max()
+        .unwrap_or(0);
+
+    for (i, col_info) in app.selected_table_columns.iter().enumerate() {
         column_text.push_line(col_info.name.clone());
         if app.options.display_col_metainfo_in_insert_view {
             column_text.push_span(Span::styled(format!(" [{}]", col_info.col_type.clone()), metadata_style));
         }
+        if let Some(form) = &app.table_insert_form {
+            column_text.push_span(Span::styled("  ", insert_row_popup_style));
+            if i == form.index {
+                column_text.push_span(Span::styled(form.items.get(i).unwrap().text_value.clone(), insert_text_area_on_style));
+            } else {
+                column_text.push_span(Span::styled(form.items.get(i).unwrap().text_value.clone(), insert_text_area_off_style));
+            }
+        }
     }
+
     let content_paragraph = Paragraph::new(column_text)
         .block(popup_block)
         .wrap(Wrap { trim: false } );
     let info_bits = vec![
         "Commands:",
         "s", " - save entry",
-        "ESC / q", " - return to database table view",
+        "ESC / ALT + q", " - return to database table view",
     ];
     let info_text = format_info_text(&info_bits, app);
     let info_paragraph = Paragraph::new(info_text)

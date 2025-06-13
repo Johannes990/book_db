@@ -6,10 +6,10 @@ use crate::{
     options::Options,
     row::row_list::RowListView,
     table::{table_info::TableInfo, table_list::TableListView},
-    ui::{colorscheme::ColorScheme, render},
+    ui::{colorscheme::ColorScheme, render}, widgets::table_insert_form::TableInsertForm,
 };
 use ratatui::{
-    style::Color,
+    style::{Color, Style},
     Terminal,
 };
 use std::{io, path::PathBuf};
@@ -31,9 +31,15 @@ pub enum PopUp {
     Save,
 }
 
+pub enum AppMode {
+    Browsing,
+    Editing,
+}
+
 pub struct App {
     pub current_screen: Screen,
     pub current_popup: PopUp,
+    pub current_mode: AppMode,
     pub selected_db: Option<DB>,
     pub selected_db_table: Option<String>,
     pub selected_table_columns: Vec<ColumnInfo>,
@@ -41,6 +47,7 @@ pub struct App {
     pub table_list_view: Option<TableListView>,
     pub column_list_view: Option<ColumnListView>,
     pub row_list_view: Option<RowListView>,
+    pub table_insert_form: Option<TableInsertForm>,
     pub options: Options
 }
 
@@ -52,6 +59,7 @@ impl App {
         Self {
             current_screen: Screen::Splash,
             current_popup: PopUp::None,
+            current_mode: AppMode::Browsing,
             selected_db: None,
             selected_db_table: None,
             selected_table_columns: Vec::new(),
@@ -59,6 +67,7 @@ impl App {
             table_list_view: None,
             column_list_view: None,
             row_list_view: None,
+            table_insert_form: None,
             options
         }
     }
@@ -170,6 +179,10 @@ impl App {
         }
     }
 
+    pub fn create_table_insert_form(&mut self, table_cols: Vec<String>) {
+        self.table_insert_form = Some(TableInsertForm::new(table_cols));
+    }
+
     pub fn general_text_color(&self) -> Color {
         self.options.selected_color_scheme.colors().general_text_color
     }
@@ -206,6 +219,10 @@ impl App {
         self.options.selected_color_scheme.colors().info_block_bg_col
     }
 
+    pub fn text_entry_box_bg_col(&self) -> Color {
+        self.options.selected_color_scheme.colors().text_entry_box_bg_col
+    }
+
     pub fn switch_to_screen(&mut self, screen: Screen) {
         self.current_screen = screen;
     }
@@ -216,5 +233,9 @@ impl App {
 
     pub fn list_available_color_schemes(&self) -> &Vec<ColorScheme> {
         self.options.list_color_schemes()
+    }
+
+    pub fn switch_app_mode(&mut self, mode: AppMode) {
+        self.current_mode = mode;
     }
 }

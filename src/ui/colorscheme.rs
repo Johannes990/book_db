@@ -17,6 +17,7 @@ pub struct Colors {
     pub table_row_normal_col: Color,
     pub table_row_alt_color: Color,
     pub info_block_bg_col: Color,
+    pub text_entry_box_bg_col: Color,
 }
 
 impl ColorScheme {
@@ -32,6 +33,7 @@ impl ColorScheme {
                 table_row_normal_col: Color::Rgb(200, 100, 0),
                 table_row_alt_color: Color::Rgb(180, 110, 0),
                 info_block_bg_col: Color::Rgb(255, 255, 255),
+                text_entry_box_bg_col: Color::Rgb(0, 255, 0),
             },
             ColorScheme::CoolBlue => Colors {
                 general_text_color: Color::Rgb(255, 255, 255),
@@ -43,6 +45,7 @@ impl ColorScheme {
                 table_row_normal_col: Color::Rgb(10, 10, 20),
                 table_row_alt_color: Color::Rgb(10, 10, 25),
                 info_block_bg_col: Color::Rgb(30, 30, 255),
+                text_entry_box_bg_col: Color::Rgb(0, 30, 200),
             }
         }
     }
