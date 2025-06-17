@@ -26,7 +26,7 @@ use ratatui::{
 use std::{io, rc::Rc, vec};
 use crate::{
     app::{App, PopUp, Screen},
-    column::{self, column_info::ColumnInfo},
+    column::column_info::ColumnInfo,
     file_explorer::file_explorer_data::FileExplorerData,
     options::SelectedOption,
     row::row_info::RowInfo,

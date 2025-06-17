@@ -9,7 +9,7 @@ use crate::{
     ui::{colorscheme::ColorScheme, render}, widgets::table_insert_form::TableInsertForm,
 };
 use ratatui::{
-    style::{Color, Style},
+    style::Color,
     Terminal,
 };
 use std::{io, path::PathBuf};

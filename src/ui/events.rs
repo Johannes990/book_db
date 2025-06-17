@@ -1,6 +1,11 @@
 use std::io;
 use crossterm::event::KeyModifiers;
-use ratatui::{crossterm::event::{self, Event, KeyCode, KeyEventKind}, style::Style};
+use ratatui::crossterm::event::{
+    self,
+    Event,
+    KeyCode,
+    KeyEventKind
+};
 use crate::{app::{App, PopUp, Screen, AppMode}, options::SelectedOption};
 
 
