@@ -46,8 +46,9 @@ impl DB {
             Self {
                 db_name: name, 
                 db_conn: conn, 
-                db_tab_col_map: HashMap::new() 
-        })
+                db_tab_col_map: HashMap::new()
+            }
+        )
     }
 
     pub fn get_db_name(&self) -> String {
@@ -107,6 +108,19 @@ impl DB {
         })?.collect::<Result<Vec<_>, _>>()?;
 
         Ok(rows)
+    }
+
+    pub fn get_autoincrement_pk_column(&self, table_name: &str) -> Result<Option<String>, DBError> {
+        let columns = self.get_table_columns(table_name)?;
+
+        for col in columns {
+            if col.is_pk && col.col_type.to_lowercase() == "integer" {
+                // SQLite auto-increment uses INTEGER PRIMARY KEY
+                return Ok(Some(col.name));
+            }
+        }
+
+        Ok(None)
     }
 
     pub fn get_table_columns(&self, table_name: &str) -> Result<Vec<ColumnInfo>, DBError> {
@@ -202,11 +216,8 @@ impl DB {
         Ok(())
     }
 
-    pub fn insert_statement(&mut self, table_name: String, columns: Vec<String>, values: Vec<&dyn ToSql>) -> Result<(), DBError> {
+    pub fn insert_statement(&mut self, table_name: String, mut columns: Vec<String>, mut values: Vec<&dyn ToSql>) -> Result<(), DBError> {
         let _ = self.check_table_exists(&table_name);
-        let table_cols = self.db_tab_col_map.get(&table_name).unwrap();
-        let _ = self.check_cols_match_existing(table_cols, &columns);
-
         let col_str = columns.join(", ");
         let placeholders = (0..columns.len()).map(|_| "?").collect::<Vec<_>>().join(", ");
         let sql = format!("INSERT INTO {} ({}) VALUES ({})", table_name, col_str, placeholders);
@@ -219,9 +230,17 @@ impl DB {
         let _ = self.check_table_exists(&table_name);
         let table_cols = self.db_tab_col_map.get(table_name).unwrap();
         let _ = self.check_cols_match_existing(table_cols, cols);
-
         let col_str = cols.join(", ");
         let sql = format!("SELECT {} FROM {}", col_str, table_name);
+        let res = self.db_conn.prepare(&sql)?;
+
+        Ok(res)
+    }
+
+    pub fn delete_statement(&self, table_name: &String, col_name: &String, id: u32) -> Result<Statement> {
+        let _ = self.check_table_exists(&table_name);
+        //let _ = self.check_col_exists_in_table(table_name, col_name);
+        let sql = format!("DELETE FROM {} WHERE {}={} ", table_name, col_name, id);
         let res = self.db_conn.prepare(&sql)?;
 
         Ok(res)
@@ -253,6 +272,16 @@ impl DB {
                 return Err(DBError::ColumnDoesNotExist(col.to_string()));
             }
         }
+
+        Ok(())
+    }
+
+    fn check_col_exists_in_table(self, table_name: &String, col_name: &String) -> Result<(), DBError> {
+        let table_cols = self.db_tab_col_map.get(table_name).unwrap();
+        if !(table_cols.contains(col_name)) {
+            return Err(DBError::ColumnDoesNotExist(col_name.to_string()));
+        }
+
         Ok(())
     }
 
@@ -264,6 +293,7 @@ impl DB {
             println!("Received col name {}", col_name);
             col_names.push(col_name.to_string());
         }
+
         col_names
     }
 }

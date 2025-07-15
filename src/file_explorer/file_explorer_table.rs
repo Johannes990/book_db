@@ -62,7 +62,7 @@ impl FileExplorerTable {
         self.scroll_state = self.scroll_state.position(i * ITEM_HEIGHT);
     }
 
-    pub fn update_file_list(&mut self) -> io::Result<()> {
+    pub fn update_file_list(&mut self) {
         let mut items = get_data_from_path(&self.current_path);
         
         if let Some(_) = self.current_path.parent() {
@@ -75,7 +75,6 @@ impl FileExplorerTable {
         }
         self.items = get_data_from_path(&self.current_path);
         self.state = TableState::new().with_selected(self.index);
-        Ok(())
     }
 
     pub fn update_scrollbar_state(&mut self) {

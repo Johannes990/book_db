@@ -28,7 +28,7 @@ pub enum PopUp {
     Quit,
     NoDBLoaded,
     InsertRow,
-    Save,
+    DeleteRow
 }
 
 pub enum AppMode {
@@ -48,6 +48,7 @@ pub struct App {
     pub column_list_view: Option<ColumnListView>,
     pub row_list_view: Option<RowListView>,
     pub table_insert_form: Option<TableInsertForm>,
+    pub should_quit: bool,
     pub options: Options
 }
 
@@ -68,6 +69,7 @@ impl App {
             column_list_view: None,
             row_list_view: None,
             table_insert_form: None,
+            should_quit: false,
             options
         }
     }

@@ -68,6 +68,7 @@ where
                 render_database_table_screen(frame, app);
                 match app.current_popup {
                     PopUp::InsertRow => render_insert_row_popup(frame, app),
+                    PopUp::DeleteRow => render_delete_row_popup(frame, app),
                     _ => {},
                 }
             },
@@ -263,6 +264,7 @@ fn render_database_table_screen(frame: &mut Frame, app: &mut App) {
     let text_bits = vec![
         "Commands:", 
         "i", " - create new entry",
+        "d", " - delete entry",
         "ESC / b", " - return to database view",
     ];
     let info_text = format_info_text(&text_bits, app);
@@ -407,7 +409,7 @@ fn render_insert_row_popup(frame: &mut Frame, app: &mut App) {
         .title(title_text)
         .style(insert_row_popup_style);
     let mut column_text = Text::default();
-
+    
     // this is to calculate the correct spacing for entry text to line up, not yet implemented
     let longest_col_name_len = app.selected_table_columns.iter()
         .map(|c| c.name.len())
@@ -587,6 +589,40 @@ fn render_table(frame: &mut Frame, state: &mut TableState,
     }
 
     frame.render_stateful_widget(table, area, state);
+}
+
+fn render_delete_row_popup(frame: &mut Frame, app: &mut App) {
+    let area = centered_rect(55, 30, frame.area());
+    let chunks = get_chunks(area, Direction::Vertical, vec![45, 55]);
+    let delete_row_popup_style = Style::default()
+        .bg(app.quit_popup_bg_col())
+        .fg(app.general_text_color());
+    let title_text = format!("Delete entry from table {}", app.selected_db_table.as_deref().unwrap());
+    let popup_block = Block::default()
+        .borders(Borders::ALL)
+        .title(title_text)
+        .style(delete_row_popup_style);
+    let mut delete_text = Text::default();
+    delete_text.push_line(Line::from("id"));
+    let content_paragraph = Paragraph::new(delete_text)
+        .wrap(Wrap {trim: true})
+        .block(popup_block);
+    let info_bits = vec![
+        "Commands:",
+        "Enter", " - delete entry with given ID",
+        "ESC", " - return to database table view"
+    ];
+    let info_text = format_info_text(&info_bits, app);
+    let info_paragraph = Paragraph::new(info_text)
+        .wrap(Wrap {trim: true})
+        .style(Style::default().bg(app.info_block_bg_col()))
+        .block(Block::default().borders(Borders::ALL).title("Info"));
+
+    frame.render_widget(Clear, chunks[0]);
+    frame.render_widget(content_paragraph, chunks[0]);
+
+    frame.render_widget(Clear, chunks[1]);
+    frame.render_widget(info_paragraph, chunks[1]);
 }
 
 fn centered_rect(percent_x: u16, percent_y: u16, area: ratatui::layout::Rect) -> ratatui::layout::Rect {
