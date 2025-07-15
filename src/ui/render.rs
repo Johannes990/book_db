@@ -4,21 +4,7 @@ use ratatui::{
     style::{Color, Modifier, Style},
     text::{Line, Span, Text},
     widgets::{
-        Block,
-        Borders,
-        Cell,
-        Clear,
-        HighlightSpacing,
-        List,
-        ListItem,
-        Paragraph,
-        Row,
-        Scrollbar,
-        ScrollbarOrientation,
-        ScrollbarState,
-        Table,
-        TableState,
-        Wrap
+        Block, Borders, Cell, Clear, HighlightSpacing, List, ListItem, Paragraph, Row, Scrollbar, ScrollbarOrientation, ScrollbarState, Table, TableState, Wrap
     },
     Frame,
     Terminal
@@ -85,7 +71,7 @@ where
 }
 
 fn render_splash_screen(frame: &mut Frame, app: &App) {
-    let chunks = get_chunks(frame.area(), Direction::Vertical, vec![75, 25]);
+    let chunks = get_chunks_from_percentages(frame.area(), Direction::Vertical, vec![75, 25]);
     let main_page_style = Style::default()
         .bg(app.general_page_bg_color())
         .fg(app.general_text_color());
@@ -115,7 +101,7 @@ fn render_splash_screen(frame: &mut Frame, app: &App) {
 }
 
 fn render_file_explorer_screen(frame: &mut Frame, app: &mut App) {
-    let chunks = get_chunks(frame.area(), Direction::Vertical, vec![75, 25]);
+    let chunks = get_chunks_from_percentages(frame.area(), Direction::Vertical, vec![75, 25]);
     let fexp_page_style = Style::default()
         .bg(app.general_page_bg_color())
         .fg(app.general_text_color());
@@ -176,14 +162,14 @@ fn render_file_explorer_screen(frame: &mut Frame, app: &mut App) {
 
 fn render_database_schema_screen(frame: &mut Frame, app: &mut App) {
     let db_page_style = Style::default().bg(app.general_page_bg_color()).fg(app.general_text_color());
-    let chunks = get_chunks(frame.area(), Direction::Vertical, vec![75, 25]);
+    let chunks = get_chunks_from_percentages(frame.area(), Direction::Vertical, vec![75, 25]);
     let db_name = app.selected_db.as_ref().expect("No DB option found").get_db_name();
     let outer_block = Block::default()
         .title(" Database View")
         .title(Line::from(format!("Currently viewing DATABASE: {}.db ", db_name)).right_aligned())
         .style(db_page_style);
     let inner_area = outer_block.inner(chunks[0]);
-    let table_column_chunks = get_chunks(inner_area, Direction::Horizontal, vec![50, 50]);
+    let table_column_chunks = get_chunks_from_percentages(inner_area, Direction::Horizontal, vec![50, 50]);
 
     frame.render_widget(outer_block, chunks[0]);
 
@@ -210,7 +196,7 @@ fn render_database_table_screen(frame: &mut Frame, app: &mut App) {
     let db_page_style = Style::default().bg(app.general_page_bg_color()).fg(app.general_text_color());
     let col_name_style = Style::default().fg(app.general_text_color()).add_modifier(Modifier::ITALIC | Modifier::UNDERLINED);
     let metadata_style = Style::default().fg(app.alt_text_color_2()).add_modifier(Modifier::ITALIC);
-    let chunks = get_chunks(frame.area(), Direction::Vertical, vec![75, 25]);
+    let chunks = get_chunks_from_percentages(frame.area(), Direction::Vertical, vec![75, 25]);
     let table_name = app.selected_db_table.as_ref().expect("unknown");
     let outer_block = Block::default()
         .title(" Table View")
@@ -278,8 +264,8 @@ fn render_database_table_screen(frame: &mut Frame, app: &mut App) {
 
 fn render_options_screen(frame: &mut Frame, app: &mut App) {
     let general_text_style = Style::default().fg(app.general_text_color());
-    let vertical_chunks = get_chunks(frame.area(), Direction::Vertical, vec![50, 25, 25]);
-    let horizontal_chunks = get_chunks(vertical_chunks[1], Direction::Horizontal, vec![50, 50]);
+    let vertical_chunks = get_chunks_from_percentages(frame.area(), Direction::Vertical, vec![50, 25, 25]);
+    let horizontal_chunks = get_chunks_from_percentages(vertical_chunks[1], Direction::Horizontal, vec![50, 50]);
 
     let color_schemes: &Vec<ColorScheme> = app.list_available_color_schemes();
     let color_scheme_items: Vec<ListItem> = color_schemes.into_iter()
@@ -394,7 +380,7 @@ fn render_no_db_loaded_popup(frame: &mut Frame, app: &mut App) {
 
 fn render_insert_row_popup(frame: &mut Frame, app: &mut App) {
     let area = centered_rect(55, 55, frame.area());
-    let chunks = get_chunks(area, Direction::Vertical, vec![70, 30]);
+    let chunks = get_chunks_from_percentages(area, Direction::Vertical, vec![70, 30]);
     let insert_row_popup_style = Style::default()
         .bg(app.quit_popup_bg_col())
         .fg(app.general_text_color());
@@ -593,20 +579,34 @@ fn render_table(frame: &mut Frame, state: &mut TableState,
 
 fn render_delete_row_popup(frame: &mut Frame, app: &mut App) {
     let area = centered_rect(55, 30, frame.area());
-    let chunks = get_chunks(area, Direction::Vertical, vec![45, 55]);
+    let chunks = get_chunks_from_percentages(area, Direction::Vertical, vec![45, 55]);
+    let content_chunks = get_chunks_from_constraints(
+        chunks[0],
+        Direction::Vertical,
+        vec![
+            Constraint::Length(2),
+            Constraint::Length(2),
+        ]
+    );
+    let delete_text_area_on_style = Style::default()
+        .bg(app.text_entry_box_bg_col())
+        .fg(app.general_text_color());
+    let delete_text_area_off_style = Style::default()
+        .bg(app.text_entry_box_bg_col())
+        .fg(app.file_exp_pg_selected_col());
+    if let Some(form) = &mut app.table_delete_form {
+        form.set_on_style(delete_text_area_on_style);
+        form.set_off_style(delete_text_area_off_style);
+    }
+   
+    let title_text = format!("Delete entry from table {}", app.selected_db_table.as_deref().unwrap());
     let delete_row_popup_style = Style::default()
         .bg(app.quit_popup_bg_col())
         .fg(app.general_text_color());
-    let title_text = format!("Delete entry from table {}", app.selected_db_table.as_deref().unwrap());
-    let popup_block = Block::default()
+    let delete_form_block = Block::default()
         .borders(Borders::ALL)
         .title(title_text)
         .style(delete_row_popup_style);
-    let mut delete_text = Text::default();
-    delete_text.push_line(Line::from("id"));
-    let content_paragraph = Paragraph::new(delete_text)
-        .wrap(Wrap {trim: true})
-        .block(popup_block);
     let info_bits = vec![
         "Commands:",
         "Enter", " - delete entry with given ID",
@@ -619,10 +619,30 @@ fn render_delete_row_popup(frame: &mut Frame, app: &mut App) {
         .block(Block::default().borders(Borders::ALL).title("Info"));
 
     frame.render_widget(Clear, chunks[0]);
-    frame.render_widget(content_paragraph, chunks[0]);
+    frame.render_widget(delete_form_block, chunks[0]);
 
     frame.render_widget(Clear, chunks[1]);
     frame.render_widget(info_paragraph, chunks[1]);
+    
+    let col_name_block = Block::default()
+        .borders(Borders::ALL)
+        .title("column name");
+    if let Some(form) = &app.table_delete_form {
+        frame.render_widget(&form.col_name_entry, col_name_block.inner(content_chunks[0]));
+    }
+
+    frame.render_widget(Clear, content_chunks[0]);
+    frame.render_widget(col_name_block, content_chunks[0]);
+
+    let value_block = Block::default()
+        .borders(Borders::ALL)
+        .title("row value");
+    if let Some(form) = &app.table_delete_form {
+        frame.render_widget(&form.row_value_entry, value_block.inner(chunks[1]));
+    }
+
+    frame.render_widget(Clear, content_chunks[1]);
+    frame.render_widget(value_block, content_chunks[1]);
 }
 
 fn centered_rect(percent_x: u16, percent_y: u16, area: ratatui::layout::Rect) -> ratatui::layout::Rect {
@@ -634,13 +654,20 @@ fn centered_rect(percent_x: u16, percent_y: u16, area: ratatui::layout::Rect) ->
     area
 }
 
-fn get_chunks(area: Rect, direction: Direction, percentages: Vec<u16>) -> Rc<[Rect]> {
+fn get_chunks_from_percentages(area: Rect, direction: Direction, percentages: Vec<u16>) -> Rc<[Rect]> {
     let constraints: Vec<Constraint> = percentages.iter().map(|value| Constraint::Percentage(*value)).collect();
     let chunks = Layout::default()
         .direction(direction)
-        .constraints(
-            constraints
-        )
+        .constraints(constraints)
+        .split(area);
+
+    chunks
+}
+
+fn get_chunks_from_constraints(area: Rect, direction: Direction, constraints: Vec<Constraint>) -> Rc<[Rect]> {
+    let chunks = Layout::default()
+        .direction(direction)
+        .constraints(constraints)
         .split(area);
 
     chunks

@@ -237,13 +237,16 @@ impl DB {
         Ok(res)
     }
 
-    pub fn delete_statement(&self, table_name: &String, col_name: &String, id: u32) -> Result<Statement> {
-        let _ = self.check_table_exists(&table_name);
-        //let _ = self.check_col_exists_in_table(table_name, col_name);
-        let sql = format!("DELETE FROM {} WHERE {}={} ", table_name, col_name, id);
-        let res = self.db_conn.prepare(&sql)?;
-
-        Ok(res)
+    pub fn delete_statement(&self, table_name: &str, col_name: &str, value: &str) -> Result<Statement> {
+        let _ = self.check_table_exists(table_name);
+        
+        if value.parse::<u32>().is_ok() {
+            let sql = format!("DELETE FROM {} WHERE {} = {}", table_name, col_name, value);
+            self.db_conn.prepare(&sql)
+        } else {
+            let sql = format!("DELETE FROM {} WHERE {} = '{}'", table_name, col_name, value);
+            self.db_conn.prepare(&sql)
+        }
     }
 
     fn check_tab_col_map_contains_table(&self, table_name: &String) -> bool {
@@ -258,8 +261,8 @@ impl DB {
         }
     }
 
-    fn check_table_exists(&self, table_name: &String) -> Result<(), DBError> {
-        if self.check_tab_col_map_contains_table(table_name) {
+    fn check_table_exists(&self, table_name: &str) -> Result<(), DBError> {
+        if self.check_tab_col_map_contains_table(&table_name.to_string()) {
             Ok(())
         } else {
             Err(DBError::TableDoesNotExist(table_name.to_string()))

@@ -26,6 +26,17 @@ impl Widget for TextEntryField {
     }
 }
 
+impl Widget for &TextEntryField {
+    fn render(self, area: Rect, buf: &mut Buffer) {
+        let style = if self.selected { self.on_style } else { self.off_style };
+
+        Paragraph::new(Line::from(self.text_value.clone()))
+            .style(style)
+            .block(Block::default().borders(Borders::NONE))
+            .render(area, buf);
+    }
+}
+
 impl TextEntryField {
     pub fn default(text_value: String, selected: bool) -> Self {
         TextEntryField {

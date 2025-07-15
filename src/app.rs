@@ -6,7 +6,7 @@ use crate::{
     options::Options,
     row::row_list::RowListView,
     table::{table_info::TableInfo, table_list::TableListView},
-    ui::{colorscheme::ColorScheme, render}, widgets::table_insert_form::TableInsertForm,
+    ui::{colorscheme::ColorScheme, render}, widgets::{table_delete_form::TableDeleteForm, table_insert_form::TableInsertForm},
 };
 use ratatui::{
     style::Color,
@@ -48,6 +48,7 @@ pub struct App {
     pub column_list_view: Option<ColumnListView>,
     pub row_list_view: Option<RowListView>,
     pub table_insert_form: Option<TableInsertForm>,
+    pub table_delete_form: Option<TableDeleteForm>,
     pub should_quit: bool,
     pub options: Options
 }
@@ -69,6 +70,7 @@ impl App {
             column_list_view: None,
             row_list_view: None,
             table_insert_form: None,
+            table_delete_form: None,
             should_quit: false,
             options
         }
@@ -183,6 +185,10 @@ impl App {
 
     pub fn create_table_insert_form(&mut self, table_cols: Vec<String>) {
         self.table_insert_form = Some(TableInsertForm::new(table_cols));
+    }
+
+    pub fn create_table_delete_form(&mut self) {
+        self.table_delete_form = Some(TableDeleteForm::new("", ""));
     }
 
     pub fn general_text_color(&self) -> Color {

@@ -208,7 +208,10 @@ fn database_table_screen_handler(app: &mut App, key_event: KeyEvent) {
                         app.switch_app_mode(AppMode::Editing);
                         app.switch_to_popup(PopUp::InsertRow);  // rendering is done after switch to InsertRow pop-up
                     },
-                    (KeyCode::Char('d'), KeyModifiers::NONE) => app.switch_to_popup(PopUp::DeleteRow),
+                    (KeyCode::Char('d'), KeyModifiers::NONE) => {
+                        app.create_table_delete_form();
+                        app.switch_to_popup(PopUp::DeleteRow);
+                    }
                     _ => {}
                 }
             }
@@ -275,8 +278,29 @@ fn database_table_screen_handler(app: &mut App, key_event: KeyEvent) {
         PopUp::DeleteRow => {
             if key_event.kind == KeyEventKind::Press {
                 match (key_event.code, key_event.modifiers) {
-                    (KeyCode::Enter, KeyModifiers::NONE) => {},
+                    (KeyCode::Enter, KeyModifiers::NONE) => {
+                        if let Some(form) = &app.table_delete_form {
+                            let col = form.col_name_entry.text_value.clone();
+                            let row = form.row_value_entry.text_value.clone();
+                            if let Some(db) = &app.selected_db.as_mut() {
+                                if let Some(table_name) = &app.selected_db_table {
+                                    let _ = db.delete_statement(&table_name, &col, &row);
+                                }
+                            }
+                        }
+                    },
                     (KeyCode::Esc, KeyModifiers::NONE) => app.switch_to_popup(PopUp::None),
+                    (KeyCode::Up, KeyModifiers::NONE) |
+                    (KeyCode::Down, KeyModifiers::NONE) |
+                    (KeyCode::Tab, KeyModifiers::NONE) => app.table_delete_form.as_mut().unwrap().switch_field(),
+                    (KeyCode::Char(c), KeyModifiers::NONE) => app.table_delete_form.as_mut().unwrap().enter_char(c),
+                    (KeyCode::Char(c), KeyModifiers::SHIFT) => {
+                        for c_uppercase in c.to_uppercase() {
+                            app.table_delete_form.as_mut().unwrap().enter_char(c_uppercase);
+                        }
+                    },
+                    (KeyCode::Backspace, KeyModifiers::NONE) => app.table_delete_form.as_mut().unwrap().pop_char(),
+
                     _ =>{}
                 }
             }
