@@ -5,8 +5,15 @@ use crate::{
     handle_key_events,
     options::Options,
     row::row_list::RowListView,
-    table::{table_info::TableInfo, table_list::TableListView},
-    ui::{colorscheme::ColorScheme, render}, widgets::{table_delete_form::TableDeleteForm, table_insert_form::TableInsertForm},
+    table::{
+        table_info::TableInfo,
+        table_list::TableListView
+    },
+    ui::{colorscheme::ColorScheme, render},
+    widgets::{
+        table_delete_form::TableDeleteForm,
+        table_insert_form::TableInsertForm
+    },
 };
 use ratatui::{
     style::Color,

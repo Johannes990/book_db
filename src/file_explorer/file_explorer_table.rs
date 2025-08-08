@@ -1,7 +1,7 @@
 use crate::file_explorer::file_explorer_data::FileExplorerData;
 use ratatui::widgets::{ScrollbarState, TableState};
 use unicode_width::UnicodeWidthStr;
-use std::{fs::{self}, io, path::PathBuf};
+use std::{fs::{self}, path::PathBuf};
 use chrono::{DateTime, Utc};
 
 
