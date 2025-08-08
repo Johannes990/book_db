@@ -203,7 +203,7 @@ impl DB {
     }
 
     pub fn create_table(&mut self, table_name: String, columns: Vec<String>, constraints: Vec<String>) -> Result<(), DBError> {
-        let _ = self.check_table_does_not_exist(table_name.clone());
+        self.check_table_does_not_exist(&table_name)?;
 
         let col_names = self.col_names_from_sql(&columns);
         self.db_tab_col_map.insert(table_name.clone(), col_names);
@@ -217,7 +217,7 @@ impl DB {
     }
 
     pub fn insert_statement(&mut self, table_name: String, columns: Vec<String>, values: Vec<&dyn ToSql>) -> Result<(), DBError> {
-        self.check_table_exists(&table_name);
+        self.check_table_exists(&table_name)?;
         let col_str = columns.join(", ");
         let placeholders = (0..columns.len()).map(|_| "?").collect::<Vec<_>>().join(", ");
         let sql = format!("INSERT INTO {} ({}) VALUES ({})", table_name, col_str, placeholders);
@@ -226,8 +226,8 @@ impl DB {
         Ok(())
     }
 
-    pub fn select_statement(&self, table_name: &String, cols: &Vec<String>) -> Result<Statement> {
-        self.check_table_exists(&table_name);
+    pub fn select_statement(&self, table_name: &String, cols: &Vec<String>) -> Result<Statement, DBError> {
+        self.check_table_exists(&table_name)?;
         let table_cols = self.db_tab_col_map.get(table_name).unwrap();
         let _ = self.check_cols_match_existing(table_cols, cols);
         let col_str = cols.join(", ");
@@ -237,8 +237,8 @@ impl DB {
         Ok(res)
     }
 
-    pub fn delete_statement(&self, table_name: &str, col_name: &str, value: &str) -> Result<usize> {
-        self.check_table_exists(table_name);
+    pub fn delete_statement(&self, table_name: &str, col_name: &str, value: &str) -> Result<usize, DBError> {
+        self.check_table_exists(table_name)?;
         
         let sql = if value.parse::<u32>().is_ok() {
             format!("DELETE FROM {} WHERE {} = {}", table_name, col_name, value)
@@ -246,18 +246,18 @@ impl DB {
             format!("DELETE FROM {} WHERE {} = '{}'", table_name, col_name, value)
         };
 
-        self.db_conn.execute(&sql, [])
+        Ok(self.db_conn.execute(&sql, [])?)
     }
 
     fn check_tab_col_map_contains_table(&self, table_name: &String) -> bool {
         self.db_tab_col_map.contains_key(table_name)
     }
 
-    fn check_table_does_not_exist(&self, table_name: String) -> Result<(), DBError> {
-        if !self.check_tab_col_map_contains_table(&table_name) {
+    fn check_table_does_not_exist(&self, table_name: &str) -> Result<(), DBError> {
+        if !self.check_tab_col_map_contains_table(&table_name.to_string()) {
             Ok(())
         } else {
-            Err(DBError::TableAlreadyExists(table_name))
+            Err(DBError::TableAlreadyExists(table_name.to_string()))
         }
     }
 
