@@ -296,7 +296,7 @@ fn database_table_screen_handler(app: &mut App, key_event: KeyEvent) {
                                             app.switch_to_popup(PopUp::None);
                                         }
                                         Err(e) => {
-                                            println!("Error deleting row: {}", e);
+                                            app.switch_to_popup(PopUp::Error(e));
                                         }
                                     }
                                 }
@@ -316,6 +316,14 @@ fn database_table_screen_handler(app: &mut App, key_event: KeyEvent) {
                     (KeyCode::Backspace, KeyModifiers::NONE) => app.table_delete_form.as_mut().unwrap().pop_char(),
 
                     _ =>{}
+                }
+            }
+        }
+        PopUp::Error(_) => {
+            if key_event.kind == KeyEventKind::Press {
+                match (key_event.code, key_event.modifiers) {
+                    (KeyCode::Esc, KeyModifiers::NONE) => app.switch_to_popup(PopUp::None),
+                    _ => {},
                 }
             }
         }

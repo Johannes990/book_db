@@ -1,6 +1,6 @@
 use ratatui::{
     layout::{Constraint, Direction, Flex, Layout},
-    prelude::{Margin, Rect},
+    prelude::{Alignment, Margin, Rect},
     style::{Color, Modifier, Style},
     text::{Line, Span, Text},
     widgets::{
@@ -55,6 +55,10 @@ where
                 match app.current_popup {
                     PopUp::InsertRow => render_insert_row_popup(frame, app),
                     PopUp::DeleteRow => render_delete_row_popup(frame, app),
+                    PopUp::Error(ref err) => {
+                        let msg = format!("{}", err);
+                        render_error_popup(frame, app, &msg);
+                    }
                     _ => {},
                 }
             },
@@ -639,6 +643,24 @@ fn render_delete_row_popup(frame: &mut Frame, app: &mut App) {
 
     frame.render_widget(Clear, chunks[1]);
     frame.render_widget(info_paragraph, chunks[1]);
+}
+
+fn render_error_popup(frame: &mut Frame, app: &mut App, msg: &str) {
+    let area = centered_rect(40 , 30, frame.area());
+    let error_block = Block::default()
+        .borders(Borders::ALL)
+        .title("Error")
+        .border_style(Style::default().fg(Color::Red))
+        .style(Style::default().bg(app.quit_popup_bg_col()).fg(Color::White));
+    let mut error_text = Text::default();
+    error_text.push_line(Span::raw(msg));
+    error_text.push_line(Span::raw("Press ESC to close this popup"));
+    let paragraph = Paragraph::new(error_text)
+        .block(error_block)
+        .alignment(Alignment::Center)
+        .wrap(Wrap { trim: true });
+
+    frame.render_widget(paragraph, area);
 }
 
 fn centered_rect(percent_x: u16, percent_y: u16, area: ratatui::layout::Rect) -> ratatui::layout::Rect {
