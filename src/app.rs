@@ -35,7 +35,8 @@ pub enum PopUp {
     Quit,
     NoDBLoaded,
     InsertRow,
-    DeleteRow
+    DeleteRow,
+    Error(DBError),
 }
 
 pub enum AppMode {
@@ -102,6 +103,7 @@ impl App {
                 Ok(db) => {
                     self.selected_db = Some(db);
                     self.fetch_table_list();
+                    self.populate_table_col_map();
                     Ok(())
                 },
                 Err(e) => Err(e),
@@ -252,5 +254,19 @@ impl App {
 
     pub fn switch_app_mode(&mut self, mode: AppMode) {
         self.current_mode = mode;
+    }
+
+    fn populate_table_col_map(&mut self) {
+        if let Some(db) = &mut self.selected_db {
+            db.db_tab_col_map.clear();
+
+            if let Ok(tables) = db.get_table_list() {
+                for table in tables {
+                    if let Ok(cols) = db.get_table_columns(&table) {
+                        db.db_tab_col_map.insert(table, cols.iter().map(|col| col.name.clone()).collect());
+                    }
+                }
+            }
+        }
     }
 }
