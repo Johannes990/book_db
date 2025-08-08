@@ -284,7 +284,21 @@ fn database_table_screen_handler(app: &mut App, key_event: KeyEvent) {
                             let row = form.row_value_entry.text_value.clone();
                             if let Some(db) = &app.selected_db.as_mut() {
                                 if let Some(table_name) = &app.selected_db_table {
-                                    let _ = db.delete_statement(&table_name, &col, &row);
+                                    match db.delete_statement(table_name, &col, &row) {
+                                        Ok(affected) => {
+                                            if affected > 0 {
+                                                println!("Deleted {} rows", affected);
+                                                
+                                            } else {
+                                                println!("No matching rows found");
+                                            }
+                                            app.select_table_rows(table_name.to_string());
+                                            app.switch_to_popup(PopUp::None);
+                                        }
+                                        Err(e) => {
+                                            println!("Error deleting row: {}", e);
+                                        }
+                                    }
                                 }
                             }
                         }

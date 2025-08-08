@@ -216,8 +216,8 @@ impl DB {
         Ok(())
     }
 
-    pub fn insert_statement(&mut self, table_name: String, mut columns: Vec<String>, mut values: Vec<&dyn ToSql>) -> Result<(), DBError> {
-        let _ = self.check_table_exists(&table_name);
+    pub fn insert_statement(&mut self, table_name: String, columns: Vec<String>, values: Vec<&dyn ToSql>) -> Result<(), DBError> {
+        self.check_table_exists(&table_name);
         let col_str = columns.join(", ");
         let placeholders = (0..columns.len()).map(|_| "?").collect::<Vec<_>>().join(", ");
         let sql = format!("INSERT INTO {} ({}) VALUES ({})", table_name, col_str, placeholders);
@@ -227,7 +227,7 @@ impl DB {
     }
 
     pub fn select_statement(&self, table_name: &String, cols: &Vec<String>) -> Result<Statement> {
-        let _ = self.check_table_exists(&table_name);
+        self.check_table_exists(&table_name);
         let table_cols = self.db_tab_col_map.get(table_name).unwrap();
         let _ = self.check_cols_match_existing(table_cols, cols);
         let col_str = cols.join(", ");
@@ -237,16 +237,16 @@ impl DB {
         Ok(res)
     }
 
-    pub fn delete_statement(&self, table_name: &str, col_name: &str, value: &str) -> Result<Statement> {
-        let _ = self.check_table_exists(table_name);
+    pub fn delete_statement(&self, table_name: &str, col_name: &str, value: &str) -> Result<usize> {
+        self.check_table_exists(table_name);
         
-        if value.parse::<u32>().is_ok() {
-            let sql = format!("DELETE FROM {} WHERE {} = {}", table_name, col_name, value);
-            self.db_conn.prepare(&sql)
+        let sql = if value.parse::<u32>().is_ok() {
+            format!("DELETE FROM {} WHERE {} = {}", table_name, col_name, value)
         } else {
-            let sql = format!("DELETE FROM {} WHERE {} = '{}'", table_name, col_name, value);
-            self.db_conn.prepare(&sql)
-        }
+            format!("DELETE FROM {} WHERE {} = '{}'", table_name, col_name, value)
+        };
+
+        self.db_conn.execute(&sql, [])
     }
 
     fn check_tab_col_map_contains_table(&self, table_name: &String) -> bool {

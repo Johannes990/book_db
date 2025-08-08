@@ -422,7 +422,7 @@ fn render_insert_row_popup(frame: &mut Frame, app: &mut App) {
         .wrap(Wrap { trim: false } );
     let info_bits = vec![
         "Commands:",
-        "s", " - save entry",
+        "CTRL + s", " - save entry",
         "ESC / ALT + q", " - return to database table view",
     ];
     let info_text = format_info_text(&info_bits, app);
@@ -579,15 +579,10 @@ fn render_table(frame: &mut Frame, state: &mut TableState,
 
 fn render_delete_row_popup(frame: &mut Frame, app: &mut App) {
     let area = centered_rect(55, 30, frame.area());
-    let chunks = get_chunks_from_percentages(area, Direction::Vertical, vec![45, 55]);
-    let content_chunks = get_chunks_from_constraints(
-        chunks[0],
-        Direction::Vertical,
-        vec![
-            Constraint::Length(2),
-            Constraint::Length(2),
-        ]
-    );
+    let chunks = get_chunks_from_percentages(area, Direction::Vertical, vec![70, 30]);
+    let delete_row_popup_style = Style::default()
+        .bg(app.quit_popup_bg_col())
+        .fg(app.general_text_color());
     let delete_text_area_on_style = Style::default()
         .bg(app.text_entry_box_bg_col())
         .fg(app.general_text_color());
@@ -598,15 +593,39 @@ fn render_delete_row_popup(frame: &mut Frame, app: &mut App) {
         form.set_on_style(delete_text_area_on_style);
         form.set_off_style(delete_text_area_off_style);
     }
-   
     let title_text = format!("Delete entry from table {}", app.selected_db_table.as_deref().unwrap());
-    let delete_row_popup_style = Style::default()
-        .bg(app.quit_popup_bg_col())
-        .fg(app.general_text_color());
     let delete_form_block = Block::default()
         .borders(Borders::ALL)
         .title(title_text)
         .style(delete_row_popup_style);
+
+    let form_inner = delete_form_block.inner(chunks[0]);
+    let form_chunks = get_chunks_from_constraints(
+        form_inner,
+        Direction::Vertical,
+        vec![
+            Constraint::Length(3),
+            Constraint::Length(3),
+        ],
+    );
+
+    frame.render_widget(Clear, chunks[0]);
+    frame.render_widget(delete_form_block.clone(), chunks[0]);
+
+    if let Some(form) = &app.table_delete_form {
+        let col_name_block = Block::default()
+            .borders(Borders::ALL)
+            .title("Column name");
+        frame.render_widget(&form.col_name_entry, col_name_block.inner(form_chunks[0]));
+        frame.render_widget(col_name_block, form_chunks[0]);
+        
+        let value_block = Block::default()
+            .borders(Borders::ALL)
+            .title("Row value");
+        frame.render_widget(&form.row_value_entry, value_block.inner(form_chunks[1]));
+        frame.render_widget(value_block, form_chunks[1]);
+    }
+
     let info_bits = vec![
         "Commands:",
         "Enter", " - delete entry with given ID",
@@ -618,31 +637,8 @@ fn render_delete_row_popup(frame: &mut Frame, app: &mut App) {
         .style(Style::default().bg(app.info_block_bg_col()))
         .block(Block::default().borders(Borders::ALL).title("Info"));
 
-    frame.render_widget(Clear, chunks[0]);
-    frame.render_widget(delete_form_block, chunks[0]);
-
     frame.render_widget(Clear, chunks[1]);
     frame.render_widget(info_paragraph, chunks[1]);
-    
-    let col_name_block = Block::default()
-        .borders(Borders::ALL)
-        .title("column name");
-    if let Some(form) = &app.table_delete_form {
-        frame.render_widget(&form.col_name_entry, col_name_block.inner(content_chunks[0]));
-    }
-
-    frame.render_widget(Clear, content_chunks[0]);
-    frame.render_widget(col_name_block, content_chunks[0]);
-
-    let value_block = Block::default()
-        .borders(Borders::ALL)
-        .title("row value");
-    if let Some(form) = &app.table_delete_form {
-        frame.render_widget(&form.row_value_entry, value_block.inner(chunks[1]));
-    }
-
-    frame.render_widget(Clear, content_chunks[1]);
-    frame.render_widget(value_block, content_chunks[1]);
 }
 
 fn centered_rect(percent_x: u16, percent_y: u16, area: ratatui::layout::Rect) -> ratatui::layout::Rect {
