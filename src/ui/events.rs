@@ -115,62 +115,94 @@ fn file_explorer_screen_handler(app: &mut App, key_event: KeyEvent) {
 }
 
 fn database_schema_screen_handler(app: &mut App, key_event: KeyEvent) {
-    if key_event.kind == KeyEventKind::Press {
-        match (key_event.code, key_event.modifiers) {
-            (KeyCode::Char('q'), KeyModifiers::NONE) |
-            (KeyCode::Esc, KeyModifiers::NONE) => app.switch_to_screen(Screen::Splash),
-            (KeyCode::Up, KeyModifiers::NONE) => {
-                if let Some(db) = &app.selected_db {
-                    let tables = db.get_table_list().unwrap_or_default();
-                    if let Some(selected_table) = &app.selected_db_table {
-                        let current_idx = tables.iter().position(|t| t == selected_table).unwrap_or(0);
-                        if current_idx > 0 {
-                            app.select_table(tables[current_idx - 1].clone());
-                        } else if current_idx == 0 {
-                            app.select_table(tables[tables.len() - 1].clone());
-                        } else if !tables.is_empty() {
-                            app.select_table(tables[0].clone());
+    match app.current_popup {
+        PopUp::None => {
+            if key_event.kind == KeyEventKind::Press {
+                match (key_event.code, key_event.modifiers) {
+                    (KeyCode::Char('q'), KeyModifiers::NONE) |
+                    (KeyCode::Esc, KeyModifiers::NONE) => app.switch_to_screen(Screen::Splash),
+                    (KeyCode::Up, KeyModifiers::NONE) => {
+                        if let Some(db) = &app.selected_db {
+                            let tables = db.get_table_list().unwrap_or_default();
+                            if let Some(selected_table) = &app.selected_db_table {
+                                let current_idx = tables.iter().position(|t| t == selected_table).unwrap_or(0);
+                                if current_idx > 0 {
+                                    app.select_table(tables[current_idx - 1].clone());
+                                } else if current_idx == 0 {
+                                    app.select_table(tables[tables.len() - 1].clone());
+                                } else if !tables.is_empty() {
+                                    app.select_table(tables[0].clone());
+                                }
+                                let _ = &app.table_list_view.as_mut().unwrap().previous();
+                            }
                         }
-                        let _ = &app.table_list_view.as_mut().unwrap().previous();
-                    }
-                }
-            },
-            (KeyCode::Down, KeyModifiers::NONE) => {
-                if let Some(db) = &app.selected_db {
-                    let tables = db.get_table_list().unwrap_or_default();
-                    if let Some(selected_table) = &app.selected_db_table {
-                        let current_idx = tables.iter().position(|t| t == selected_table).unwrap_or(0);
-                        if current_idx < tables.len() - 1 {
-                            app.select_table(tables[current_idx + 1].clone());
-                        } else if !tables.is_empty() {
-                            app.select_table(tables[0].clone());
+                    },
+                    (KeyCode::Down, KeyModifiers::NONE) => {
+                        if let Some(db) = &app.selected_db {
+                            let tables = db.get_table_list().unwrap_or_default();
+                            if let Some(selected_table) = &app.selected_db_table {
+                                let current_idx = tables.iter().position(|t| t == selected_table).unwrap_or(0);
+                                if current_idx < tables.len() - 1 {
+                                    app.select_table(tables[current_idx + 1].clone());
+                                } else if !tables.is_empty() {
+                                    app.select_table(tables[0].clone());
+                                }
+                                let _ = &app.table_list_view.as_mut().unwrap().next();
+                            }
                         }
-                        let _ = &app.table_list_view.as_mut().unwrap().next();
+                    },
+                    (KeyCode::Char('s'), KeyModifiers::NONE) => {
+                        if let Some(_) = &app.selected_db {
+                            if let Some(_) = &app.column_list_view {
+                                let _ = &app.column_list_view.as_mut().unwrap().previous();
+                            }
+                        }
+                    },
+                    (KeyCode::Char('x'), KeyModifiers::NONE) => {
+                        if let Some(_) = &app.selected_db {
+                            if let Some(_) = &app.column_list_view {
+                                let _ = &app.column_list_view.as_mut().unwrap().next();
+                            }
+                        }
+                    },
+                    (KeyCode::Char('n'), KeyModifiers::CONTROL) => {
+                        if let Some(db) = &app.selected_db {
+                            app.create_create_table_form();
+                            app.switch_to_popup(PopUp::InsertTable);
+                        }
+                    },
+                    (KeyCode::Enter, KeyModifiers::NONE) => {
+                        if let Some(selected_table) = &app.selected_db_table {
+                            app.select_table_rows(selected_table.to_string());
+                            app.switch_to_screen(Screen::DataBaseTable);
+                        }
+                    },
+                    _ => {}
+                }
+            }
+        },
+        PopUp::InsertTable => {
+            if key_event.kind == KeyEventKind::Press {
+                match (key_event.code, key_event.modifiers) {
+                    (KeyCode::Esc, KeyModifiers::NONE) => app.switch_to_popup(PopUp::None),
+                    (KeyCode::Char(c), KeyModifiers::NONE) => app.create_table_form.as_mut().unwrap().enter_char(c),
+                    (KeyCode::Char(c), KeyModifiers::SHIFT) => {
+                        for c_uppercase in c.to_uppercase() {
+                            app.create_table_form.as_mut().unwrap().enter_char(c_uppercase);
+                        }
+                    },
+                    (KeyCode::Backspace, KeyModifiers::NONE) => app.create_table_form.as_mut().unwrap().pop_char(),
+                    (KeyCode::Enter, KeyModifiers::NONE) => {
+                        if let Some(db) = &mut app.selected_db {
+                            db.execute_raw_sql(app.create_table_form.as_ref().unwrap().sql.text_value.clone());
+                            app.switch_to_popup(PopUp::None);
+                        }
                     }
+                    _ => {}
                 }
-            },
-            (KeyCode::Char('s'), KeyModifiers::NONE) => {
-                if let Some(_) = &app.selected_db {
-                    if let Some(_) = &app.column_list_view {
-                        let _ = &app.column_list_view.as_mut().unwrap().previous();
-                    }
-                }
-            },
-            (KeyCode::Char('x'), KeyModifiers::NONE) => {
-                if let Some(_) = &app.selected_db {
-                    if let Some(_) = &app.column_list_view {
-                        let _ = &app.column_list_view.as_mut().unwrap().next();
-                    }
-                }
-            },
-            (KeyCode::Enter, KeyModifiers::NONE) => {
-                if let Some(selected_table) = &app.selected_db_table {
-                    app.select_table_rows(selected_table.to_string());
-                    app.switch_to_screen(Screen::DataBaseTable);
-                }
-            },
-            _ => {}
-        }
+            }
+        },
+        _ => {}
     }
 }
 

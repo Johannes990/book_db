@@ -47,6 +47,7 @@ where
             Screen::DatabaseSchema => {
                 render_database_schema_screen(frame, app);
                 match app.current_popup {
+                    PopUp::InsertTable => render_insert_table_popup(frame, app),
                     _ => {},
                 }
             },
@@ -184,7 +185,8 @@ fn render_database_schema_screen(frame: &mut Frame, app: &mut App) {
     let text_bits = vec![
         "Commands:", 
         "↑ / ↓", " - navigate", 
-        "Enter" , " - select table", 
+        "Enter" , " - select table",
+        "CTRL + n", " - create new table",
         "ESC / q", " - return to splash screen",
     ];
     let info_text = format_info_text(&text_bits, app);
@@ -428,6 +430,42 @@ fn render_insert_row_popup(frame: &mut Frame, app: &mut App) {
         "Commands:",
         "CTRL + s", " - save entry",
         "ESC / ALT + q", " - return to database table view",
+    ];
+    let info_text = format_info_text(&info_bits, app);
+    let info_paragraph = Paragraph::new(info_text)
+        .wrap(Wrap {trim: true})
+        .style(Style::default().bg(app.info_block_bg_col()))
+        .block(Block::default().borders(Borders::ALL).title("Info"));
+
+    frame.render_widget(Clear, chunks[0]);
+    frame.render_widget(content_paragraph, chunks[0]);
+
+    frame.render_widget(Clear, chunks[1]);
+    frame.render_widget(info_paragraph, chunks[1]);
+}
+
+fn render_insert_table_popup(frame: &mut Frame, app: &mut App) {
+    let area = centered_rect(55, 55, frame.area());
+    let chunks = get_chunks_from_percentages(area, Direction::Vertical, vec![70, 30]);
+    let insert_table_popup_style = Style::default()
+        .bg(app.quit_popup_bg_col())
+        .fg(app.general_text_color());
+    let insert_text_area_on_style = Style::default().bg(app.text_entry_box_bg_col()).fg(app.general_text_color());
+    let insert_text_area_off_style = Style::default().bg(app.text_entry_box_bg_col()).fg(app.file_exp_pg_selected_col());
+    app.create_table_form.as_mut().unwrap().set_on_style(insert_text_area_on_style);
+    app.create_table_form.as_mut().unwrap().set_off_style(insert_text_area_off_style);
+    let title_text = format!("Create new table into database {}", app.selected_db.as_ref().unwrap().get_db_name());
+    let create_table_block = Block::default()
+        .borders(Borders::ALL)
+        .style(insert_table_popup_style)
+        .title(title_text);
+    let content_paragraph = Paragraph::new(app.create_table_form.as_ref().unwrap().sql.text_value.clone())
+        .block(create_table_block)
+        .wrap(Wrap { trim: false });
+    let info_bits = vec![
+        "Commands:",
+        "Enter", " - execute sql",
+        "ESC", " - return to database schema view",
     ];
     let info_text = format_info_text(&info_bits, app);
     let info_paragraph = Paragraph::new(info_text)

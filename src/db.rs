@@ -1,4 +1,6 @@
 use rusqlite::{Connection, Result, Error, Statement, ToSql, types::ValueRef};
+use sqlparser::dialect::SQLiteDialect;
+use sqlparser::parser::{Parser, ParserError};
 use std::collections::HashMap;
 use std::fmt;
 use crate::column::column_info::ColumnInfo;
@@ -12,6 +14,7 @@ pub enum DBError {
     TableDoesNotExist(String),
     ColumnDoesNotExist(String),
     SqlError(Error),
+    ParseError(ParserError),
 }
 
 impl fmt::Display for DBError {
@@ -22,6 +25,7 @@ impl fmt::Display for DBError {
             DBError::TableDoesNotExist(table) => write!(f, "Table '{}' does not exist", table),
             DBError::ColumnDoesNotExist(column) => write!(f, "Column '{}' does not exist", column),
             Self::SqlError(e) => write!(f, "SQL Error: {}", e),
+            DBError::ParseError(e) => write!(f, "SQL Parse Error: {}", e),
         }
     }
 }
@@ -29,6 +33,12 @@ impl fmt::Display for DBError {
 impl From<Error> for DBError {
     fn from(err: Error) -> DBError {
         DBError::SqlError(err)
+    }
+}
+
+impl From<ParserError> for DBError {
+    fn from(err: ParserError) -> DBError {
+        DBError::ParseError(err)
     }
 }
 
@@ -216,6 +226,24 @@ impl DB {
         Ok(())
     }
 
+    pub fn execute_raw_sql(&mut self, raw_sql: String) -> Result<(), DBError> {
+        // validate by sqlparser
+        let dialect = SQLiteDialect{};
+        Parser::parse_sql(&dialect, &raw_sql)?;
+
+        //validate by rusqlite
+        let explain_sql = format!("EXPLAIN {}", raw_sql);
+        self.db_conn
+            .prepare(&explain_sql)
+            .map_err(DBError::SqlError)?;
+
+        self.db_conn
+            .execute(&raw_sql, [])
+            .map_err(DBError::SqlError)?;
+
+        Ok(())
+    }
+
     pub fn insert_statement(&mut self, table_name: String, columns: Vec<String>, values: Vec<&dyn ToSql>) -> Result<(), DBError> {
         self.check_table_exists(&table_name)?;
         let col_str = columns.join(", ");
@@ -288,9 +316,9 @@ impl DB {
         Ok(())
     }
 
-    fn col_names_from_sql<'a>(&self, sql_str: &Vec<String>) -> Vec<String> {
+    fn col_names_from_sql<'a>(&self, columns: &Vec<String>) -> Vec<String> {
         let mut col_names = Vec::new();
-        for col_str in sql_str {
+        for col_str in columns {
             let col_parts: Vec<_> = col_str.split(' ').collect();
             let col_name = col_parts[0];
             println!("Received col name {}", col_name);

@@ -11,8 +11,7 @@ use crate::{
     },
     ui::{colorscheme::ColorScheme, render},
     widgets::{
-        table_delete_form::TableDeleteForm,
-        table_insert_form::TableInsertForm
+        create_table_form::CreateTableForm, table_delete_form::TableDeleteForm, table_insert_form::TableInsertForm
     },
 };
 use ratatui::{
@@ -36,6 +35,7 @@ pub enum PopUp {
     NoDBLoaded,
     InsertRow,
     DeleteRow,
+    InsertTable,
     Error(DBError),
 }
 
@@ -60,6 +60,7 @@ pub struct App {
     pub row_list_view: Option<RowListView>,
     pub table_insert_form: Option<TableInsertForm>,
     pub table_delete_form: Option<TableDeleteForm>,
+    pub create_table_form: Option<CreateTableForm>,
     pub should_quit: bool,
     pub options: Options
 }
@@ -94,6 +95,7 @@ impl App {
             row_list_view: None,
             table_insert_form: None,
             table_delete_form: None,
+            create_table_form: None,
             should_quit: false,
             options
         })
@@ -213,6 +215,10 @@ impl App {
 
     pub fn create_table_delete_form(&mut self) {
         self.table_delete_form = Some(TableDeleteForm::new("", ""));
+    }
+
+    pub fn create_create_table_form(&mut self) {
+        self.create_table_form = Some(CreateTableForm::new());
     }
 
     pub fn general_text_color(&self) -> Color {
