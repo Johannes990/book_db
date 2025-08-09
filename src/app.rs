@@ -45,6 +45,9 @@ pub enum AppMode {
 }
 
 pub struct App {
+    pub qualifier: String,
+    pub organization: String,
+    pub application: String,
     pub current_screen: Screen,
     pub current_popup: PopUp,
     pub current_mode: AppMode,
@@ -62,18 +65,30 @@ pub struct App {
 }
 
 impl App {
-    pub fn new(color_scheme: ColorScheme) -> Self {
-        let file_explorer_table = FileExplorerTable::new();
-        let options = Options::new(color_scheme);
+    pub fn new(
+        qualifier: String,
+        organization: String,
+        application: String,
+        default_color_scheme: ColorScheme
+    ) -> io::Result<Self> {
+        let options = Options::load_or_default(
+            &qualifier,
+            &organization,
+            &application,
+            default_color_scheme
+        )?;
 
-        Self {
+        Ok(Self {
+            qualifier,
+            organization,
+            application,
             current_screen: Screen::Splash,
             current_popup: PopUp::None,
             current_mode: AppMode::Browsing,
             selected_db: None,
             selected_db_table: None,
             selected_table_columns: Vec::new(),
-            file_explorer_table,
+            file_explorer_table: FileExplorerTable::new(),
             table_list_view: None,
             column_list_view: None,
             row_list_view: None,
@@ -81,7 +96,7 @@ impl App {
             table_delete_form: None,
             should_quit: false,
             options
-        }
+        })
     }
 
     pub fn run<B: ratatui::backend::Backend>(&mut self, terminal: &mut Terminal<B>) -> io::Result<()> {

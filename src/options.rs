@@ -1,12 +1,17 @@
 use crate::ui::colorscheme::ColorScheme;
 use strum::{EnumIter, IntoEnumIterator};
+use serde::{Serialize, Deserialize};
+use std::{fs, io};
+use directories_next::ProjectDirs;
+use toml;
 
-#[derive(EnumIter, Clone, Copy, PartialEq)]
+#[derive(EnumIter, Clone, Copy, PartialEq, Serialize, Deserialize)]
 pub enum SelectedOption {
     TableMetainfoToggle,
     InsertMetainfoToggle,
 }
 
+#[derive(Serialize, Deserialize)]
 pub struct Options {
     pub available_color_schemes: Vec<ColorScheme>,
     pub selected_color_scheme: ColorScheme,
@@ -28,6 +33,46 @@ impl Options {
             display_col_metainfo_in_table_view: true,
             display_col_metainfo_in_insert_view: true,
         }
+    }
+
+    pub fn load_or_default(
+            qualifier_str: &str,
+            organization_str: &str,
+            application_str: &str,
+            default_color_scheme: ColorScheme
+    ) -> io::Result<Self> {
+        let project_dirs = ProjectDirs::from(
+            qualifier_str,
+            organization_str,
+            application_str
+        )
+            .expect("Could not determine directoy!");
+        fs::create_dir_all(project_dirs.config_dir())?;
+        let config_dir_path = project_dirs.config_dir().join("config.toml");
+
+        if config_dir_path.exists() {
+            let data = fs::read_to_string(&config_dir_path)?;
+            let options: Self = toml::from_str(&data)
+                .map_err(|err| io::Error::new(io::ErrorKind::InvalidData, err))?;
+            Ok(options)
+        } else {
+            Ok(Self::new(default_color_scheme))
+        }
+    }
+
+    pub fn save(&self, qualifier_str: &str, organization_str: &str, application_str: &str) -> io::Result<()> {
+        let project_dirs = ProjectDirs::from(
+            qualifier_str,
+            organization_str,
+            application_str
+        )
+            .expect("Could not determine directory!");
+        let config_path = project_dirs.config_dir().join("config.toml");
+        fs::create_dir_all(project_dirs.config_dir())?;
+        let data = toml::to_string(self)
+            .map_err(|err| io::Error::new(io::ErrorKind::InvalidData, err))?;
+        fs::write(config_path, data)?;
+        Ok(())
     }
 
     fn select_color_scheme(&mut self, color_scheme: ColorScheme) {
@@ -63,7 +108,7 @@ impl Options {
     }
 
     pub fn set_display_col_metainfo_in_table_view(&mut self, value: bool) {
-        self.display_col_metainfo_in_table_view = value;        
+        self.display_col_metainfo_in_table_view = value;
     }
 
     pub fn set_display_col_metainfo_in_insert_view(&mut self, value: bool) {

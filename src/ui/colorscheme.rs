@@ -1,7 +1,8 @@
 use ratatui::style::Color;
 use strum_macros::EnumIter;
+use serde::{Serialize, Deserialize};
 
-#[derive(Clone, Copy, EnumIter, Debug, PartialEq)]
+#[derive(Clone, Copy, EnumIter, Debug, PartialEq, Serialize, Deserialize)]
 pub enum ColorScheme {
     Autumn,
     CoolBlue,

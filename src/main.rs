@@ -28,6 +28,10 @@ use std::io;
 
 
 fn main() -> io::Result<()> {
+    let qualifier = "".to_string();
+    let organization = "JohannesCorp".to_string();
+    let application = "Libry".to_string();
+
     let mut stdout = std::io::stdout();
 
     let _ = execute!(
@@ -40,7 +44,14 @@ fn main() -> io::Result<()> {
 
     let backend = CrosstermBackend::new(io::stdout());
     let mut terminal = setup_terminal(backend)?;
-    let mut app = setup_app(&terminal, ColorScheme::Autumn)?;
+    let default_color_scheme = ColorScheme::Autumn;
+    let mut app = setup_app(
+        &terminal,
+        qualifier,
+        organization,
+        application,
+        default_color_scheme
+    )?;
     let res = app.run(&mut terminal);
     handle_errors(res);
     teardown_terminal(&mut terminal)?;
@@ -61,13 +72,19 @@ where
     Ok(terminal)
 }
 
-fn setup_app<B>(terminal: &Terminal<B>, color_scheme: ColorScheme) -> Result<App, io::Error> 
+fn setup_app<B>(
+    terminal: &Terminal<B>,
+    qual_str: String,
+    org_str: String,
+    app_str: String,
+    color_scheme: ColorScheme
+) -> Result<App, io::Error> 
 where 
     B: Backend,
 {
     let _terminal_height = terminal.size()?.height;
     let _terminal_width = terminal.size()?.width;
-    let app = App::new(color_scheme);
+    let app = App::new(qual_str,org_str, app_str, color_scheme)?;
 
     Ok(app)
 }
