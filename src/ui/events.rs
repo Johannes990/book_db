@@ -277,9 +277,8 @@ fn database_table_screen_handler(app: &mut App, key_event: KeyEvent) {
                             .iter()
                             .map(|col_info| col_info.name.clone())
                             .collect();
-                        app.create_table_insert_form(table_cols);   // create table insert form before rendering
-                        app.switch_app_mode(AppMode::Editing);
-                        app.switch_to_popup(PopUp::InsertRow);  // rendering is done after switch to InsertRow pop-up
+                        app.create_table_insert_form(table_cols);
+                        app.switch_to_popup(PopUp::InsertRow);
                     },
                     (KeyCode::Char('d'), KeyModifiers::NONE) => {
                         app.create_table_delete_form();
@@ -290,64 +289,65 @@ fn database_table_screen_handler(app: &mut App, key_event: KeyEvent) {
             }
         },
         PopUp::InsertRow => {
-            match app.current_mode {
-                AppMode::Browsing => {
-                },
-                AppMode::Editing => {
-                    if key_event.kind == KeyEventKind::Press {
-                        match (key_event.code, key_event.modifiers) {
-                            (KeyCode::Esc, KeyModifiers::NONE) |
-                            (KeyCode::Char('q'), KeyModifiers::ALT) => {
-                                app.switch_app_mode(AppMode::Browsing);
-                                app.switch_to_popup(PopUp::None);
-                            } ,
-                            (KeyCode::Up, KeyModifiers::NONE) => app.table_insert_form.as_mut().unwrap().previous(),
-                            (KeyCode::Down, KeyModifiers::NONE) => app.table_insert_form.as_mut().unwrap().next(),
-                            (KeyCode::Char(c), KeyModifiers::NONE) => app.table_insert_form.as_mut().unwrap().enter_char(c),
-                            (KeyCode::Char(c), KeyModifiers::SHIFT) => {
-                                for c_uppercase in c.to_uppercase() {
-                                    app.table_insert_form.as_mut().unwrap().enter_char(c_uppercase);
-                                }
-                            },
-                            (KeyCode::Backspace, KeyModifiers::NONE) => app.table_insert_form.as_mut().unwrap().pop_char(),
-                            (KeyCode::Char('s'), KeyModifiers::CONTROL) => {
-                                if let Some(db) = app.selected_db.as_mut() {
-                                    if let Some(table_name) = &app.selected_db_table {
-                                        if let Some(form) = &app.table_insert_form.as_ref() {
-                                            let mut columns: Vec<String> = Vec::new();
-                                            let mut values: Vec<&dyn ToSql> = Vec::new();
-                                            let mut values_str = Vec::new();
-                                            
-                                            // Pair form items with their column info
-                                            for (item, col_info) in form.items
-                                                    .iter()
-                                                    .zip(&app.selected_table_columns) {
-                                                columns.push(col_info.name.clone());
-                                                values.push(&item.text_value as &dyn ToSql);
-                                                values_str.push(&item.text_value);
-                                            }
+            if key_event.kind == KeyEventKind::Press {
+                match (key_event.code, key_event.modifiers) {
+                    (KeyCode::Esc, KeyModifiers::NONE) |
+                    (KeyCode::Char('q'), KeyModifiers::ALT) => {
+                        app.switch_app_mode(AppMode::Browsing);
+                        app.switch_to_popup(PopUp::None);
+                    } ,
+                    (KeyCode::Up, KeyModifiers::NONE) => app.table_insert_form.as_mut().unwrap().previous(),
+                    (KeyCode::Down, KeyModifiers::NONE) => app.table_insert_form.as_mut().unwrap().next(),
+                    (KeyCode::Char(c), KeyModifiers::NONE) => app.table_insert_form.as_mut().unwrap().enter_char(c),
+                    (KeyCode::Char(c), KeyModifiers::SHIFT) => {
+                        for c_uppercase in c.to_uppercase() {
+                            app.table_insert_form.as_mut().unwrap().enter_char(c_uppercase);
+                        }
+                    },
+                    (KeyCode::Backspace, KeyModifiers::NONE) => app.table_insert_form.as_mut().unwrap().pop_char(),
+                    (KeyCode::Char('s'), KeyModifiers::CONTROL) => {
+                        if let Some(db) = app.selected_db.as_mut() {
+                            if let Some(table_name) = &app.selected_db_table {
+                                if let Some(form) = &app.table_insert_form.as_ref() {
+                                    let mut columns: Vec<String> = Vec::new();
+                                    let mut values: Vec<&dyn ToSql> = Vec::new();
+                                    let mut values_str = Vec::new();
+                                    
+                                    // Pair form items with their column info
+                                    for (item, col_info) in form.items
+                                            .iter()
+                                            .zip(&app.selected_table_columns) {
+                                        columns.push(col_info.name.clone());
+                                        values.push(&item.text_value as &dyn ToSql);
+                                        values_str.push(&item.text_value);
+                                    }
 
-                                            match db.insert_rows_statement(table_name.clone(), columns, values) {
-                                                Ok(_) => {
-                                                    app.switch_app_mode(AppMode::Browsing);
-                                                    app.switch_to_popup(PopUp::None);
-                                                    
-                                                    if let Some(selected_table) = &app.selected_db_table {
-                                                        app.select_table_rows(selected_table.to_string());
-                                                    }
-                                                },
-                                                Err(e) => eprintln!("Insert failed: {}", e)
+                                    match db.insert_rows_statement(table_name.clone(), columns, values) {
+                                        Ok(_) => {
+                                            if let Some(table_list) = &mut app.table_list_view {
+                                                if let Some(table_info) = table_list
+                                                        .items
+                                                        .iter_mut()
+                                                        .find(|t| t.name == *table_name) {
+                                                    table_info.increment_row_count();
+                                                }
                                             }
-                                        }
+                                            app.switch_app_mode(AppMode::Browsing);
+                                            app.switch_to_popup(PopUp::None);
+                                            
+                                            if let Some(selected_table) = &app.selected_db_table {
+                                                app.select_table_rows(selected_table.to_string());
+                                            }
+                                        },
+                                        Err(e) => eprintln!("Insert failed: {}", e)
                                     }
                                 }
-                            },
-                            _ => {}
+                            }
                         }
-                    }
+                    },
+                    _ => {}
                 }
             }
-            
         },
         PopUp::DeleteRow => {
             if key_event.kind == KeyEventKind::Press {
@@ -361,6 +361,14 @@ fn database_table_screen_handler(app: &mut App, key_event: KeyEvent) {
                                     match db.delete_row_statement(table_name, &col, &row) {
                                         Ok(affected) => {
                                             if affected > 0 {
+                                                if let Some(table_list) = &mut app.table_list_view {
+                                                if let Some(table_info) = table_list
+                                                        .items
+                                                        .iter_mut()
+                                                        .find(|t| t.name == *table_name) {
+                                                    table_info.decrement_row_count();
+                                                }
+                                            }
                                                 println!("Deleted {} rows", affected);
                                                 
                                             } else {

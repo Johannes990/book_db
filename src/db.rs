@@ -229,6 +229,8 @@ impl DB {
 
         self.db_conn.execute(&sql, [])?;
 
+        self.refresh_table_columns(&table_name)?;
+
         Ok(())
     }
 
@@ -257,6 +259,8 @@ impl DB {
             .execute(&raw_sql, [])
             .map_err(DBError::SqlError)?;
 
+        self.refresh_tables()?;
+
         Ok(())
     }
 
@@ -278,7 +282,7 @@ impl DB {
         let table_cols = self.db_tab_col_map.get(table_name).unwrap();
 
         self.check_cols_match_existing(table_cols, cols)?;
-        
+
         let col_str = cols.join(", ");
         let sql = format!("SELECT {} FROM {}", col_str, table_name);
         let res = self.db_conn.prepare(&sql)?;
@@ -332,6 +336,25 @@ impl DB {
         let table_cols = self.db_tab_col_map.get(table_name).unwrap();
         if !(table_cols.contains(col_name)) {
             return Err(DBError::ColumnDoesNotExist(col_name.to_string()));
+        }
+
+        Ok(())
+    }
+
+    fn refresh_table_columns(&mut self, table_name: &str) -> Result<(), DBError> {
+        let columns = self.get_table_columns(table_name)?
+            .into_iter()
+            .map(|col| col.name)
+            .collect::<Vec<_>>();
+        self.db_tab_col_map.insert(table_name.to_string(), columns);
+
+        Ok(())
+    }
+
+    fn refresh_tables(&mut self) -> Result<(), DBError> {
+        let tables = self.get_table_list()?;
+        for table in tables {
+            self.refresh_table_columns(&table)?;
         }
 
         Ok(())
