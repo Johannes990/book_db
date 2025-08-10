@@ -51,7 +51,9 @@ pub struct DB {
 impl DB {
     pub fn new(name: String) -> Result<Self, DBError> {
         let db_string = name.to_owned() + ".db";
-        let conn = Connection::open(&db_string).map_err(|text| DBError::ConnectionCreationError(text.to_string()))?;
+        let conn = Connection::open(&db_string)
+            .map_err(|text| DBError::ConnectionCreationError(text.to_string()))?;
+
         Ok(
             Self {
                 db_name: name, 
@@ -86,6 +88,7 @@ impl DB {
             "SELECT type FROM sqlite_master WHERE name = ?"
         )?;
         let table_type: String = statement.query_row([table_name], |row| row.get(0))?;
+
         Ok(table_type == "view")
     }
 
@@ -93,6 +96,7 @@ impl DB {
         let query = format!("SELECT COUNT(*) FROM {}", table_name);
         let mut statement = self.db_conn.prepare(&query)?;
         let count: u64 = statement.query_row([], |row| row.get(0))?;
+
         Ok(count)
     }
 
@@ -222,7 +226,19 @@ impl DB {
         let constraints_str = constraints.join(", ");
         let table_contents = columns_str + ", " + &constraints_str;
         let sql = format!("CREATE TABLE IF NOT EXISTS {} ({})", table_name, table_contents);
+
         self.db_conn.execute(&sql, [])?;
+
+        Ok(())
+    }
+
+    pub fn drop_table(&mut self, table_name: String) -> Result<(), DBError> {
+        self.check_table_exists(table_name.as_str())?;
+
+        let sql = format!("DROP TABLE IF EXISTS {}", table_name);
+
+        self.db_conn.execute(&sql, [])?;
+
         Ok(())
     }
 
@@ -244,20 +260,25 @@ impl DB {
         Ok(())
     }
 
-    pub fn insert_statement(&mut self, table_name: String, columns: Vec<String>, values: Vec<&dyn ToSql>) -> Result<(), DBError> {
+    pub fn insert_rows_statement(&mut self, table_name: String, columns: Vec<String>, values: Vec<&dyn ToSql>) -> Result<(), DBError> {
         self.check_table_exists(&table_name)?;
+
         let col_str = columns.join(", ");
         let placeholders = (0..columns.len()).map(|_| "?").collect::<Vec<_>>().join(", ");
         let sql = format!("INSERT INTO {} ({}) VALUES ({})", table_name, col_str, placeholders);
+
         self.db_conn.execute(&sql, values.as_slice())?;
 
         Ok(())
     }
 
-    pub fn select_statement(&self, table_name: &String, cols: &Vec<String>) -> Result<Statement, DBError> {
+    pub fn select_row_statement(&self, table_name: &String, cols: &Vec<String>) -> Result<Statement, DBError> {
         self.check_table_exists(&table_name)?;
+
         let table_cols = self.db_tab_col_map.get(table_name).unwrap();
-        let _ = self.check_cols_match_existing(table_cols, cols);
+
+        self.check_cols_match_existing(table_cols, cols)?;
+        
         let col_str = cols.join(", ");
         let sql = format!("SELECT {} FROM {}", col_str, table_name);
         let res = self.db_conn.prepare(&sql)?;
@@ -265,7 +286,7 @@ impl DB {
         Ok(res)
     }
 
-    pub fn delete_statement(&self, table_name: &str, col_name: &str, value: &str) -> Result<usize, DBError> {
+    pub fn delete_row_statement(&self, table_name: &str, col_name: &str, value: &str) -> Result<usize, DBError> {
         self.check_table_exists(table_name)?;
         
         let sql = if value.parse::<u32>().is_ok() {

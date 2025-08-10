@@ -48,6 +48,7 @@ where
                 render_database_schema_screen(frame, app);
                 match app.current_popup {
                     PopUp::InsertTable => render_insert_table_popup(frame, app),
+                    PopUp::DeleteTable => render_drop_table_popup(frame, app),
                     _ => {},
                 }
             },
@@ -187,6 +188,7 @@ fn render_database_schema_screen(frame: &mut Frame, app: &mut App) {
         "↑ / ↓", " - navigate", 
         "Enter" , " - select table",
         "CTRL + n", " - create new table",
+        "CTRL + d", " - delete table",
         "ESC / q", " - return to splash screen",
     ];
     let info_text = format_info_text(&text_bits, app);
@@ -251,7 +253,7 @@ fn render_database_table_screen(frame: &mut Frame, app: &mut App) {
         Some(table_name.to_string())
     );
 
-    render_vertical_scrollbar(frame, inner_area, None, &mut unwrapped_row_list.scroll_state);
+    render_vertical_scrollbar(frame, inner_area, None, &mut unwrapped_row_list.scroll_bar_state);
 
     let text_bits = vec![
         "Commands:", 
@@ -445,7 +447,7 @@ fn render_insert_row_popup(frame: &mut Frame, app: &mut App) {
 }
 
 fn render_insert_table_popup(frame: &mut Frame, app: &mut App) {
-    let area = centered_rect(55, 55, frame.area());
+    let area = centered_rect(55, 40, frame.area());
     let chunks = get_chunks_from_percentages(area, Direction::Vertical, vec![70, 30]);
     let insert_table_popup_style = Style::default()
         .bg(app.quit_popup_bg_col())
@@ -470,6 +472,40 @@ fn render_insert_table_popup(frame: &mut Frame, app: &mut App) {
     let info_text = format_info_text(&info_bits, app);
     let info_paragraph = Paragraph::new(info_text)
         .wrap(Wrap {trim: true})
+        .style(Style::default().bg(app.info_block_bg_col()))
+        .block(Block::default().borders(Borders::ALL).title("Info"));
+
+    frame.render_widget(Clear, chunks[0]);
+    frame.render_widget(content_paragraph, chunks[0]);
+
+    frame.render_widget(Clear, chunks[1]);
+    frame.render_widget(info_paragraph, chunks[1]);
+}
+
+fn render_drop_table_popup(frame: &mut Frame, app: &mut App) {
+    let area = centered_rect(55, 30, frame.area());
+    let chunks = get_chunks_from_percentages(area, Direction::Vertical, vec![40, 60]);
+    let drop_table_popup_style = Style::default()
+        .bg(app.quit_popup_bg_col())
+        .fg(app.general_text_color());
+    let text_area_style = Style::default().bg(app.text_entry_box_bg_col()).fg(app.general_text_color());
+    app.drop_table_form.as_mut().unwrap().set_on_style(text_area_style);
+    let title_text = format!("Drop table from database {}", app.selected_db.as_ref().unwrap().get_db_name());
+    let drop_table_block = Block::default()
+        .borders(Borders::ALL)
+        .style(drop_table_popup_style)
+        .title(title_text);
+    let content_paragraph = Paragraph::new(app.drop_table_form.as_ref().unwrap().table_name.text_value.clone())
+        .block(drop_table_block)
+        .wrap(Wrap { trim: true });
+    let info_bits = vec![
+        "Commands:",
+        "Enter", " - drop table with given name",
+        "ESC", " - return to database schema view",
+    ];
+    let info_text = format_info_text(&info_bits, app);
+    let info_paragraph = Paragraph::new(info_text)
+        .wrap(Wrap { trim: true })
         .style(Style::default().bg(app.info_block_bg_col()))
         .block(Block::default().borders(Borders::ALL).title("Info"));
 

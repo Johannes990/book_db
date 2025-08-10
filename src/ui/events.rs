@@ -166,11 +166,17 @@ fn database_schema_screen_handler(app: &mut App, key_event: KeyEvent) {
                         }
                     },
                     (KeyCode::Char('n'), KeyModifiers::CONTROL) => {
-                        if let Some(db) = &app.selected_db {
+                        if let Some(_db) = &app.selected_db {
                             app.create_create_table_form();
                             app.switch_to_popup(PopUp::InsertTable);
                         }
                     },
+                    (KeyCode::Char('d'), KeyModifiers::CONTROL) => {
+                        if let Some(_db) = &app.selected_db {
+                            app.create_drop_table_form();
+                            app.switch_to_popup(PopUp::DeleteTable);
+                        }
+                    }
                     (KeyCode::Enter, KeyModifiers::NONE) => {
                         if let Some(selected_table) = &app.selected_db_table {
                             app.select_table_rows(selected_table.to_string());
@@ -194,14 +200,49 @@ fn database_schema_screen_handler(app: &mut App, key_event: KeyEvent) {
                     (KeyCode::Backspace, KeyModifiers::NONE) => app.create_table_form.as_mut().unwrap().pop_char(),
                     (KeyCode::Enter, KeyModifiers::NONE) => {
                         if let Some(db) = &mut app.selected_db {
-                            db.execute_raw_sql(app.create_table_form.as_ref().unwrap().sql.text_value.clone());
-                            app.switch_to_popup(PopUp::None);
+                            match db.execute_raw_sql(app.create_table_form.as_ref().unwrap().sql.text_value.clone()) {
+                                Ok(_) => {
+                                    app.fetch_table_list();
+                                    app.switch_to_popup(PopUp::None);
+                                },
+                                Err(e) => {
+                                    app.switch_to_popup(PopUp::Error(e));
+                                }
+                            }
                         }
                     }
                     _ => {}
                 }
             }
         },
+        PopUp::DeleteTable => {
+            if key_event.kind == KeyEventKind::Press {
+                match (key_event.code, key_event.modifiers) {
+                    (KeyCode::Esc, KeyModifiers::NONE) => app.switch_to_popup(PopUp::None),
+                    (KeyCode::Char(c), KeyModifiers::NONE) => app.drop_table_form.as_mut().unwrap().enter_char(c),
+                    (KeyCode::Char(c), KeyModifiers::SHIFT) => {
+                        for c_uppercase in c.to_uppercase() {
+                            app.drop_table_form.as_mut().unwrap().enter_char(c_uppercase);
+                        }
+                    },
+                    (KeyCode::Backspace, KeyModifiers::NONE) => app.drop_table_form.as_mut().unwrap().pop_char(),
+                    (KeyCode::Enter, KeyModifiers::NONE) => {
+                        if let Some(db) = &mut app.selected_db {
+                            match db.drop_table(app.drop_table_form.as_ref().unwrap().table_name.text_value.clone()) {
+                                Ok(_) => {
+                                    app.fetch_table_list();
+                                    app.switch_to_popup(PopUp::None);
+                                },
+                                Err(e) => {
+                                    app.switch_to_popup(PopUp::Error(e));
+                                }
+                            }
+                        }
+                    }
+                    _ => {}
+                }
+            }
+        }
         _ => {}
     }
 }
@@ -286,10 +327,11 @@ fn database_table_screen_handler(app: &mut App, key_event: KeyEvent) {
                                                 values_str.push(&item.text_value);
                                             }
 
-                                            match db.insert_statement(table_name.clone(), columns, values) {
+                                            match db.insert_rows_statement(table_name.clone(), columns, values) {
                                                 Ok(_) => {
                                                     app.switch_app_mode(AppMode::Browsing);
                                                     app.switch_to_popup(PopUp::None);
+                                                    
                                                     if let Some(selected_table) = &app.selected_db_table {
                                                         app.select_table_rows(selected_table.to_string());
                                                     }
@@ -316,7 +358,7 @@ fn database_table_screen_handler(app: &mut App, key_event: KeyEvent) {
                             let row = form.row_value_entry.text_value.clone();
                             if let Some(db) = &app.selected_db.as_mut() {
                                 if let Some(table_name) = &app.selected_db_table {
-                                    match db.delete_statement(table_name, &col, &row) {
+                                    match db.delete_row_statement(table_name, &col, &row) {
                                         Ok(affected) => {
                                             if affected > 0 {
                                                 println!("Deleted {} rows", affected);

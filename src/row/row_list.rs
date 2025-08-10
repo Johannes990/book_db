@@ -5,17 +5,29 @@ use super::row_info::RowInfo;
 pub struct RowListView {
     pub state: TableState,
     pub items: Vec<RowInfo>,
-    pub scroll_state: ScrollbarState,
+    pub scroll_bar_state: ScrollbarState,
     pub index: usize,
 }
 
 impl RowListView {
     pub fn new(items: Vec<RowInfo>) -> Self {
         let item_count = items.len();
+        let mut state = TableState::default();
+
+        let scroll_bar_state = if item_count > 0 {
+            ScrollbarState::new((item_count - 1) * ITEM_HEIGHT)
+        } else {
+            ScrollbarState::default()
+        };
+
+        if item_count > 0 {
+            state.select(Some(0));
+        }
+
         Self {
-            state: TableState::default().with_selected(0),
+            state,
             items,
-            scroll_state: ScrollbarState::new((item_count - 1) * ITEM_HEIGHT),
+            scroll_bar_state,
             index: 0,
         }
     }
@@ -24,7 +36,7 @@ impl RowListView {
         if !self.items.is_empty() {
             self.index = (self.index + 1) % self.items.len();
             self.state.select(Some(self.index));
-            self.scroll_state = self.scroll_state.position(self.index * ITEM_HEIGHT);
+            self.scroll_bar_state = self.scroll_bar_state.position(self.index * ITEM_HEIGHT);
         }
     }
 
@@ -36,7 +48,7 @@ impl RowListView {
                 self.index = self.index - 1;
             }
             self.state.select(Some(self.index));
-            self.scroll_state = self.scroll_state.position(self.index * ITEM_HEIGHT);
+            self.scroll_bar_state = self.scroll_bar_state.position(self.index * ITEM_HEIGHT);
         }
     }
 }

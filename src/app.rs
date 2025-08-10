@@ -11,7 +11,7 @@ use crate::{
     },
     ui::{colorscheme::ColorScheme, render},
     widgets::{
-        create_table_form::CreateTableForm, table_delete_form::TableDeleteForm, table_insert_form::TableInsertForm
+        create_table_form::CreateTableForm, drop_table_form::DropTableForm, table_delete_form::TableDeleteForm, table_insert_form::TableInsertForm
     },
 };
 use ratatui::{
@@ -36,6 +36,7 @@ pub enum PopUp {
     InsertRow,
     DeleteRow,
     InsertTable,
+    DeleteTable,
     Error(DBError),
 }
 
@@ -61,6 +62,7 @@ pub struct App {
     pub table_insert_form: Option<TableInsertForm>,
     pub table_delete_form: Option<TableDeleteForm>,
     pub create_table_form: Option<CreateTableForm>,
+    pub drop_table_form: Option<DropTableForm>,
     pub should_quit: bool,
     pub options: Options
 }
@@ -96,6 +98,7 @@ impl App {
             table_insert_form: None,
             table_delete_form: None,
             create_table_form: None,
+            drop_table_form : None,
             should_quit: false,
             options
         })
@@ -130,7 +133,7 @@ impl App {
         }
     }
 
-    fn fetch_table_list(&mut self) {
+    pub fn fetch_table_list(&mut self) {
         if let Some(db) = &self.selected_db {
             match db.get_table_list() {
                 Ok(tables) => {
@@ -219,6 +222,10 @@ impl App {
 
     pub fn create_create_table_form(&mut self) {
         self.create_table_form = Some(CreateTableForm::new());
+    }
+
+    pub fn create_drop_table_form(&mut self) {
+        self.drop_table_form = Some(DropTableForm::new());
     }
 
     pub fn general_text_color(&self) -> Color {
