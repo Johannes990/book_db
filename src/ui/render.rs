@@ -87,7 +87,7 @@ fn render_splash_screen(frame: &mut Frame, app: &App) {
 
     frame.render_widget(main_page_content, chunks[0]);
 
-    let text_bits = vec![
+    let info_bits = vec![
         "Commands:",
         "CTRL + f", " - open file explorer",
         "CTRL + d", " - open loaded database",
@@ -95,6 +95,8 @@ fn render_splash_screen(frame: &mut Frame, app: &App) {
         "CTRL + o", " - open options",
         "ESC / CTRL + q", " - quit app",
     ];
+    render_info_paragraph(&info_bits, frame, app, chunks[1]);
+    /* 
     let info_text = format_info_text(&text_bits, app);
     let info_paragraph = Paragraph::new(info_text)
         .wrap(Wrap {trim: true})
@@ -103,7 +105,7 @@ fn render_splash_screen(frame: &mut Frame, app: &App) {
         .borders(Borders::ALL)
         .title("Info"));
 
-    frame.render_widget(info_paragraph, chunks[1]);
+    frame.render_widget(info_paragraph, chunks[1]);*/
 }
 
 fn render_file_explorer_screen(frame: &mut Frame, app: &mut App) {
@@ -149,11 +151,13 @@ fn render_file_explorer_screen(frame: &mut Frame, app: &mut App) {
 
     render_vertical_scrollbar(frame, chunks[0], None, &mut app.file_explorer_table.scroll_state);
 
-    let text_bits = vec![
+    let info_bits = vec![
         "Commands:",
         "↑ / ↓" , " - navigate",
         "ESC / q", " - return to splash screen",
     ];
+    render_info_paragraph(&info_bits, frame, app, chunks[1]);
+    /*
     let info_text = format_info_text(&text_bits, app);
     let info_paragraph = Paragraph::new(info_text)
         .wrap(Wrap {trim: true})
@@ -163,7 +167,7 @@ fn render_file_explorer_screen(frame: &mut Frame, app: &mut App) {
             .title("Info")
         );
 
-    frame.render_widget(info_paragraph, chunks[1]);
+    frame.render_widget(info_paragraph, chunks[1]);*/
 }
 
 fn render_database_schema_screen(frame: &mut Frame, app: &mut App) {
@@ -183,7 +187,7 @@ fn render_database_schema_screen(frame: &mut Frame, app: &mut App) {
 
     render_column_list(frame, app, table_column_chunks[1]);
 
-    let text_bits = vec![
+    let info_bits = vec![
         "Commands:", 
         "↑ / ↓", " - navigate", 
         "Enter" , " - select table",
@@ -191,13 +195,15 @@ fn render_database_schema_screen(frame: &mut Frame, app: &mut App) {
         "CTRL + d", " - delete table",
         "ESC / q", " - return to splash screen",
     ];
+    render_info_paragraph(&info_bits, frame, app, chunks[1]);
+    /*
     let info_text = format_info_text(&text_bits, app);
     let info_paragraph = Paragraph::new(info_text)
         .wrap(Wrap {trim: true})
         .style(Style::default().bg(app.info_block_bg_col()))
         .block(Block::default().borders(Borders::ALL).title("Info"));
 
-    frame.render_widget(info_paragraph, chunks[1]);
+    frame.render_widget(info_paragraph, chunks[1]);*/
 }
 
 fn render_database_table_screen(frame: &mut Frame, app: &mut App) {
@@ -255,19 +261,22 @@ fn render_database_table_screen(frame: &mut Frame, app: &mut App) {
 
     render_vertical_scrollbar(frame, inner_area, None, &mut unwrapped_row_list.scroll_bar_state);
 
-    let text_bits = vec![
+    let info_bits = vec![
         "Commands:", 
         "i", " - create new entry",
         "d", " - delete entry",
         "ESC / b", " - return to database view",
     ];
-    let info_text = format_info_text(&text_bits, app);
+    render_info_paragraph(&info_bits, frame, app, chunks[1]);
+    /*
+    let info_text = format_info_text(&info_bits, app);
     let info_paragraph = Paragraph::new(info_text)
         .wrap(Wrap {trim: true})
         .style(Style::default().bg(app.info_block_bg_col()))
         .block(Block::default().borders(Borders::ALL).title("Info"));
 
     frame.render_widget(info_paragraph, chunks[1]);
+    */
 }
 
 fn render_options_screen(frame: &mut Frame, app: &mut App) {
@@ -323,13 +332,15 @@ fn render_options_screen(frame: &mut Frame, app: &mut App) {
     frame.render_widget(table_metainfo_toggle_button, table_metainfo_toggle_area);
     frame.render_widget(insert_metainfo_toggle_button, insert_metainfo_toggle_area);
 
-    let text_bits = vec![
+    let info_bits = vec![
         "Commands: ", 
         "← / →", " - switch between color schemes", 
         "↑ / ↓", " - switch between options",
         "ESC / q" , " - return to splash screen",
     ];
-    let info_text = format_info_text(&text_bits, app);
+    render_info_paragraph(&info_bits, frame, app, vertical_chunks[2]);
+    /*
+    let info_text = format_info_text(&info_bits, app);
     let info_paragraph = Paragraph::new(info_text)
         .wrap(Wrap {trim: true})
         .style(Style::default().bg(app.info_block_bg_col()))
@@ -338,7 +349,7 @@ fn render_options_screen(frame: &mut Frame, app: &mut App) {
             .title("Info")
         );
 
-    frame.render_widget(info_paragraph, vertical_chunks[2]);
+    frame.render_widget(info_paragraph, vertical_chunks[2]);*/
 }
 
 fn render_quit_popup(frame: &mut Frame, app: &App) {
@@ -346,44 +357,51 @@ fn render_quit_popup(frame: &mut Frame, app: &App) {
     let quit_popup_style = Style::default()
         .bg(app.quit_popup_bg_col())
         .fg(app.general_text_color());
-    let popup_block = Block::default()
+    /*let popup_block = Block::default()
         .title("Are you sure you want to quit?")
         .borders(Borders::ALL)
-        .style(quit_popup_style);
-    let text_bits = vec![
+        .style(quit_popup_style);*/
+    let info_bits = vec![
         "", 
         "y", " - quit app", 
         "ESC / n", " - return to splash screen",
     ];
-    let exit_text = format_info_text(&text_bits, app);
+    render_titled_paragraph(frame, app, &info_bits, "Are you sure you want to quit", quit_popup_style, area);
+
+    /*
+    let exit_text = format_info_text(&info_bits, app);
     let exit_paragraph = Paragraph::new(exit_text)
         .block(popup_block)
         .wrap(Wrap { trim: false });
 
     frame.render_widget(Clear, area);
-    frame.render_widget(exit_paragraph, area);
+    frame.render_widget(exit_paragraph, area);*/
 }
 
 fn render_no_db_loaded_popup(frame: &mut Frame, app: &mut App) {
+    let area = centered_rect(55, 30, frame.area());
     let popup_style = Style::default()
         .bg(app.quit_popup_bg_col())
         .fg(app.general_text_color());
-    let popup_block = Block::default()
+    /*let popup_block = Block::default()
         .borders(Borders::ALL)
-        .style(popup_style);
-    let text_bits = vec![
-        "No database file loaded!", 
+        .style(popup_style);*/
+    let info_bits = vec![
+        "", 
         "CTRL + f", " - open file explorer", 
         "ESC", " - return to splash screen"
     ];
-    let info_text = format_info_text(&text_bits, app);
+    render_titled_paragraph(frame, app, &info_bits, "No database file loaded", popup_style, area);
+    //render_info_paragraph(&info_bits, frame, app, area);
+    /*
+    let info_text = format_info_text(&info_bits, app);
     let info_paragraph = Paragraph::new(info_text)
         .block(popup_block)
         .wrap(Wrap { trim: false } );
-    let area = centered_rect(55, 30, frame.area());
-
+    
     frame.render_widget(Clear, area);
     frame.render_widget(info_paragraph, area);
+    */
 }
 
 fn render_insert_row_popup(frame: &mut Frame, app: &mut App) {
@@ -428,22 +446,26 @@ fn render_insert_row_popup(frame: &mut Frame, app: &mut App) {
     let content_paragraph = Paragraph::new(column_text)
         .block(popup_block)
         .wrap(Wrap { trim: false } );
+
+    frame.render_widget(Clear, chunks[0]);
+    frame.render_widget(content_paragraph, chunks[0]);
+
     let info_bits = vec![
         "Commands:",
         "CTRL + s", " - save entry",
         "ESC / ALT + q", " - return to database table view",
     ];
+    render_info_paragraph(&info_bits, frame, app, chunks[1]);
+    /*    
     let info_text = format_info_text(&info_bits, app);
     let info_paragraph = Paragraph::new(info_text)
         .wrap(Wrap {trim: true})
         .style(Style::default().bg(app.info_block_bg_col()))
         .block(Block::default().borders(Borders::ALL).title("Info"));
 
-    frame.render_widget(Clear, chunks[0]);
-    frame.render_widget(content_paragraph, chunks[0]);
-
     frame.render_widget(Clear, chunks[1]);
     frame.render_widget(info_paragraph, chunks[1]);
+    */
 }
 
 fn render_insert_table_popup(frame: &mut Frame, app: &mut App) {
@@ -464,22 +486,25 @@ fn render_insert_table_popup(frame: &mut Frame, app: &mut App) {
     let content_paragraph = Paragraph::new(app.create_table_form.as_ref().unwrap().sql.text_value.clone())
         .block(create_table_block)
         .wrap(Wrap { trim: false });
+
+    frame.render_widget(Clear, chunks[0]);
+    frame.render_widget(content_paragraph, chunks[0]);
+
     let info_bits = vec![
         "Commands:",
         "Enter", " - execute sql",
         "ESC", " - return to database schema view",
     ];
+    render_info_paragraph(&info_bits, frame, app, chunks[1]);
+    /*
     let info_text = format_info_text(&info_bits, app);
     let info_paragraph = Paragraph::new(info_text)
         .wrap(Wrap {trim: true})
         .style(Style::default().bg(app.info_block_bg_col()))
         .block(Block::default().borders(Borders::ALL).title("Info"));
 
-    frame.render_widget(Clear, chunks[0]);
-    frame.render_widget(content_paragraph, chunks[0]);
-
     frame.render_widget(Clear, chunks[1]);
-    frame.render_widget(info_paragraph, chunks[1]);
+    frame.render_widget(info_paragraph, chunks[1]);*/
 }
 
 fn render_drop_table_popup(frame: &mut Frame, app: &mut App) {
@@ -498,22 +523,104 @@ fn render_drop_table_popup(frame: &mut Frame, app: &mut App) {
     let content_paragraph = Paragraph::new(app.drop_table_form.as_ref().unwrap().table_name.text_value.clone())
         .block(drop_table_block)
         .wrap(Wrap { trim: true });
+
+    frame.render_widget(Clear, chunks[0]);
+    frame.render_widget(content_paragraph, chunks[0]);
+
     let info_bits = vec![
         "Commands:",
         "Enter", " - drop table with given name",
         "ESC", " - return to database schema view",
     ];
+
+    render_info_paragraph(&info_bits, frame, app, chunks[1]);
+    /*
     let info_text = format_info_text(&info_bits, app);
     let info_paragraph = Paragraph::new(info_text)
         .wrap(Wrap { trim: true })
         .style(Style::default().bg(app.info_block_bg_col()))
         .block(Block::default().borders(Borders::ALL).title("Info"));
 
-    frame.render_widget(Clear, chunks[0]);
-    frame.render_widget(content_paragraph, chunks[0]);
+    
 
     frame.render_widget(Clear, chunks[1]);
     frame.render_widget(info_paragraph, chunks[1]);
+    */
+}
+
+fn render_delete_row_popup(frame: &mut Frame, app: &mut App) {
+    let area = centered_rect(55, 30, frame.area());
+    let chunks = get_chunks_from_percentages(area, Direction::Vertical, vec![70, 30]);
+    let delete_row_popup_style = Style::default()
+        .bg(app.quit_popup_bg_col())
+        .fg(app.general_text_color());
+    let delete_text_area_on_style = Style::default()
+        .bg(app.text_entry_box_bg_col())
+        .fg(app.general_text_color());
+    let delete_text_area_off_style = Style::default()
+        .bg(app.text_entry_box_bg_col())
+        .fg(app.file_exp_pg_selected_col());
+    if let Some(form) = &mut app.table_delete_form {
+        form.set_on_style(delete_text_area_on_style);
+        form.set_off_style(delete_text_area_off_style);
+    }
+    let title_text = format!("Delete entry from table {}", app.selected_db_table.as_deref().unwrap());
+    let delete_form_block = Block::default()
+        .borders(Borders::ALL)
+        .title(title_text)
+        .style(delete_row_popup_style);
+
+    let form_inner = delete_form_block.inner(chunks[0]);
+    let form_chunks = get_chunks_from_constraints(
+        form_inner,
+        Direction::Vertical,
+        vec![
+            Constraint::Length(3),
+            Constraint::Length(3),
+        ],
+    );
+
+    frame.render_widget(Clear, chunks[0]);
+    frame.render_widget(delete_form_block.clone(), chunks[0]);
+
+    if let Some(form) = &app.table_delete_form {
+        let col_name_block = Block::default()
+            .borders(Borders::ALL)
+            .title("Column name");
+        frame.render_widget(&form.col_name_entry, col_name_block.inner(form_chunks[0]));
+        frame.render_widget(col_name_block, form_chunks[0]);
+        
+        let value_block = Block::default()
+            .borders(Borders::ALL)
+            .title("Row value");
+        frame.render_widget(&form.row_value_entry, value_block.inner(form_chunks[1]));
+        frame.render_widget(value_block, form_chunks[1]);
+    }
+
+    let info_bits = vec![
+        "Commands:",
+        "Enter", " - delete entry with given ID",
+        "ESC", " - return to database table view"
+    ];
+    render_info_paragraph(&info_bits, frame, app, chunks[1]);
+}
+
+fn render_error_popup(frame: &mut Frame, app: &mut App, msg: &str) {
+    let area = centered_rect(40 , 30, frame.area());
+    let error_block = Block::default()
+        .borders(Borders::ALL)
+        .title("Error")
+        .border_style(Style::default().fg(Color::Red))
+        .style(Style::default().bg(app.quit_popup_bg_col()).fg(Color::White));
+    let mut error_text = Text::default();
+    error_text.push_line(Span::raw(msg));
+    error_text.push_line(Span::raw("Press ESC to close this popup"));
+    let paragraph = Paragraph::new(error_text)
+        .block(error_block)
+        .alignment(Alignment::Center)
+        .wrap(Wrap { trim: true });
+
+    frame.render_widget(paragraph, area);
 }
 
 fn render_table_list(frame: &mut Frame, app: &mut App, area: Rect) {
@@ -655,88 +762,6 @@ fn render_table(frame: &mut Frame, state: &mut TableState,
     frame.render_stateful_widget(table, area, state);
 }
 
-fn render_delete_row_popup(frame: &mut Frame, app: &mut App) {
-    let area = centered_rect(55, 30, frame.area());
-    let chunks = get_chunks_from_percentages(area, Direction::Vertical, vec![70, 30]);
-    let delete_row_popup_style = Style::default()
-        .bg(app.quit_popup_bg_col())
-        .fg(app.general_text_color());
-    let delete_text_area_on_style = Style::default()
-        .bg(app.text_entry_box_bg_col())
-        .fg(app.general_text_color());
-    let delete_text_area_off_style = Style::default()
-        .bg(app.text_entry_box_bg_col())
-        .fg(app.file_exp_pg_selected_col());
-    if let Some(form) = &mut app.table_delete_form {
-        form.set_on_style(delete_text_area_on_style);
-        form.set_off_style(delete_text_area_off_style);
-    }
-    let title_text = format!("Delete entry from table {}", app.selected_db_table.as_deref().unwrap());
-    let delete_form_block = Block::default()
-        .borders(Borders::ALL)
-        .title(title_text)
-        .style(delete_row_popup_style);
-
-    let form_inner = delete_form_block.inner(chunks[0]);
-    let form_chunks = get_chunks_from_constraints(
-        form_inner,
-        Direction::Vertical,
-        vec![
-            Constraint::Length(3),
-            Constraint::Length(3),
-        ],
-    );
-
-    frame.render_widget(Clear, chunks[0]);
-    frame.render_widget(delete_form_block.clone(), chunks[0]);
-
-    if let Some(form) = &app.table_delete_form {
-        let col_name_block = Block::default()
-            .borders(Borders::ALL)
-            .title("Column name");
-        frame.render_widget(&form.col_name_entry, col_name_block.inner(form_chunks[0]));
-        frame.render_widget(col_name_block, form_chunks[0]);
-        
-        let value_block = Block::default()
-            .borders(Borders::ALL)
-            .title("Row value");
-        frame.render_widget(&form.row_value_entry, value_block.inner(form_chunks[1]));
-        frame.render_widget(value_block, form_chunks[1]);
-    }
-
-    let info_bits = vec![
-        "Commands:",
-        "Enter", " - delete entry with given ID",
-        "ESC", " - return to database table view"
-    ];
-    let info_text = format_info_text(&info_bits, app);
-    let info_paragraph = Paragraph::new(info_text)
-        .wrap(Wrap {trim: true})
-        .style(Style::default().bg(app.info_block_bg_col()))
-        .block(Block::default().borders(Borders::ALL).title("Info"));
-
-    frame.render_widget(Clear, chunks[1]);
-    frame.render_widget(info_paragraph, chunks[1]);
-}
-
-fn render_error_popup(frame: &mut Frame, app: &mut App, msg: &str) {
-    let area = centered_rect(40 , 30, frame.area());
-    let error_block = Block::default()
-        .borders(Borders::ALL)
-        .title("Error")
-        .border_style(Style::default().fg(Color::Red))
-        .style(Style::default().bg(app.quit_popup_bg_col()).fg(Color::White));
-    let mut error_text = Text::default();
-    error_text.push_line(Span::raw(msg));
-    error_text.push_line(Span::raw("Press ESC to close this popup"));
-    let paragraph = Paragraph::new(error_text)
-        .block(error_block)
-        .alignment(Alignment::Center)
-        .wrap(Wrap { trim: true });
-
-    frame.render_widget(paragraph, area);
-}
-
 fn centered_rect(percent_x: u16, percent_y: u16, area: ratatui::layout::Rect) -> ratatui::layout::Rect {
     let vertical = Layout::vertical([Constraint::Percentage(percent_y)]).flex(Flex::Center);
     let horizontal = Layout::horizontal([Constraint::Percentage(percent_x)]).flex(Flex::Center);
@@ -765,7 +790,7 @@ fn get_chunks_from_constraints(area: Rect, direction: Direction, constraints: Ve
     chunks
 }
 
-fn format_info_text<'a>(text_bits: &'a Vec<&'a str>, app: &App) -> Text<'a> {
+fn format_info_text<'a>(text_bits: &'a [&str], app: &App) -> Text<'a> {
     let general_text_style = Style::default().fg(app.general_text_color());
     let alt_text_style_1 = Style::default().fg(app.alt_text_color_1());
 
@@ -799,4 +824,25 @@ fn compute_col_widths(cols: &[ColumnInfo], rows: &[RowInfo], min: usize, max: us
 
         Constraint::Length(width as u16)
     }).collect()
+}
+
+fn render_titled_paragraph(frame: &mut Frame, app: &App, info_bits: &[&str], title: &str, style: Style, area: Rect) {
+    let titled_paragraph_block = Block::default()
+        .style(style)
+        .title(title)
+        .borders(Borders::ALL);
+    let info_text = format_info_text(info_bits, app);
+    let titled_paragraph = Paragraph::new(info_text)
+        .wrap(Wrap { trim: true })
+        .block(titled_paragraph_block);
+
+    frame.render_widget(Clear, area);
+    frame.render_widget(titled_paragraph, area);
+}
+
+fn render_info_paragraph(info_bits : &[&str], frame: &mut Frame, app: & App, area: Rect) {
+    let info_style = Style::default()
+        .bg(app.info_block_bg_col());
+
+    render_titled_paragraph(frame, app, info_bits, "Info", info_style, area);
 }
