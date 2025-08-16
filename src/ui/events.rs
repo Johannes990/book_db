@@ -7,7 +7,7 @@ use ratatui::crossterm::event::{
     KeyEventKind
 };
 use rusqlite::ToSql;
-use crate::{app::{App, PopUp, Screen, AppMode}, options::SelectedOption};
+use crate::{app::{App, PopUp, Screen}, options::SelectedOption};
 
 pub fn handle_key_events(app: &mut App) -> io::Result<bool> {
     if let Event::Key(key_event) = event::read()? {
@@ -293,7 +293,6 @@ fn database_table_screen_handler(app: &mut App, key_event: KeyEvent) {
                 match (key_event.code, key_event.modifiers) {
                     (KeyCode::Esc, KeyModifiers::NONE) |
                     (KeyCode::Char('q'), KeyModifiers::ALT) => {
-                        app.switch_app_mode(AppMode::Browsing);
                         app.switch_to_popup(PopUp::None);
                     } ,
                     (KeyCode::Up, KeyModifiers::NONE) => app.table_insert_form.as_mut().unwrap().previous(),
@@ -332,7 +331,6 @@ fn database_table_screen_handler(app: &mut App, key_event: KeyEvent) {
                                                     table_info.increment_row_count();
                                                 }
                                             }
-                                            app.switch_app_mode(AppMode::Browsing);
                                             app.switch_to_popup(PopUp::None);
                                             
                                             if let Some(selected_table) = &app.selected_db_table {

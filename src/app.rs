@@ -40,18 +40,12 @@ pub enum PopUp {
     Error(DBError),
 }
 
-pub enum AppMode {
-    Browsing,
-    Editing,
-}
-
 pub struct App {
     pub qualifier: String,
     pub organization: String,
     pub application: String,
     pub current_screen: Screen,
     pub current_popup: PopUp,
-    pub current_mode: AppMode,
     pub selected_db: Option<DB>,
     pub selected_db_table: Option<String>,
     pub selected_table_columns: Vec<ColumnInfo>,
@@ -87,7 +81,6 @@ impl App {
             application,
             current_screen: Screen::Splash,
             current_popup: PopUp::None,
-            current_mode: AppMode::Browsing,
             selected_db: None,
             selected_db_table: None,
             selected_table_columns: Vec::new(),
@@ -278,10 +271,6 @@ impl App {
 
     pub fn list_available_color_schemes(&self) -> &Vec<ColorScheme> {
         self.options.list_color_schemes()
-    }
-
-    pub fn switch_app_mode(&mut self, mode: AppMode) {
-        self.current_mode = mode;
     }
 
     fn populate_table_col_map(&mut self) {

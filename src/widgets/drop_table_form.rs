@@ -24,7 +24,7 @@ impl DropTableForm {
         self.table_name.set_on_style(style);
     }
 
-    pub fn set_off_style(&mut self, style: Style) {
+    pub fn _set_off_style(&mut self, style: Style) {
         self.table_name.set_off_style(style);
     }
 }

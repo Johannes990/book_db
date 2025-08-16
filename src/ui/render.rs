@@ -423,7 +423,7 @@ fn render_insert_row_popup(frame: &mut Frame, app: &mut App) {
     let mut column_text = Text::default();
     
     // this is to calculate the correct spacing for entry text to line up, not yet implemented
-    let longest_col_name_len = app.selected_table_columns.iter()
+    let _longest_col_name_len = app.selected_table_columns.iter()
         .map(|c| c.name.len())
         .max()
         .unwrap_or(0);

@@ -124,7 +124,7 @@ impl DB {
         Ok(rows)
     }
 
-    pub fn get_autoincrement_pk_column(&self, table_name: &str) -> Result<Option<String>, DBError> {
+    pub fn _get_autoincrement_pk_column(&self, table_name: &str) -> Result<Option<String>, DBError> {
         let columns = self.get_table_columns(table_name)?;
 
         for col in columns {
@@ -216,10 +216,10 @@ impl DB {
         Ok(columns)
     }
 
-    pub fn create_table(&mut self, table_name: String, columns: Vec<String>, constraints: Vec<String>) -> Result<(), DBError> {
-        self.check_table_does_not_exist(&table_name)?;
+    pub fn _create_table(&mut self, table_name: String, columns: Vec<String>, constraints: Vec<String>) -> Result<(), DBError> {
+        self._check_table_does_not_exist(&table_name)?;
 
-        let col_names = self.col_names_from_sql(&columns);
+        let col_names = self._col_names_from_sql(&columns);
         self.db_tab_col_map.insert(table_name.clone(), col_names);
 
         let columns_str = columns.join(", ");
@@ -276,12 +276,12 @@ impl DB {
         Ok(())
     }
 
-    pub fn select_row_statement(&self, table_name: &String, cols: &Vec<String>) -> Result<Statement, DBError> {
+    pub fn _select_row_statement(&self, table_name: &String, cols: &Vec<String>) -> Result<Statement<'_>, DBError> {
         self.check_table_exists(&table_name)?;
 
         let table_cols = self.db_tab_col_map.get(table_name).unwrap();
 
-        self.check_cols_match_existing(table_cols, cols)?;
+        self._check_cols_match_existing(table_cols, cols)?;
 
         let col_str = cols.join(", ");
         let sql = format!("SELECT {} FROM {}", col_str, table_name);
@@ -292,6 +292,7 @@ impl DB {
 
     pub fn delete_row_statement(&self, table_name: &str, col_name: &str, value: &str) -> Result<usize, DBError> {
         self.check_table_exists(table_name)?;
+        self.check_col_exists_in_table(&table_name, &col_name)?;
         
         let sql = if value.parse::<u32>().is_ok() {
             format!("DELETE FROM {} WHERE {} = {}", table_name, col_name, value)
@@ -306,7 +307,7 @@ impl DB {
         self.db_tab_col_map.contains_key(table_name)
     }
 
-    fn check_table_does_not_exist(&self, table_name: &str) -> Result<(), DBError> {
+    fn _check_table_does_not_exist(&self, table_name: &str) -> Result<(), DBError> {
         if !self.check_tab_col_map_contains_table(&table_name.to_string()) {
             Ok(())
         } else {
@@ -322,7 +323,7 @@ impl DB {
         }
     }
 
-    fn check_cols_match_existing(&self, existing_cols: &Vec<String>, cols: &Vec<String>) -> Result<(), DBError> {
+    fn _check_cols_match_existing(&self, existing_cols: &Vec<String>, cols: &Vec<String>) -> Result<(), DBError> {
         for col in cols {
             if !existing_cols.contains(col) {
                 return Err(DBError::ColumnDoesNotExist(col.to_string()));
@@ -332,9 +333,9 @@ impl DB {
         Ok(())
     }
 
-    fn check_col_exists_in_table(self, table_name: &String, col_name: &String) -> Result<(), DBError> {
+    fn check_col_exists_in_table(&self, table_name: &str, col_name: &str) -> Result<(), DBError> {
         let table_cols = self.db_tab_col_map.get(table_name).unwrap();
-        if !(table_cols.contains(col_name)) {
+        if !(table_cols.contains(&col_name.to_string())) {
             return Err(DBError::ColumnDoesNotExist(col_name.to_string()));
         }
 
@@ -360,7 +361,7 @@ impl DB {
         Ok(())
     }
 
-    fn col_names_from_sql<'a>(&self, columns: &Vec<String>) -> Vec<String> {
+    fn _col_names_from_sql<'a>(&self, columns: &Vec<String>) -> Vec<String> {
         let mut col_names = Vec::new();
         for col_str in columns {
             let col_parts: Vec<_> = col_str.split(' ').collect();
