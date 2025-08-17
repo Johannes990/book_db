@@ -7,7 +7,7 @@ use ratatui::crossterm::event::{
     KeyEventKind
 };
 use rusqlite::ToSql;
-use crate::{app::{App, PopUp, Screen}, options::SelectedOption};
+use crate::{app::{App, PopUp, Screen}, column::column_list::ColumnListView, db::{DBError, DB}, options::SelectedOption, table::table_list::TableListView};
 
 pub fn handle_key_events(app: &mut App) -> io::Result<bool> {
     if let Event::Key(key_event) = event::read()? {
@@ -30,11 +30,14 @@ fn splash_screen_handler(app: &mut App, key_event: KeyEvent) {
             if key_event.kind == KeyEventKind::Press {
                 match (key_event.code, key_event.modifiers) {
                     (KeyCode::Esc, KeyModifiers::NONE) | 
-                    (KeyCode::Char('q'), KeyModifiers::CONTROL) => app.switch_to_popup(PopUp::Quit),
-                    (KeyCode::Char('f'), KeyModifiers::CONTROL) => app.switch_to_screen(Screen::FileExplorer),
-                    (KeyCode::Char('n'), KeyModifiers::CONTROL) => app.switch_to_screen(Screen::CreateNewFile),
-                    (KeyCode::Char('o'), KeyModifiers::CONTROL) => app.switch_to_screen(Screen::Options),
-                    (KeyCode::Char('d'), KeyModifiers::CONTROL) => {
+                    (KeyCode::Char('q'), KeyModifiers::NONE) => app.switch_to_popup(PopUp::Quit),
+                    (KeyCode::Char('f'), KeyModifiers::NONE) => app.switch_to_screen(Screen::FileExplorer),
+                    (KeyCode::Char('n'), KeyModifiers::NONE) => {
+                        app.create_new_db_form();
+                        app.switch_to_screen(Screen::CreateNewFile);
+                    },
+                    (KeyCode::Char('o'), KeyModifiers::NONE) => app.switch_to_screen(Screen::Options),
+                    (KeyCode::Char('d'), KeyModifiers::NONE) => {
                         if app.selected_db.is_some() {
                             app.switch_to_screen(Screen::DatabaseSchema);
                         } else {
@@ -165,13 +168,13 @@ fn database_schema_screen_handler(app: &mut App, key_event: KeyEvent) {
                             }
                         }
                     },
-                    (KeyCode::Char('n'), KeyModifiers::CONTROL) => {
+                    (KeyCode::Char('n'), KeyModifiers::NONE) => {
                         if let Some(_db) = &app.selected_db {
                             app.create_create_table_form();
                             app.switch_to_popup(PopUp::InsertTable);
                         }
                     },
-                    (KeyCode::Char('d'), KeyModifiers::CONTROL) => {
+                    (KeyCode::Char('d'), KeyModifiers::NONE) => {
                         if let Some(_db) = &app.selected_db {
                             app.create_drop_table_form();
                             app.switch_to_popup(PopUp::DeleteTable);
@@ -464,7 +467,35 @@ fn options_screen_handler(app: &mut App, key_event: KeyEvent) -> io::Result<()>{
 fn create_new_file_screen_handler(app: &mut App, key_event: KeyEvent) {
     if key_event.kind == KeyEventKind::Press {
         match (key_event.code, key_event.modifiers) {
-            (KeyCode::Esc, KeyModifiers::NONE) => app.switch_to_screen(Screen::Splash),
+            (KeyCode::Esc, KeyModifiers::NONE) |
+            (KeyCode::Char('q'), KeyModifiers::NONE) => app.switch_to_screen(Screen::Splash),
+            (KeyCode::Char('s'), KeyModifiers::CONTROL) => {
+                if app.selected_db.is_none() {
+                    if let Some(form) = &app.create_db_form {
+                        let db_name = form.file_name.text_value.clone();
+
+                        match DB::new(db_name) {
+                            Ok(db) => {
+                                app.selected_db = Some(db);
+                                app.fetch_table_list();
+                                app.populate_table_col_map();
+                                app.switch_to_screen(Screen::DatabaseSchema);
+                            },
+                            Err(e) => {
+                                let err = DBError::ConnectionCreationError(e.to_string());
+                                app.switch_to_popup(PopUp::Error(err));
+                            }
+                        }
+                    }
+                }
+            },
+            (KeyCode::Char(c), KeyModifiers::NONE) => app.create_db_form.as_mut().unwrap().enter_char(c),
+            (KeyCode::Char(c), KeyModifiers::SHIFT) => {
+                for c_uppercase in c.to_uppercase() {
+                    app.create_db_form.as_mut().unwrap().enter_char(c_uppercase);
+                }
+            },
+            (KeyCode::Backspace, KeyModifiers::NONE) => app.create_db_form.as_mut().unwrap().pop_char(),
             _ => {}
         }
     }

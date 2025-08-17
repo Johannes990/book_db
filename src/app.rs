@@ -11,7 +11,7 @@ use crate::{
     },
     ui::{colorscheme::ColorScheme, render},
     widgets::{
-        create_table_form::CreateTableForm, drop_table_form::DropTableForm, table_delete_form::TableDeleteForm, table_insert_form::TableInsertForm
+        create_db_form::CreateDBForm, create_table_form::CreateTableForm, drop_table_form::DropTableForm, table_delete_form::TableDeleteForm, table_insert_form::TableInsertForm
     },
 };
 use ratatui::{
@@ -57,6 +57,7 @@ pub struct App {
     pub table_delete_form: Option<TableDeleteForm>,
     pub create_table_form: Option<CreateTableForm>,
     pub drop_table_form: Option<DropTableForm>,
+    pub create_db_form: Option<CreateDBForm>,
     pub should_quit: bool,
     pub options: Options
 }
@@ -91,7 +92,8 @@ impl App {
             table_insert_form: None,
             table_delete_form: None,
             create_table_form: None,
-            drop_table_form : None,
+            drop_table_form: None,
+            create_db_form: None,
             should_quit: false,
             options
         })
@@ -221,6 +223,10 @@ impl App {
         self.drop_table_form = Some(DropTableForm::new());
     }
 
+    pub fn create_new_db_form(&mut self) {
+        self.create_db_form = Some(CreateDBForm::new());
+    }
+
     pub fn general_text_color(&self) -> Color {
         self.options.selected_color_scheme.colors().general_text_color
     }
@@ -273,7 +279,7 @@ impl App {
         self.options.list_color_schemes()
     }
 
-    fn populate_table_col_map(&mut self) {
+    pub fn populate_table_col_map(&mut self) {
         if let Some(db) = &mut self.selected_db {
             db.db_tab_col_map.clear();
 

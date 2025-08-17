@@ -37,7 +37,17 @@ where
                     _ => {},
                 }
             },
-            Screen::CreateNewFile => {},
+            Screen::CreateNewFile => {
+                render_new_database_screen(frame, app);
+                match app.current_popup {
+                    PopUp::Error(ref err) => {
+                        let msg = format!("{}", err);
+                        render_error_popup(frame, app, &msg);
+                    },
+                    _ => {}
+                    
+                }
+            },
             Screen::FileExplorer => {
                 render_file_explorer_screen(frame, app);
                 match app.current_popup {
@@ -89,11 +99,11 @@ fn render_splash_screen(frame: &mut Frame, app: &App) {
 
     let info_bits = vec![
         "Commands:",
-        "CTRL + f", " - open file explorer",
-        "CTRL + d", " - open loaded database",
-        "CTRL + n", " - create new database",
-        "CTRL + o", " - open options",
-        "ESC / CTRL + q", " - quit app",
+        "f", " - open file explorer",
+        "d", " - open loaded database",
+        "n", " - create new database file",
+        "o", " - open options",
+        "ESC / q", " - quit app",
     ];
     render_info_paragraph(&info_bits, frame, app, chunks[1]);
     /* 
@@ -191,8 +201,8 @@ fn render_database_schema_screen(frame: &mut Frame, app: &mut App) {
         "Commands:", 
         "↑ / ↓", " - navigate", 
         "Enter" , " - select table",
-        "CTRL + n", " - create new table",
-        "CTRL + d", " - delete table",
+        "n", " - create new table",
+        "d", " - delete table",
         "ESC / q", " - return to splash screen",
     ];
     render_info_paragraph(&info_bits, frame, app, chunks[1]);
@@ -204,6 +214,31 @@ fn render_database_schema_screen(frame: &mut Frame, app: &mut App) {
         .block(Block::default().borders(Borders::ALL).title("Info"));
 
     frame.render_widget(info_paragraph, chunks[1]);*/
+}
+
+fn render_new_database_screen(frame: &mut Frame, app: &mut App) {
+    let page_style = Style::default().bg(app.general_page_bg_color()).fg(app.general_text_color());
+    let chunks = get_chunks_from_percentages(frame.area(), Direction::Vertical, vec![75, 25]);
+    let insert_text_area_on_style = Style::default().bg(app.text_entry_box_bg_col()).fg(app.general_text_color());
+    if let Some(form) = &mut app.create_db_form {
+        form.set_on_style(insert_text_area_on_style);
+    }
+    let block = Block::default()
+        .title("Creating new database")
+        .style(page_style);
+    let content = Paragraph::new(app.create_db_form.as_ref().unwrap().file_name.text_value.clone())
+        .block(block)
+        .wrap(Wrap { trim: true });
+
+    frame.render_widget(Clear, chunks[0]);
+    frame.render_widget(content, chunks[0]);
+
+    let info_bits = vec![
+        "Commands:",
+        "CTRL + s", " - create new database",
+        "ESC / q", " - return to splash screen"
+    ];
+    render_info_paragraph(&info_bits, frame, app, chunks[1]);
 }
 
 fn render_database_table_screen(frame: &mut Frame, app: &mut App) {
@@ -624,78 +659,110 @@ fn render_error_popup(frame: &mut Frame, app: &mut App, msg: &str) {
 }
 
 fn render_table_list(frame: &mut Frame, app: &mut App, area: Rect) {
-    let row_style = Style::default().bg(app.general_page_bg_color()).fg(app.general_text_color());
-    let header = Row::new(vec![
-        Cell::new("Name"),
-        Cell::new("Rows"),
-        Cell::new("Type"),
-    ]).style(row_style);
-    let rows: Vec<Row> = app.table_list_view.as_ref().unwrap().items.iter().map(|table| {
-        Row::new(vec![
-            Cell::from(Text::from(table.name.clone())),
-            Cell::from(Text::from(table.row_count.to_string())),
-            Cell::from(Text::from(if table.is_view { "View" } else { "Table" })),
-        ])
-        .style(row_style)
-    }).collect();
-    let col_constraints = [
-        Constraint::Min(15), // table name
-        Constraint::Min(7), // row count
-        Constraint::Length(7), // type (table, view)
-    ];
-    let highlight_color = app.file_exp_pg_selected_col();
-    let unwrapped_table_list = app.table_list_view.as_mut().unwrap();
+    if app.table_list_view.is_some(){
+        let row_style = Style::default().bg(app.general_page_bg_color()).fg(app.general_text_color());
+        let header = Row::new(vec![
+            Cell::new("Name"),
+            Cell::new("Rows"),
+            Cell::new("Type"),
+        ]).style(row_style);
+        let rows: Vec<Row> = app.table_list_view.as_ref().unwrap().items.iter().map(|table| {
+            Row::new(vec![
+                Cell::from(Text::from(table.name.clone())),
+                Cell::from(Text::from(table.row_count.to_string())),
+                Cell::from(Text::from(if table.is_view { "View" } else { "Table" })),
+            ])
+            .style(row_style)
+        }).collect();
+        let col_constraints = [
+            Constraint::Min(15), // table name
+            Constraint::Min(7), // row count
+            Constraint::Length(7), // type (table, view)
+        ];
+        let highlight_color = app.file_exp_pg_selected_col();
+        let unwrapped_table_list = app.table_list_view.as_mut().unwrap();
 
-    render_table(frame, &mut unwrapped_table_list.state,
-        Some(header), rows,
-        col_constraints.to_vec(), area,
-        highlight_color, Borders::ALL, Some("Tables".to_string()));
+        render_table(frame, &mut unwrapped_table_list.state,
+            Some(header), rows,
+            col_constraints.to_vec(), area,
+            highlight_color, Borders::ALL, Some("Tables".to_string()));
 
-    render_vertical_scrollbar(frame, area, None, &mut unwrapped_table_list.scroll_state);
+        render_vertical_scrollbar(frame, area, None, &mut unwrapped_table_list.scroll_state);
+    } else {
+        let style = Style::default()
+            .bg(app.general_page_bg_color())
+            .fg(app.general_text_color());
+        let empty_block = Block::default()
+            .title("Tables")
+            .borders(Borders::ALL);
+        let paragraph = Paragraph::new("Empty Schema")
+            .block(empty_block)
+            .style(style);
+
+        frame.render_widget(Clear, area);
+        frame.render_widget(paragraph, area);
+    }
+    
 }
 
 fn render_column_list(frame: &mut Frame, app: &mut App, area: Rect) {
-    let header = ["Name", "Type", "Constraints"]
-        .into_iter()
-        .map(Cell::from)
-        .collect::<Row>()
-        .style(Style::default().fg(app.general_text_color()));
-    let rows: Vec<Row> = app.column_list_view.as_ref().unwrap().items.iter().map(|col| {
-        let mut col_constraint_text = "".to_string();
-        if col.is_pk {
-            col_constraint_text.push_str("[PK]");
-        }
-        if col.is_unique {
-            col_constraint_text.push_str("[UNIQUE]");
-        }
-        if col.is_not_null {
-            col_constraint_text.push_str("[NOT NULL]");
-        }
-        if col.is_fk {
-            let ref_table = col.references_table.as_deref().unwrap_or("Unknown");
-            col_constraint_text.push_str(&format!("[FK -> {}]", ref_table).to_string());
-        }
-        
-        Row::new(vec![
-            Cell::from(Text::from(col.name.to_string())),
-            Cell::from(Text::from(col.col_type.to_string())),
-            Cell::from(Text::from(col_constraint_text)),
-        ])
-    }).collect();
-    let col_constraints = [
-        Constraint::Min(15),
-        Constraint::Length(8),
-        Constraint::Min(10),
-    ];
-    let highlight_color = app.file_exp_pg_selected_col();
-    let unwrapped_column_list = app.column_list_view.as_mut().unwrap();
+    if app.column_list_view.is_some() {
+        let header = ["Name", "Type", "Constraints"]
+            .into_iter()
+            .map(Cell::from)
+            .collect::<Row>()
+            .style(Style::default().fg(app.general_text_color()));
+        let rows: Vec<Row> = app.column_list_view.as_ref().unwrap().items.iter().map(|col| {
+            let mut col_constraint_text = "".to_string();
+            if col.is_pk {
+                col_constraint_text.push_str("[PK]");
+            }
+            if col.is_unique {
+                col_constraint_text.push_str("[UNIQUE]");
+            }
+            if col.is_not_null {
+                col_constraint_text.push_str("[NOT NULL]");
+            }
+            if col.is_fk {
+                let ref_table = col.references_table.as_deref().unwrap_or("Unknown");
+                col_constraint_text.push_str(&format!("[FK -> {}]", ref_table).to_string());
+            }
+            
+            Row::new(vec![
+                Cell::from(Text::from(col.name.to_string())),
+                Cell::from(Text::from(col.col_type.to_string())),
+                Cell::from(Text::from(col_constraint_text)),
+            ])
+        }).collect();
+        let col_constraints = [
+            Constraint::Min(15),
+            Constraint::Length(8),
+            Constraint::Min(10),
+        ];
+        let highlight_color = app.file_exp_pg_selected_col();
+        let unwrapped_column_list = app.column_list_view.as_mut().unwrap();
 
-    render_table(frame, &mut unwrapped_column_list.state,
-                 Some(header), rows,
-                 col_constraints.to_vec(), area,
-                 highlight_color, Borders::ALL, Some("Columns".to_string()));
+        render_table(frame, &mut unwrapped_column_list.state,
+                    Some(header), rows,
+                    col_constraints.to_vec(), area,
+                    highlight_color, Borders::ALL, Some("Columns".to_string()));
 
-    render_vertical_scrollbar(frame, area, None, &mut unwrapped_column_list.scroll_state);
+        render_vertical_scrollbar(frame, area, None, &mut unwrapped_column_list.scroll_state);
+    } else {
+        let style = Style::default()
+            .bg(app.general_page_bg_color())
+            .fg(app.general_text_color());
+        let empty_block = Block::default()
+            .title("Columns")
+            .borders(Borders::ALL);
+        let paragraph = Paragraph::new("No columns")
+            .block(empty_block)
+            .style(style);
+
+        frame.render_widget(Clear, area);
+        frame.render_widget(paragraph, area);
+    }
+    
 }
 
 fn render_color_scheme_preview(frame: &mut Frame, area: Rect, color_scheme: &ColorScheme) {

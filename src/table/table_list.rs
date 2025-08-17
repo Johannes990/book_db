@@ -13,10 +13,14 @@ pub struct TableListView {
 impl TableListView {
     pub fn new(items: Vec<TableInfo>) -> Self {
         let item_count = items.len();
+        let mut scroll_state = ScrollbarState::new(0);
+        if item_count > 0 {
+            scroll_state = ScrollbarState::new((item_count - 1) * ITEM_HEIGHT);
+        }
         Self {
             state: TableState::default().with_selected(0),
             items,
-            scroll_state: ScrollbarState::new((item_count - 1) * ITEM_HEIGHT),
+            scroll_state,
             index: 0,
         }
     }
