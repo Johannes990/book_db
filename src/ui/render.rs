@@ -191,18 +191,21 @@ fn render_new_database_screen(frame: &mut Frame, app: &mut App) {
     let page_style = Style::default().bg(app.general_page_bg_color()).fg(app.general_text_color());
     let chunks = get_chunks_from_percentages(frame.area(), Direction::Vertical, vec![75, 25]);
     let insert_text_area_on_style = Style::default().bg(app.text_entry_box_bg_col()).fg(app.general_text_color());
-    if let Some(form) = &mut app.create_db_form {
-        form.set_on_style(insert_text_area_on_style);
-    }
+    let form = app.create_db_form.as_mut().unwrap();
+    form.set_on_style(insert_text_area_on_style);
     let block = Block::default()
         .title("Creating new database")
+        .borders(Borders::ALL)
         .style(page_style);
-    let content = Paragraph::new(app.create_db_form.as_ref().unwrap().text_field.text_value.clone())
-        .block(block)
-        .wrap(Wrap { trim: true });
+    let text_area = chunks[0].inner(Margin { horizontal: 1, vertical: 1 });
 
     frame.render_widget(Clear, chunks[0]);
-    frame.render_widget(content, chunks[0]);
+    frame.render_widget(block, chunks[0]);
+    frame.render_widget(&form.text_field, text_area);
+
+    if let Some(cursor_pos) = form.text_field.cursor_position(text_area) {
+        frame.set_cursor_position(cursor_pos);
+    }
 
     let info_bits = vec![
         "Commands:",
@@ -426,19 +429,23 @@ fn render_insert_table_popup(frame: &mut Frame, app: &mut App) {
         .fg(app.general_text_color());
     let insert_text_area_on_style = Style::default().bg(app.text_entry_box_bg_col()).fg(app.general_text_color());
     let insert_text_area_off_style = Style::default().bg(app.text_entry_box_bg_col()).fg(app.file_exp_pg_selected_col());
-    app.create_table_form.as_mut().unwrap().set_on_style(insert_text_area_on_style);
-    app.create_table_form.as_mut().unwrap().set_off_style(insert_text_area_off_style);
+    let form = app.create_table_form.as_mut().unwrap();
+    form.set_on_style(insert_text_area_on_style);
+    form.set_off_style(insert_text_area_off_style);
     let title_text = format!("Create new table into database {}", app.selected_db.as_ref().unwrap().get_db_name());
     let create_table_block = Block::default()
         .borders(Borders::ALL)
         .style(insert_table_popup_style)
         .title(title_text);
-    let content_paragraph = Paragraph::new(app.create_table_form.as_ref().unwrap().text_field.text_value.clone())
-        .block(create_table_block)
-        .wrap(Wrap { trim: false });
+    let text_area = chunks[0].inner(Margin { horizontal: 1, vertical: 1 });
 
     frame.render_widget(Clear, chunks[0]);
-    frame.render_widget(content_paragraph, chunks[0]);
+    frame.render_widget(create_table_block, chunks[0]);
+    frame.render_widget(&form.text_field, text_area);
+
+    if let Some(cursor_pos) = form.text_field.cursor_position(text_area) {
+        frame.set_cursor_position(cursor_pos);
+    }
 
     let info_bits = vec![
         "Commands:",
@@ -455,18 +462,22 @@ fn render_drop_table_popup(frame: &mut Frame, app: &mut App) {
         .bg(app.quit_popup_bg_col())
         .fg(app.general_text_color());
     let text_area_style = Style::default().bg(app.text_entry_box_bg_col()).fg(app.general_text_color());
-    app.drop_table_form.as_mut().unwrap().set_on_style(text_area_style);
+    let form = app.drop_table_form.as_mut().unwrap();
+    form.set_on_style(text_area_style);
     let title_text = format!("Drop table from database {}", app.selected_db.as_ref().unwrap().get_db_name());
     let drop_table_block = Block::default()
         .borders(Borders::ALL)
         .style(drop_table_popup_style)
         .title(title_text);
-    let content_paragraph = Paragraph::new(app.drop_table_form.as_ref().unwrap().text_field.text_value.clone())
-        .block(drop_table_block)
-        .wrap(Wrap { trim: true });
+    let text_area = chunks[0].inner(Margin { horizontal: 1, vertical: 1 });
 
     frame.render_widget(Clear, chunks[0]);
-    frame.render_widget(content_paragraph, chunks[0]);
+    frame.render_widget(drop_table_block, chunks[0]);
+    frame.render_widget(&form.text_field, text_area);
+
+    if let Some(cursor_pos) = form.text_field.cursor_position(text_area) {
+        frame.set_cursor_position(cursor_pos);
+    }
 
     let info_bits = vec![
         "Commands:",
