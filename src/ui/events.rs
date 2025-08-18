@@ -7,7 +7,7 @@ use ratatui::crossterm::event::{
     KeyEventKind
 };
 use rusqlite::ToSql;
-use crate::{app::{App, PopUp, Screen}, column::column_list::ColumnListView, db::{DBError, DB}, options::SelectedOption, table::table_list::TableListView};
+use crate::{app::{App, PopUp, Screen}, db::{DBError, DB}, options::SelectedOption};
 
 pub fn handle_key_events(app: &mut App) -> io::Result<bool> {
     if let Event::Key(key_event) = event::read()? {
@@ -203,7 +203,7 @@ fn database_schema_screen_handler(app: &mut App, key_event: KeyEvent) {
                     (KeyCode::Backspace, KeyModifiers::NONE) => app.create_table_form.as_mut().unwrap().pop_char(),
                     (KeyCode::Enter, KeyModifiers::NONE) => {
                         if let Some(db) = &mut app.selected_db {
-                            match db.execute_raw_sql(app.create_table_form.as_ref().unwrap().sql.text_value.clone()) {
+                            match db.execute_raw_sql(app.create_table_form.as_ref().unwrap().text_field.text_value.clone()) {
                                 Ok(_) => {
                                     app.fetch_table_list();
                                     app.switch_to_popup(PopUp::None);
@@ -231,7 +231,7 @@ fn database_schema_screen_handler(app: &mut App, key_event: KeyEvent) {
                     (KeyCode::Backspace, KeyModifiers::NONE) => app.drop_table_form.as_mut().unwrap().pop_char(),
                     (KeyCode::Enter, KeyModifiers::NONE) => {
                         if let Some(db) = &mut app.selected_db {
-                            match db.drop_table(app.drop_table_form.as_ref().unwrap().table_name.text_value.clone()) {
+                            match db.drop_table(app.drop_table_form.as_ref().unwrap().text_field.text_value.clone()) {
                                 Ok(_) => {
                                     app.fetch_table_list();
                                     app.switch_to_popup(PopUp::None);
@@ -472,7 +472,7 @@ fn create_new_file_screen_handler(app: &mut App, key_event: KeyEvent) {
             (KeyCode::Char('s'), KeyModifiers::CONTROL) => {
                 if app.selected_db.is_none() {
                     if let Some(form) = &app.create_db_form {
-                        let db_name = form.file_name.text_value.clone();
+                        let db_name = form.text_field.text_value.clone();
 
                         match DB::new(db_name) {
                             Ok(db) => {

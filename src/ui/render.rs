@@ -106,16 +106,6 @@ fn render_splash_screen(frame: &mut Frame, app: &App) {
         "ESC / q", " - quit app",
     ];
     render_info_paragraph(&info_bits, frame, app, chunks[1]);
-    /* 
-    let info_text = format_info_text(&text_bits, app);
-    let info_paragraph = Paragraph::new(info_text)
-        .wrap(Wrap {trim: true})
-        .style(Style::default().bg(app.info_block_bg_col()))
-        .block(Block::default()
-        .borders(Borders::ALL)
-        .title("Info"));
-
-    frame.render_widget(info_paragraph, chunks[1]);*/
 }
 
 fn render_file_explorer_screen(frame: &mut Frame, app: &mut App) {
@@ -167,17 +157,6 @@ fn render_file_explorer_screen(frame: &mut Frame, app: &mut App) {
         "ESC / q", " - return to splash screen",
     ];
     render_info_paragraph(&info_bits, frame, app, chunks[1]);
-    /*
-    let info_text = format_info_text(&text_bits, app);
-    let info_paragraph = Paragraph::new(info_text)
-        .wrap(Wrap {trim: true})
-        .style(Style::default().bg(app.info_block_bg_col()))
-        .block(Block::default()
-            .borders(Borders::ALL)
-            .title("Info")
-        );
-
-    frame.render_widget(info_paragraph, chunks[1]);*/
 }
 
 fn render_database_schema_screen(frame: &mut Frame, app: &mut App) {
@@ -206,14 +185,6 @@ fn render_database_schema_screen(frame: &mut Frame, app: &mut App) {
         "ESC / q", " - return to splash screen",
     ];
     render_info_paragraph(&info_bits, frame, app, chunks[1]);
-    /*
-    let info_text = format_info_text(&text_bits, app);
-    let info_paragraph = Paragraph::new(info_text)
-        .wrap(Wrap {trim: true})
-        .style(Style::default().bg(app.info_block_bg_col()))
-        .block(Block::default().borders(Borders::ALL).title("Info"));
-
-    frame.render_widget(info_paragraph, chunks[1]);*/
 }
 
 fn render_new_database_screen(frame: &mut Frame, app: &mut App) {
@@ -226,7 +197,7 @@ fn render_new_database_screen(frame: &mut Frame, app: &mut App) {
     let block = Block::default()
         .title("Creating new database")
         .style(page_style);
-    let content = Paragraph::new(app.create_db_form.as_ref().unwrap().file_name.text_value.clone())
+    let content = Paragraph::new(app.create_db_form.as_ref().unwrap().text_field.text_value.clone())
         .block(block)
         .wrap(Wrap { trim: true });
 
@@ -303,15 +274,6 @@ fn render_database_table_screen(frame: &mut Frame, app: &mut App) {
         "ESC / b", " - return to database view",
     ];
     render_info_paragraph(&info_bits, frame, app, chunks[1]);
-    /*
-    let info_text = format_info_text(&info_bits, app);
-    let info_paragraph = Paragraph::new(info_text)
-        .wrap(Wrap {trim: true})
-        .style(Style::default().bg(app.info_block_bg_col()))
-        .block(Block::default().borders(Borders::ALL).title("Info"));
-
-    frame.render_widget(info_paragraph, chunks[1]);
-    */
 }
 
 fn render_options_screen(frame: &mut Frame, app: &mut App) {
@@ -374,17 +336,6 @@ fn render_options_screen(frame: &mut Frame, app: &mut App) {
         "ESC / q" , " - return to splash screen",
     ];
     render_info_paragraph(&info_bits, frame, app, vertical_chunks[2]);
-    /*
-    let info_text = format_info_text(&info_bits, app);
-    let info_paragraph = Paragraph::new(info_text)
-        .wrap(Wrap {trim: true})
-        .style(Style::default().bg(app.info_block_bg_col()))
-        .block(Block::default()
-            .borders(Borders::ALL)
-            .title("Info")
-        );
-
-    frame.render_widget(info_paragraph, vertical_chunks[2]);*/
 }
 
 fn render_quit_popup(frame: &mut Frame, app: &App) {
@@ -392,25 +343,12 @@ fn render_quit_popup(frame: &mut Frame, app: &App) {
     let quit_popup_style = Style::default()
         .bg(app.quit_popup_bg_col())
         .fg(app.general_text_color());
-    /*let popup_block = Block::default()
-        .title("Are you sure you want to quit?")
-        .borders(Borders::ALL)
-        .style(quit_popup_style);*/
     let info_bits = vec![
         "", 
         "y", " - quit app", 
         "ESC / n", " - return to splash screen",
     ];
     render_titled_paragraph(frame, app, &info_bits, "Are you sure you want to quit", quit_popup_style, area);
-
-    /*
-    let exit_text = format_info_text(&info_bits, app);
-    let exit_paragraph = Paragraph::new(exit_text)
-        .block(popup_block)
-        .wrap(Wrap { trim: false });
-
-    frame.render_widget(Clear, area);
-    frame.render_widget(exit_paragraph, area);*/
 }
 
 fn render_no_db_loaded_popup(frame: &mut Frame, app: &mut App) {
@@ -418,25 +356,12 @@ fn render_no_db_loaded_popup(frame: &mut Frame, app: &mut App) {
     let popup_style = Style::default()
         .bg(app.quit_popup_bg_col())
         .fg(app.general_text_color());
-    /*let popup_block = Block::default()
-        .borders(Borders::ALL)
-        .style(popup_style);*/
     let info_bits = vec![
         "", 
         "CTRL + f", " - open file explorer", 
         "ESC", " - return to splash screen"
     ];
     render_titled_paragraph(frame, app, &info_bits, "No database file loaded", popup_style, area);
-    //render_info_paragraph(&info_bits, frame, app, area);
-    /*
-    let info_text = format_info_text(&info_bits, app);
-    let info_paragraph = Paragraph::new(info_text)
-        .block(popup_block)
-        .wrap(Wrap { trim: false } );
-    
-    frame.render_widget(Clear, area);
-    frame.render_widget(info_paragraph, area);
-    */
 }
 
 fn render_insert_row_popup(frame: &mut Frame, app: &mut App) {
@@ -491,16 +416,6 @@ fn render_insert_row_popup(frame: &mut Frame, app: &mut App) {
         "ESC / ALT + q", " - return to database table view",
     ];
     render_info_paragraph(&info_bits, frame, app, chunks[1]);
-    /*    
-    let info_text = format_info_text(&info_bits, app);
-    let info_paragraph = Paragraph::new(info_text)
-        .wrap(Wrap {trim: true})
-        .style(Style::default().bg(app.info_block_bg_col()))
-        .block(Block::default().borders(Borders::ALL).title("Info"));
-
-    frame.render_widget(Clear, chunks[1]);
-    frame.render_widget(info_paragraph, chunks[1]);
-    */
 }
 
 fn render_insert_table_popup(frame: &mut Frame, app: &mut App) {
@@ -518,7 +433,7 @@ fn render_insert_table_popup(frame: &mut Frame, app: &mut App) {
         .borders(Borders::ALL)
         .style(insert_table_popup_style)
         .title(title_text);
-    let content_paragraph = Paragraph::new(app.create_table_form.as_ref().unwrap().sql.text_value.clone())
+    let content_paragraph = Paragraph::new(app.create_table_form.as_ref().unwrap().text_field.text_value.clone())
         .block(create_table_block)
         .wrap(Wrap { trim: false });
 
@@ -531,15 +446,6 @@ fn render_insert_table_popup(frame: &mut Frame, app: &mut App) {
         "ESC", " - return to database schema view",
     ];
     render_info_paragraph(&info_bits, frame, app, chunks[1]);
-    /*
-    let info_text = format_info_text(&info_bits, app);
-    let info_paragraph = Paragraph::new(info_text)
-        .wrap(Wrap {trim: true})
-        .style(Style::default().bg(app.info_block_bg_col()))
-        .block(Block::default().borders(Borders::ALL).title("Info"));
-
-    frame.render_widget(Clear, chunks[1]);
-    frame.render_widget(info_paragraph, chunks[1]);*/
 }
 
 fn render_drop_table_popup(frame: &mut Frame, app: &mut App) {
@@ -555,7 +461,7 @@ fn render_drop_table_popup(frame: &mut Frame, app: &mut App) {
         .borders(Borders::ALL)
         .style(drop_table_popup_style)
         .title(title_text);
-    let content_paragraph = Paragraph::new(app.drop_table_form.as_ref().unwrap().table_name.text_value.clone())
+    let content_paragraph = Paragraph::new(app.drop_table_form.as_ref().unwrap().text_field.text_value.clone())
         .block(drop_table_block)
         .wrap(Wrap { trim: true });
 
@@ -569,18 +475,6 @@ fn render_drop_table_popup(frame: &mut Frame, app: &mut App) {
     ];
 
     render_info_paragraph(&info_bits, frame, app, chunks[1]);
-    /*
-    let info_text = format_info_text(&info_bits, app);
-    let info_paragraph = Paragraph::new(info_text)
-        .wrap(Wrap { trim: true })
-        .style(Style::default().bg(app.info_block_bg_col()))
-        .block(Block::default().borders(Borders::ALL).title("Info"));
-
-    
-
-    frame.render_widget(Clear, chunks[1]);
-    frame.render_widget(info_paragraph, chunks[1]);
-    */
 }
 
 fn render_delete_row_popup(frame: &mut Frame, app: &mut App) {

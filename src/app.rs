@@ -11,7 +11,7 @@ use crate::{
     },
     ui::{colorscheme::ColorScheme, render},
     widgets::{
-        create_db_form::CreateDBForm, create_table_form::CreateTableForm, drop_table_form::DropTableForm, table_delete_form::TableDeleteForm, table_insert_form::TableInsertForm
+        single_field_form::SingleFieldForm, table_delete_form::TableDeleteForm, table_insert_form::TableInsertForm
     },
 };
 use ratatui::{
@@ -55,9 +55,9 @@ pub struct App {
     pub row_list_view: Option<RowListView>,
     pub table_insert_form: Option<TableInsertForm>,
     pub table_delete_form: Option<TableDeleteForm>,
-    pub create_table_form: Option<CreateTableForm>,
-    pub drop_table_form: Option<DropTableForm>,
-    pub create_db_form: Option<CreateDBForm>,
+    pub create_table_form: Option<SingleFieldForm>,
+    pub drop_table_form: Option<SingleFieldForm>,
+    pub create_db_form: Option<SingleFieldForm>,
     pub should_quit: bool,
     pub options: Options
 }
@@ -216,15 +216,15 @@ impl App {
     }
 
     pub fn create_create_table_form(&mut self) {
-        self.create_table_form = Some(CreateTableForm::new());
+        self.create_table_form = Some(SingleFieldForm::new());
     }
 
     pub fn create_drop_table_form(&mut self) {
-        self.drop_table_form = Some(DropTableForm::new());
+        self.drop_table_form = Some(SingleFieldForm::new());
     }
 
     pub fn create_new_db_form(&mut self) {
-        self.create_db_form = Some(CreateDBForm::new());
+        self.create_db_form = Some(SingleFieldForm::new());
     }
 
     pub fn general_text_color(&self) -> Color {
