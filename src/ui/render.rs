@@ -376,42 +376,53 @@ fn render_insert_row_popup(frame: &mut Frame, app: &mut App) {
     let metadata_style = Style::default().fg(app.alt_text_color_2()).add_modifier(Modifier::ITALIC);
     let insert_text_area_on_style = Style::default().bg(app.text_entry_box_bg_col()).fg(app.general_text_color());
     let insert_text_area_off_style = Style::default().bg(app.text_entry_box_bg_col()).fg(app.file_exp_pg_selected_col());
-    app.table_insert_form.as_mut().unwrap().set_off_style(insert_text_area_off_style);
-    app.table_insert_form.as_mut().unwrap().set_on_style(insert_text_area_on_style);
+    let form = app.table_insert_form.as_mut().unwrap();
+    form.set_off_style(insert_text_area_off_style);
+    form.set_on_style(insert_text_area_on_style);
     let title_text = format!("Enter new entry into table {}", app.selected_db_table.as_deref().unwrap());
     let popup_block = Block::default()
         .borders(Borders::ALL)
         .title(title_text)
         .style(insert_row_popup_style);
-    let mut column_text = Text::default();
-    
-    // this is to calculate the correct spacing for entry text to line up, not yet implemented
-    let _longest_col_name_len = app.selected_table_columns.iter()
-        .map(|c| c.name.len())
-        .max()
-        .unwrap_or(0);
+
+    frame.render_widget(Clear, chunks[0]);
+    frame.render_widget(popup_block, chunks[0]);
+
+    let text_area = chunks[0].inner(Margin { horizontal: 1, vertical: 1 });
 
     for (i, col_info) in app.selected_table_columns.iter().enumerate() {
-        column_text.push_line(col_info.name.clone());
+        let x = text_area.x;
+        let y = text_area.y + i as u16;
+
+        let mut line = Line::from(vec![Span::raw(col_info.name.clone())]);
         if app.options.display_col_metainfo_in_insert_view {
-            column_text.push_span(Span::styled(format!(" [{}]", col_info.col_type.clone()), metadata_style));
+            line.spans.push(Span::styled(
+                format!(" [{}]", col_info.col_type.clone()),
+                metadata_style
+            ));
         }
-        if let Some(form) = &app.table_insert_form {
-            column_text.push_span(Span::styled("  ", insert_row_popup_style));
-            if i == form.index {
-                column_text.push_span(Span::styled(form.items.get(i).unwrap().text_value.clone(), insert_text_area_on_style));
-            } else {
-                column_text.push_span(Span::styled(form.items.get(i).unwrap().text_value.clone(), insert_text_area_off_style));
+
+        line.spans.push(Span::raw(" "));
+        let field = &form.items[i];
+        if field.selected {
+            line.spans.push(Span::styled(field.text_value.clone(), insert_text_area_on_style))
+        } else {
+            line.spans.push(Span::styled(field.text_value.clone(), insert_text_area_off_style));
+        }
+
+        frame.buffer_mut().set_line(x, y, &line, text_area.width);
+
+        if field.selected {
+            if let Some(cursor_pos) = field.cursor_position(Rect {
+                x: x + (col_info.col_name_length(&app.options.display_col_metainfo_in_insert_view) + 1) as u16,
+                y,
+                width: text_area.width,
+                height: 1
+            }) {
+                frame.set_cursor_position(cursor_pos);
             }
         }
     }
-
-    let content_paragraph = Paragraph::new(column_text)
-        .block(popup_block)
-        .wrap(Wrap { trim: false } );
-
-    frame.render_widget(Clear, chunks[0]);
-    frame.render_widget(content_paragraph, chunks[0]);
 
     let info_bits = vec![
         "Commands:",
