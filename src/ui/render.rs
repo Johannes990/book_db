@@ -15,7 +15,7 @@ use crate::{
     column::column_info::ColumnInfo,
     file_explorer::file_explorer_data::FileExplorerData,
     options::SelectedOption,
-    row::row_info::RowInfo,
+    row::{self, row_info::RowInfo},
     widgets::selectable_line::SelectableLine,
 };
 
@@ -502,6 +502,8 @@ fn render_drop_table_popup(frame: &mut Frame, app: &mut App) {
 fn render_delete_row_popup(frame: &mut Frame, app: &mut App) {
     let area = centered_rect(55, 30, frame.area());
     let chunks = get_chunks_from_percentages(area, Direction::Vertical, vec![70, 30]);
+    let col_name_str = "Column name: ";
+    let row_val_str = "Row value: ";
     let delete_row_popup_style = Style::default()
         .bg(app.quit_popup_bg_col())
         .fg(app.general_text_color());
@@ -521,31 +523,63 @@ fn render_delete_row_popup(frame: &mut Frame, app: &mut App) {
         .title(title_text)
         .style(delete_row_popup_style);
 
-    let form_inner = delete_form_block.inner(chunks[0]);
-    let form_chunks = get_chunks_from_constraints(
-        form_inner,
-        Direction::Vertical,
-        vec![
-            Constraint::Length(3),
-            Constraint::Length(3),
-        ],
-    );
-
     frame.render_widget(Clear, chunks[0]);
     frame.render_widget(delete_form_block.clone(), chunks[0]);
 
+    let text_area = delete_form_block.inner(chunks[0]);
+
     if let Some(form) = &app.table_delete_form {
-        let col_name_block = Block::default()
-            .borders(Borders::ALL)
-            .title("Column name");
-        frame.render_widget(&form.col_name_entry, col_name_block.inner(form_chunks[0]));
-        frame.render_widget(col_name_block, form_chunks[0]);
-        
-        let value_block = Block::default()
-            .borders(Borders::ALL)
-            .title("Row value");
-        frame.render_widget(&form.row_value_entry, value_block.inner(form_chunks[1]));
-        frame.render_widget(value_block, form_chunks[1]);
+        let mut text = Text::default();
+
+        text.push_span(Span::raw(col_name_str));
+        if form.col_name_entry.selected {
+            text.push_span(Span::styled(
+                form.col_name_entry.text_value.clone(),
+                delete_text_area_on_style
+            ));
+        } else {
+            text.push_span(Span::styled(
+                form.col_name_entry.text_value.clone(),
+                delete_text_area_off_style
+            ))
+        }
+        text.push_line("");
+
+        text.push_span(Span::raw(row_val_str));
+        if form.row_value_entry.selected {
+            text.push_span(Span::styled(
+                form.row_value_entry.text_value.clone(),
+                delete_text_area_on_style
+            ));
+        } else {
+            text.push_span(Span::styled(
+                form.row_value_entry.text_value.clone(),
+                delete_text_area_off_style
+            ));
+        }
+
+        let content_paragraph = Paragraph::new(text).wrap(Wrap { trim: false });
+        frame.render_widget(content_paragraph, text_area);
+
+        if form.col_name_entry.selected {
+            if let Some(cursor_pos) = form.col_name_entry.cursor_position(Rect {
+                x: text_area.x + col_name_str.len() as u16,
+                y:text_area.y,
+                width: text_area.width,
+                height: 1,
+            }) {
+                frame.set_cursor_position(cursor_pos);
+            }
+        } else if form.row_value_entry.selected {
+            if let Some(cursor_pos) = form.row_value_entry.cursor_position(Rect {
+                x: text_area.x + row_val_str.len() as u16,
+                y:text_area.y + 1,
+                width: text_area.width,
+                height: 1,
+            }) {
+                frame.set_cursor_position(cursor_pos);
+            }
+        }
     }
 
     let info_bits = vec![
