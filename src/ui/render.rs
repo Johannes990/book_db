@@ -12,7 +12,7 @@ use ratatui::{
     text::{Line, Span, Text},
     widgets::{
         Block, Borders, Cell, Clear, HighlightSpacing, List, ListItem, Paragraph, Row, Scrollbar,
-        ScrollbarOrientation, ScrollbarState, Table, TableState, Wrap
+        ScrollbarOrientation, ScrollbarState, Table, TableState, Wrap,
     },
     Frame, Terminal,
 };
@@ -31,7 +31,7 @@ where
             match app.current_popup {
                 PopUp::NoDBLoaded => render_no_db_loaded_popup(frame, app),
                 PopUp::Quit => render_quit_popup(frame, app),
-                _ => {},
+                _ => {}
             }
         }
         Screen::CreateNewFile => {
@@ -49,7 +49,7 @@ where
             match app.current_popup {
                 PopUp::InsertTable => render_insert_table_popup(frame, app),
                 PopUp::DeleteTable => render_drop_table_popup(frame, app),
-                _ => {},
+                _ => {}
             }
         }
         Screen::DataBaseTable => {
@@ -76,7 +76,7 @@ fn render_splash_screen(frame: &mut Frame, app: &App) {
     let main_page_style = Style::default()
         .bg(app.general_page_bg_color())
         .fg(app.general_text_color());
-    let main_page_content = 
+    let main_page_content =
         Paragraph::new("Database terminal app v0.0.1".to_owned()).style(main_page_style);
 
     frame.render_widget(main_page_content, chunks[0]);
@@ -135,11 +135,11 @@ fn render_file_explorer_screen(frame: &mut Frame, app: &mut App) {
 
     render_table(
         frame,
-        &mut app.file_explorer_table.state, 
+        &mut app.file_explorer_table.state,
         Some(header),
-        rows, 
+        rows,
         col_constraints.to_vec(),
-        chunks[0], 
+        chunks[0],
         highlight_col,
         Borders::NONE,
         None,
@@ -154,7 +154,7 @@ fn render_file_explorer_screen(frame: &mut Frame, app: &mut App) {
 
     let info_bits = vec![
         "Commands:",
-        "↑ / ↓" ,
+        "↑ / ↓",
         " - navigate",
         "ESC / q",
         " - return to splash screen",
@@ -187,9 +187,9 @@ fn render_database_schema_screen(frame: &mut Frame, app: &mut App) {
     render_column_list(frame, app, table_column_chunks[1]);
 
     let info_bits = vec![
-        "Commands:", 
+        "Commands:",
         "↑ / ↓",
-        " - navigate", 
+        " - navigate",
         "Enter",
         " - select table",
         "n",
@@ -210,13 +210,9 @@ fn render_new_database_screen(frame: &mut Frame, app: &mut App) {
     let insert_text_area_on_style = Style::default()
         .bg(app.text_entry_box_bg_col())
         .fg(app.general_text_color());
-    
+
     if let Some(form) = &mut app.create_db_form {
-        form.set_styles(
-            insert_text_area_on_style,
-            Style::default(),
-            page_style
-        );
+        form.set_styles(insert_text_area_on_style, Style::default(), page_style);
     }
 
     if let Some(form) = &app.create_db_form {
@@ -228,7 +224,7 @@ fn render_new_database_screen(frame: &mut Frame, app: &mut App) {
         "CTRL + s",
         " - create new database",
         "ESC / q",
-        " - return to splash screen"
+        " - return to splash screen",
     ];
     render_info_paragraph(&info_bits, frame, app, chunks[1]);
 }
@@ -271,7 +267,11 @@ fn render_database_table_screen(frame: &mut Frame, app: &mut App) {
         .items
         .iter()
         .map(|row| {
-            let row_cells = row.values.iter().map(|val| Cell::from(val.clone())).collect::<Vec<_>>();
+            let row_cells = row
+                .values
+                .iter()
+                .map(|val| Cell::from(val.clone()))
+                .collect::<Vec<_>>();
             Row::new(row_cells).style(db_page_style)
         })
         .collect();
@@ -306,7 +306,7 @@ fn render_database_table_screen(frame: &mut Frame, app: &mut App) {
     );
 
     let info_bits = vec![
-        "Commands:", 
+        "Commands:",
         "i",
         " - create new entry",
         "d",
@@ -343,7 +343,7 @@ fn render_options_screen(frame: &mut Frame, app: &mut App) {
         .block(
             Block::default()
                 .borders(Borders::ALL)
-                .title("Color Schemes")
+                .title("Color Schemes"),
         )
         .highlight_style(Style::default().bg(app.general_page_bg_color()));
 
@@ -352,7 +352,7 @@ fn render_options_screen(frame: &mut Frame, app: &mut App) {
     render_color_scheme_preview(
         frame,
         horizontal_chunks[1],
-        &app.options.selected_color_scheme
+        &app.options.selected_color_scheme,
     );
 
     let table_metainfo_toggle_button = SelectableLine::default(
@@ -388,9 +388,9 @@ fn render_options_screen(frame: &mut Frame, app: &mut App) {
     frame.render_widget(insert_metainfo_toggle_button, insert_metainfo_toggle_area);
 
     let info_bits = vec![
-        "Commands: ", 
+        "Commands: ",
         "← / →",
-        " - switch between color schemes", 
+        " - switch between color schemes",
         "↑ / ↓",
         " - switch between options",
         "ESC / q",
@@ -405,9 +405,9 @@ fn render_quit_popup(frame: &mut Frame, app: &App) {
         .bg(app.quit_popup_bg_col())
         .fg(app.general_text_color());
     let info_bits = vec![
-        "", 
+        "",
         "y",
-        " - quit app", 
+        " - quit app",
         "ESC / n",
         " - return to splash screen",
     ];
@@ -417,7 +417,7 @@ fn render_quit_popup(frame: &mut Frame, app: &App) {
         &info_bits,
         "Are you sure you want to quit",
         quit_popup_style,
-        area
+        area,
     );
 }
 
@@ -427,11 +427,11 @@ fn render_no_db_loaded_popup(frame: &mut Frame, app: &mut App) {
         .bg(app.quit_popup_bg_col())
         .fg(app.general_text_color());
     let info_bits = vec![
-        "", 
+        "",
         "CTRL + f",
-        " - open file explorer", 
+        " - open file explorer",
         "ESC",
-        " - return to splash screen"
+        " - return to splash screen",
     ];
     render_titled_paragraph(
         frame,
@@ -439,7 +439,7 @@ fn render_no_db_loaded_popup(frame: &mut Frame, app: &mut App) {
         &info_bits,
         "No database file loaded",
         popup_style,
-        area
+        area,
     );
 }
 
@@ -543,7 +543,7 @@ fn render_insert_table_popup(frame: &mut Frame, app: &mut App) {
     let insert_text_area_off_style = Style::default()
         .bg(app.text_entry_box_bg_col())
         .fg(app.file_exp_pg_selected_col());
-    
+
     if let Some(form) = &mut app.create_table_form {
         form.set_styles(
             insert_text_area_on_style,
@@ -625,7 +625,7 @@ fn render_delete_row_popup(frame: &mut Frame, app: &mut App) {
         "Enter",
         " - delete entry with given ID",
         "ESC",
-        " - return to database table view"
+        " - return to database table view",
     ];
     render_info_paragraph(&info_bits, frame, app, chunks[1]);
 }
@@ -639,7 +639,7 @@ fn render_error_popup(frame: &mut Frame, app: &mut App, msg: &str) {
         .style(
             Style::default()
                 .bg(app.quit_popup_bg_col())
-                .fg(Color::White)
+                .fg(Color::White),
         );
     let mut error_text = Text::default();
     error_text.push_line(Span::raw(msg));
@@ -676,7 +676,8 @@ fn render_table_list(frame: &mut Frame, app: &mut App, area: Rect) {
                     Cell::from(Text::from(if table.is_view { "View" } else { "Table" })),
                 ])
                 .style(row_style)
-            }).collect();
+            })
+            .collect();
 
         let col_constraints = [
             Constraint::Min(15),   // table name
@@ -695,7 +696,7 @@ fn render_table_list(frame: &mut Frame, app: &mut App, area: Rect) {
             area,
             highlight_color,
             Borders::ALL,
-            Some("Tables".to_string())
+            Some("Tables".to_string()),
         );
 
         render_vertical_scrollbar(frame, area, None, &mut unwrapped_table_list.scroll_state);
@@ -742,13 +743,14 @@ fn render_column_list(frame: &mut Frame, app: &mut App, area: Rect) {
                     let ref_table = col.references_table.as_deref().unwrap_or("Unknown");
                     col_constraint_text.push_str(&format!("[FK -> {}]", ref_table).to_string());
                 }
-                
+
                 Row::new(vec![
                     Cell::from(Text::from(col.name.to_string())),
                     Cell::from(Text::from(col.col_type.to_string())),
                     Cell::from(Text::from(col_constraint_text)),
                 ])
-            }).collect();
+            })
+            .collect();
 
         let col_constraints = [
             Constraint::Min(15),
@@ -767,7 +769,7 @@ fn render_column_list(frame: &mut Frame, app: &mut App, area: Rect) {
             area,
             highlight_color,
             Borders::ALL,
-            Some("Columns".to_string())
+            Some("Columns".to_string()),
         );
 
         render_vertical_scrollbar(frame, area, None, &mut unwrapped_column_list.scroll_state);
@@ -781,7 +783,6 @@ fn render_column_list(frame: &mut Frame, app: &mut App, area: Rect) {
         frame.render_widget(Clear, area);
         frame.render_widget(paragraph, area);
     }
-    
 }
 
 fn render_color_scheme_preview(frame: &mut Frame, area: Rect, color_scheme: &ColorScheme) {
@@ -807,7 +808,7 @@ fn render_color_scheme_preview(frame: &mut Frame, area: Rect, color_scheme: &Col
         );
         frame.render_widget(
             Block::default().style(Style::default().bg(*color)),
-            color_area
+            color_area,
         );
     }
 }
@@ -816,7 +817,7 @@ fn render_vertical_scrollbar(
     frame: &mut Frame,
     area: Rect,
     endpoints: Option<&str>,
-    scroll_bar_state: &mut ScrollbarState
+    scroll_bar_state: &mut ScrollbarState,
 ) {
     frame.render_stateful_widget(
         Scrollbar::default()
@@ -842,7 +843,7 @@ fn render_table(
     area: Rect,
     highlight_col: Color,
     borders: Borders,
-    title: Option<String>
+    title: Option<String>,
 ) {
     let table_title = title.unwrap_or_default();
     let block_style = Block::new().borders(borders).title(table_title);
@@ -871,13 +872,13 @@ fn centered_rect(percent_x: u16, percent_y: u16, area: Rect) -> Rect {
 fn get_chunks_from_percentages(
     area: Rect,
     direction: Direction,
-    percentages: Vec<u16>
+    percentages: Vec<u16>,
 ) -> Rc<[Rect]> {
     let constraints: Vec<Constraint> = percentages
         .iter()
         .map(|value| Constraint::Percentage(*value))
         .collect();
-    
+
     Layout::default()
         .direction(direction)
         .constraints(constraints)
@@ -908,7 +909,7 @@ fn compute_col_widths(
     rows: &[RowInfo],
     min: usize,
     max: usize,
-    display_metainfo: &bool
+    display_metainfo: &bool,
 ) -> Vec<Constraint> {
     cols.iter()
         .enumerate()
@@ -921,7 +922,8 @@ fn compute_col_widths(
             let width = header_len.max(max_data_len).clamp(min, max);
 
             Constraint::Length(width as u16)
-        }).collect()
+        })
+        .collect()
 }
 
 fn render_titled_paragraph(
@@ -930,7 +932,7 @@ fn render_titled_paragraph(
     info_bits: &[&str],
     title: &str,
     style: Style,
-    area: Rect
+    area: Rect,
 ) {
     let titled_paragraph_block = Block::default()
         .style(style)
@@ -945,7 +947,7 @@ fn render_titled_paragraph(
     frame.render_widget(titled_paragraph, area);
 }
 
-fn render_info_paragraph(info_bits: &[&str], frame: &mut Frame, app: & App, area: Rect) {
+fn render_info_paragraph(info_bits: &[&str], frame: &mut Frame, app: &App, area: Rect) {
     let info_style = Style::default().bg(app.info_block_bg_col());
 
     render_titled_paragraph(frame, app, info_bits, "Info", info_style, area);

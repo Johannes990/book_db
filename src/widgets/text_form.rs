@@ -105,7 +105,7 @@ impl TextForm {
 
     pub fn update_cursor_pos(&self, frame: &mut Frame, area: Rect) {
         if let Some(active_field) = self.fields.get(self.index) {
-            let cursor_x = 
+            let cursor_x =
                 area.x + self.labels[self.index].len() as u16 + 3 + active_field.cursor_pos as u16;
             let cursor_y = area.y + self.index as u16 + 1;
             frame.set_cursor_position((cursor_x, cursor_y));

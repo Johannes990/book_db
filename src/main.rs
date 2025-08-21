@@ -1,15 +1,16 @@
-mod db;
-mod options;
-mod ui;
 mod app;
 mod column;
-mod table;
+mod db;
 mod file_explorer;
+mod options;
 mod row;
+mod table;
+mod ui;
 mod widgets;
 
+use app::App;
 use crossterm::{
-    event::{KeyboardEnhancementFlags, PushKeyboardEnhancementFlags, PopKeyboardEnhancementFlags},
+    event::{KeyboardEnhancementFlags, PopKeyboardEnhancementFlags, PushKeyboardEnhancementFlags},
     execute,
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
@@ -18,13 +19,8 @@ use ratatui::{
     Terminal,
 };
 use rusqlite::Result;
-use ui::{
-    colorscheme::ColorScheme,
-    events::handle_key_events,
-};
-use app::App;
 use std::io;
-
+use ui::{colorscheme::ColorScheme, events::handle_key_events};
 
 fn main() -> io::Result<()> {
     let qualifier = "".to_string();
@@ -36,8 +32,8 @@ fn main() -> io::Result<()> {
     let _ = execute!(
         stdout,
         PushKeyboardEnhancementFlags(
-            KeyboardEnhancementFlags::DISAMBIGUATE_ESCAPE_CODES |
-            KeyboardEnhancementFlags::REPORT_ALL_KEYS_AS_ESCAPE_CODES
+            KeyboardEnhancementFlags::DISAMBIGUATE_ESCAPE_CODES
+                | KeyboardEnhancementFlags::REPORT_ALL_KEYS_AS_ESCAPE_CODES
         )
     );
 
@@ -49,7 +45,7 @@ fn main() -> io::Result<()> {
         qualifier,
         organization,
         application,
-        default_color_scheme
+        default_color_scheme,
     )?;
     let res = app.run(&mut terminal);
     handle_errors(res);
@@ -76,20 +72,20 @@ fn setup_app<B>(
     qual_str: String,
     org_str: String,
     app_str: String,
-    color_scheme: ColorScheme
-) -> Result<App, io::Error> 
-where 
+    color_scheme: ColorScheme,
+) -> Result<App, io::Error>
+where
     B: Backend,
 {
     let _terminal_height = terminal.size()?.height;
     let _terminal_width = terminal.size()?.width;
-    let app = App::new(qual_str,org_str, app_str, color_scheme)?;
+    let app = App::new(qual_str, org_str, app_str, color_scheme)?;
 
     Ok(app)
 }
 
 fn teardown_terminal<B>(terminal: &mut Terminal<B>) -> Result<(), io::Error>
-where 
+where
     B: Backend + std::io::Write,
 {
     disable_raw_mode()?;

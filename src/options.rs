@@ -1,8 +1,8 @@
 use crate::ui::colorscheme::ColorScheme;
-use strum::{EnumIter, IntoEnumIterator};
-use serde::{Serialize, Deserialize};
-use std::{fs, io};
 use directories_next::ProjectDirs;
+use serde::{Deserialize, Serialize};
+use std::{fs, io};
+use strum::{EnumIter, IntoEnumIterator};
 
 #[derive(EnumIter, Clone, Copy, PartialEq, Serialize, Deserialize)]
 pub enum SelectedOption {
@@ -35,16 +35,12 @@ impl Options {
     }
 
     pub fn load_or_default(
-            qualifier_str: &str,
-            organization_str: &str,
-            application_str: &str,
-            default_color_scheme: ColorScheme
+        qualifier_str: &str,
+        organization_str: &str,
+        application_str: &str,
+        default_color_scheme: ColorScheme,
     ) -> io::Result<Self> {
-        let project_dirs = ProjectDirs::from(
-            qualifier_str,
-            organization_str,
-            application_str
-        )
+        let project_dirs = ProjectDirs::from(qualifier_str, organization_str, application_str)
             .expect("Could not determine directoy!");
         fs::create_dir_all(project_dirs.config_dir())?;
         let config_dir_path = project_dirs.config_dir().join("config.toml");
@@ -59,17 +55,18 @@ impl Options {
         }
     }
 
-    pub fn save(&self, qualifier_str: &str, organization_str: &str, application_str: &str) -> io::Result<()> {
-        let project_dirs = ProjectDirs::from(
-            qualifier_str,
-            organization_str,
-            application_str
-        )
+    pub fn save(
+        &self,
+        qualifier_str: &str,
+        organization_str: &str,
+        application_str: &str,
+    ) -> io::Result<()> {
+        let project_dirs = ProjectDirs::from(qualifier_str, organization_str, application_str)
             .expect("Could not determine directory!");
         let config_path = project_dirs.config_dir().join("config.toml");
         fs::create_dir_all(project_dirs.config_dir())?;
-        let data = toml::to_string(self)
-            .map_err(|err| io::Error::new(io::ErrorKind::InvalidData, err))?;
+        let data =
+            toml::to_string(self).map_err(|err| io::Error::new(io::ErrorKind::InvalidData, err))?;
         fs::write(config_path, data)?;
         Ok(())
     }
@@ -85,25 +82,29 @@ impl Options {
     }
 
     pub fn previous_color_scheme(&mut self) {
-        if let Some(index) = self.available_color_schemes
+        if let Some(index) = self
+            .available_color_schemes
             .iter()
-            .position(|&cs| cs == self.selected_color_scheme) {
-                let prev_index = if index == 0 {
-                    self.available_color_schemes.len() - 1
-                } else {
-                    index - 1
-                };
-                self.select_color_scheme(self.available_color_schemes[prev_index]);
-            }
+            .position(|&cs| cs == self.selected_color_scheme)
+        {
+            let prev_index = if index == 0 {
+                self.available_color_schemes.len() - 1
+            } else {
+                index - 1
+            };
+            self.select_color_scheme(self.available_color_schemes[prev_index]);
+        }
     }
 
     pub fn next_color_scheme(&mut self) {
-        if let Some(index) = self.available_color_schemes
+        if let Some(index) = self
+            .available_color_schemes
             .iter()
-            .position(|&cs| cs == self.selected_color_scheme) {
-                let next_index = (index + 1) % self.available_color_schemes.len();
-                self.select_color_scheme(self.available_color_schemes[next_index]);
-            }
+            .position(|&cs| cs == self.selected_color_scheme)
+        {
+            let next_index = (index + 1) % self.available_color_schemes.len();
+            self.select_color_scheme(self.available_color_schemes[next_index]);
+        }
     }
 
     pub fn set_display_col_metainfo_in_table_view(&mut self, value: bool) {
@@ -115,25 +116,29 @@ impl Options {
     }
 
     pub fn previous_option(&mut self) {
-        if let Some(index) = self.available_options
+        if let Some(index) = self
+            .available_options
             .iter()
-            .position(|&so| so == self.selected_option) {
-                let prev_index = if index == 0 {
-                    self.available_options.len() - 1
-                } else {
-                    index - 1
-                };
-                self.select_option(self.available_options[prev_index]);
-            }
+            .position(|&so| so == self.selected_option)
+        {
+            let prev_index = if index == 0 {
+                self.available_options.len() - 1
+            } else {
+                index - 1
+            };
+            self.select_option(self.available_options[prev_index]);
+        }
     }
 
     pub fn next_option(&mut self) {
-        if let Some(index) = self.available_options
+        if let Some(index) = self
+            .available_options
             .iter()
-            .position(|&so| so == self.selected_option) {
-                let next_index = (index + 1) % self.available_options.len();
-                self.select_option(self.available_options[next_index]);
-            }
+            .position(|&so| so == self.selected_option)
+        {
+            let next_index = (index + 1) % self.available_options.len();
+            self.select_option(self.available_options[next_index]);
+        }
     }
 
     fn select_option(&mut self, option: SelectedOption) {

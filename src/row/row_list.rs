@@ -1,6 +1,6 @@
-use ratatui::widgets::{ScrollbarState, TableState};
-use crate::file_explorer::file_explorer_table::ITEM_HEIGHT;
 use super::row_info::RowInfo;
+use crate::file_explorer::file_explorer_table::ITEM_HEIGHT;
+use ratatui::widgets::{ScrollbarState, TableState};
 
 pub struct RowListView {
     pub state: TableState,

@@ -1,5 +1,5 @@
-use ratatui::widgets::{ScrollbarState, TableState};
 use crate::file_explorer::file_explorer_table::ITEM_HEIGHT;
+use ratatui::widgets::{ScrollbarState, TableState};
 
 use super::table_info::TableInfo;
 

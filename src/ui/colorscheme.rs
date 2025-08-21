@@ -1,6 +1,6 @@
 use ratatui::style::Color;
+use serde::{Deserialize, Serialize};
 use strum_macros::EnumIter;
-use serde::{Serialize, Deserialize};
 
 #[derive(Clone, Copy, EnumIter, Debug, PartialEq, Serialize, Deserialize)]
 pub enum ColorScheme {
@@ -47,7 +47,7 @@ impl ColorScheme {
                 table_row_alt_color: Color::Rgb(10, 10, 25),
                 info_block_bg_col: Color::Rgb(30, 30, 255),
                 text_entry_box_bg_col: Color::Rgb(0, 30, 200),
-            }
+            },
         }
     }
 }
