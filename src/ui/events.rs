@@ -155,17 +155,14 @@ fn database_schema_screen_handler(app: &mut App, key_event: KeyEvent) {
                         }
                     },
                     (KeyCode::Char('s'), KeyModifiers::NONE) => {
-                        if app.selected_db.is_some() {
-                            if app.column_list_view.is_some() {
-                                let _ = &app.column_list_view.as_mut().unwrap().previous();
-                            }
+                        if app.selected_db.is_some() && app.column_list_view.is_some() {
+                            let _ = &app.column_list_view.as_mut().unwrap().previous();
+
                         }
                     },
                     (KeyCode::Char('x'), KeyModifiers::NONE) => {
-                        if app.selected_db.is_some() {
-                            if app.column_list_view.is_some() {
-                                let _ = &app.column_list_view.as_mut().unwrap().next();
-                            }
+                        if app.selected_db.is_some() && app.column_list_view.is_some() {
+                            let _ = &app.column_list_view.as_mut().unwrap().next();
                         }
                     },
                     (KeyCode::Char('n'), KeyModifiers::NONE) => {
@@ -258,21 +255,13 @@ fn database_table_screen_handler(app: &mut App, key_event: KeyEvent) {
                     (KeyCode::Char('b'), KeyModifiers::NONE) |
                     (KeyCode::Esc, KeyModifiers::NONE) => app.switch_to_screen(Screen::DatabaseSchema),
                     (KeyCode::Up, KeyModifiers::NONE) => {
-                        if app.selected_db.is_some() {
-                            if app.selected_db_table.is_some() {
-                                if app.row_list_view.is_some() {
-                                    let _ = &app.row_list_view.as_mut().unwrap().previous();
-                                }
-                            }
+                        if app.selected_db.is_some() && app.selected_db_table.is_some() && app.row_list_view.is_some() {
+                            let _ = &app.row_list_view.as_mut().unwrap().previous();
                         }
                     },
                     (KeyCode::Down, KeyModifiers::NONE) => {
-                        if app.selected_db.is_some() {
-                            if app.selected_db_table.is_some() {
-                                if app.row_list_view.is_some() {
-                                    let _ = &app.row_list_view.as_mut().unwrap().next();
-                                }
-                            }
+                        if app.selected_db.is_some() && app.selected_db_table.is_some() && app.row_list_view.is_some() {
+                            let _ = &app.row_list_view.as_mut().unwrap().next();
                         }
                     },
                     (KeyCode::Char('i'), KeyModifiers::NONE) => {
