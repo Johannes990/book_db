@@ -12,9 +12,7 @@ use crate::{
     ui::{colorscheme::ColorScheme, render},
     widgets::text_form::TextForm,
 };
-use ratatui::{
-    style::Color, Terminal
-};
+use ratatui::{style::Color, Terminal};
 use std::{io, path::PathBuf};
 
 pub enum Screen {
@@ -56,7 +54,7 @@ pub struct App {
     pub drop_table_form: Option<TextForm>,
     pub create_db_form: Option<TextForm>,
     pub should_quit: bool,
-    pub options: Options
+    pub options: Options,
 }
 
 impl App {
@@ -64,13 +62,13 @@ impl App {
         qualifier: String,
         organization: String,
         application: String,
-        default_color_scheme: ColorScheme
+        default_color_scheme: ColorScheme,
     ) -> io::Result<Self> {
         let options = Options::load_or_default(
             &qualifier,
             &organization,
             &application,
-            default_color_scheme
+            default_color_scheme,
         )?;
 
         Ok(Self {
@@ -92,11 +90,14 @@ impl App {
             drop_table_form: None,
             create_db_form: None,
             should_quit: false,
-            options
+            options,
         })
     }
 
-    pub fn run<B: ratatui::backend::Backend>(&mut self, terminal: &mut Terminal<B>) -> io::Result<()> {
+    pub fn run<B: ratatui::backend::Backend>(
+        &mut self,
+        terminal: &mut Terminal<B>,
+    ) -> io::Result<()> {
         loop {
             render::render(terminal, self)?;
     
@@ -109,7 +110,11 @@ impl App {
 
     pub fn open_db_file(&mut self, path: PathBuf) -> Result<(), DBError> {
         if path.is_file() && path.extension().unwrap() == "db" {
-            let db_name = path.file_stem().unwrap_or_default().to_string_lossy().to_string();
+            let db_name = path
+                .file_stem()
+                .unwrap_or_default()
+                .to_string_lossy()
+                .to_string();
 
             match DB::new(db_name) {
                 Ok(db) => {
@@ -117,11 +122,13 @@ impl App {
                     self.fetch_table_list();
                     self.populate_table_col_map();
                     Ok(())
-                },
+                }
                 Err(e) => Err(e),
             }
         } else {
-            Err(DBError::ConnectionCreationError("Invalid .db file path".to_string()))
+            Err(DBError::ConnectionCreationError(
+                "Invalid .db file path".to_string(),
+            ))
         }
     }
 
@@ -141,14 +148,16 @@ impl App {
                         table_info_vec.push(TableInfo {
                             name: table_name.to_string(),
                             row_count,
-                            is_view 
+                            is_view,
                         });
                     }
 
                     if let Some(first_table) = table_info_vec.first() {
                         self.selected_db_table = Some(first_table.name.to_string());
-                        self.selected_table_columns = db.get_table_columns(&first_table.name).unwrap_or_default();
-                        self.column_list_view = Some(ColumnListView::new(self.selected_table_columns.clone()));
+                        self.selected_table_columns =
+                            db.get_table_columns(&first_table.name).unwrap_or_default();
+                        self.column_list_view =
+                            Some(ColumnListView::new(self.selected_table_columns.clone()));
                         self.row_list_view = None;
                     } else {
                         self.selected_db_table = None;
@@ -157,7 +166,7 @@ impl App {
                     }
 
                     self.table_list_view = Some(TableListView::new(table_info_vec));
-                },
+                }
                 Err(_) => {
                     self.selected_db_table = None;
                     self.table_list_view = None;
@@ -205,12 +214,18 @@ impl App {
     }
 
     pub fn create_table_insert_form(&mut self, table_cols: Vec<String>) {
-        let title_text = format!("Enter new entry into table {}", self.selected_db_table.as_deref().unwrap());
+        let title_text = format!(
+            "Enter new entry into table {}",
+            self.selected_db_table.as_deref().unwrap()
+        );
         self.table_insert_form = Some(TextForm::new(table_cols, title_text));
     }
 
     pub fn create_table_delete_form(&mut self) {
-        let title_text = format!("Delete entry from table {}", self.selected_db_table.as_deref().unwrap());
+        let title_text = format!(
+            "Delete entry from table {}",
+            self.selected_db_table.as_deref().unwrap()
+        );
         self.table_delete_form = Some(TextForm::new(
             vec!["Column name".to_string(), "Row value".to_string()],
             title_text
@@ -218,12 +233,18 @@ impl App {
     }
 
     pub fn create_create_table_form(&mut self) {
-        let title_text = format!("Create new table into database {}", self.selected_db.as_ref().unwrap().get_db_name());
+        let title_text = format!(
+            "Create new table into database {}",
+            self.selected_db.as_ref().unwrap().get_db_name()
+        );
         self.create_table_form = Some(TextForm::new(vec!["Raw SQL".to_string()], title_text));
     }
 
     pub fn create_drop_table_form(&mut self) {
-        let title_text = format!("Drop table from database {}", self.selected_db.as_ref().unwrap().get_db_name());
+        let title_text = format!(
+            "Drop table from database {}",
+            self.selected_db.as_ref().unwrap().get_db_name()
+        );
         self.drop_table_form = Some(TextForm::new(vec!["Table Name".to_string()], title_text));
     }
 
@@ -233,35 +254,59 @@ impl App {
     }
 
     pub fn general_text_color(&self) -> Color {
-        self.options.selected_color_scheme.colors().general_text_color
+        self.options
+            .selected_color_scheme
+            .colors()
+            .general_text_color
     }
 
     pub fn alt_text_color_1(&self) -> Color {
-        self.options.selected_color_scheme.colors().alt_text_color_1
+        self.options
+            .selected_color_scheme
+            .colors()
+            .alt_text_color_1
     }
 
     pub fn alt_text_color_2(&self) -> Color {
-        self.options.selected_color_scheme.colors().alt_text_color_2
+        self.options
+            .selected_color_scheme
+            .colors()
+            .alt_text_color_2
     }
 
     pub fn general_page_bg_color(&self) -> Color {
-        self.options.selected_color_scheme.colors().general_page_bg_color
+        self.options
+            .selected_color_scheme
+            .colors()
+            .general_page_bg_color
     }
 
     pub fn quit_popup_bg_col(&self) -> Color {
-        self.options.selected_color_scheme.colors().quit_popup_bg_col
+        self.options
+            .selected_color_scheme
+            .colors()
+            .quit_popup_bg_col
     }
 
     pub fn file_exp_pg_selected_col(&self) -> Color {
-        self.options.selected_color_scheme.colors().file_exp_pg_selected_col
+        self.options
+            .selected_color_scheme
+            .colors()
+            .file_exp_pg_selected_col
     }
 
     pub fn table_row_normal_col(&self) -> Color {
-        self.options.selected_color_scheme.colors().table_row_normal_col
+        self.options
+            .selected_color_scheme
+            .colors()
+            .table_row_normal_col
     }
 
     pub fn table_row_alt_color(&self) -> Color {
-        self.options.selected_color_scheme.colors().table_row_alt_color
+        self.options
+            .selected_color_scheme
+            .colors()
+            .table_row_alt_color
     }
 
     pub fn info_block_bg_col(&self) -> Color {
@@ -269,7 +314,10 @@ impl App {
     }
 
     pub fn text_entry_box_bg_col(&self) -> Color {
-        self.options.selected_color_scheme.colors().text_entry_box_bg_col
+        self.options
+            .selected_color_scheme
+            .colors()
+            .text_entry_box_bg_col
     }
 
     pub fn switch_to_screen(&mut self, screen: Screen) {
@@ -291,7 +339,8 @@ impl App {
             if let Ok(tables) = db.get_table_list() {
                 for table in tables {
                     if let Ok(cols) = db.get_table_columns(&table) {
-                        db.db_tab_col_map.insert(table, cols.iter().map(|col| col.name.clone()).collect());
+                        db.db_tab_col_map
+                            .insert(table, cols.iter().map(|col| col.name.clone()).collect());
                     }
                 }
             }
