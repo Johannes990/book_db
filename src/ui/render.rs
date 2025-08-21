@@ -3,7 +3,6 @@ use ratatui::{
         Block, Borders, Cell, Clear, HighlightSpacing, List, ListItem, Paragraph, Row, Scrollbar, ScrollbarOrientation, ScrollbarState, Table, TableState, Wrap
     }, Frame, Terminal
 };
-use unicode_width::UnicodeWidthStr;
 use std::{io, rc::Rc, vec};
 use crate::{
     app::{App, PopUp, Screen},
