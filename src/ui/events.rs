@@ -155,15 +155,15 @@ fn database_schema_screen_handler(app: &mut App, key_event: KeyEvent) {
                         }
                     },
                     (KeyCode::Char('s'), KeyModifiers::NONE) => {
-                        if let Some(_) = &app.selected_db {
-                            if let Some(_) = &app.column_list_view {
+                        if app.selected_db.is_some() {
+                            if app.column_list_view.is_some() {
                                 let _ = &app.column_list_view.as_mut().unwrap().previous();
                             }
                         }
                     },
                     (KeyCode::Char('x'), KeyModifiers::NONE) => {
-                        if let Some(_) = &app.selected_db {
-                            if let Some(_) = &app.column_list_view {
+                        if app.selected_db.is_some() {
+                            if app.column_list_view.is_some() {
                                 let _ = &app.column_list_view.as_mut().unwrap().next();
                             }
                         }
@@ -258,18 +258,18 @@ fn database_table_screen_handler(app: &mut App, key_event: KeyEvent) {
                     (KeyCode::Char('b'), KeyModifiers::NONE) |
                     (KeyCode::Esc, KeyModifiers::NONE) => app.switch_to_screen(Screen::DatabaseSchema),
                     (KeyCode::Up, KeyModifiers::NONE) => {
-                        if let Some(_) = &app.selected_db {
-                            if let Some(_) = &app.selected_db_table {
-                                if let Some(_) = &app.row_list_view {
+                        if app.selected_db.is_some() {
+                            if app.selected_db_table.is_some() {
+                                if app.row_list_view.is_some() {
                                     let _ = &app.row_list_view.as_mut().unwrap().previous();
                                 }
                             }
                         }
                     },
                     (KeyCode::Down, KeyModifiers::NONE) => {
-                        if let Some(_) = &app.selected_db {
-                            if let Some(_) = &app.selected_db_table {
-                                if let Some(_) = &app.row_list_view {
+                        if app.selected_db.is_some() {
+                            if app.selected_db_table.is_some() {
+                                if app.row_list_view.is_some() {
                                     let _ = &app.row_list_view.as_mut().unwrap().next();
                                 }
                             }
@@ -402,11 +402,8 @@ fn database_table_screen_handler(app: &mut App, key_event: KeyEvent) {
             }
         }
         PopUp::Error(_) => {
-            if key_event.kind == KeyEventKind::Press {
-                match (key_event.code, key_event.modifiers) {
-                    (KeyCode::Esc, KeyModifiers::NONE) => app.switch_to_popup(PopUp::None),
-                    _ => {},
-                }
+            if let (KeyCode::Esc, KeyModifiers::NONE) = (key_event.code, key_event.modifiers) {
+                app.switch_to_popup(PopUp::None);
             }
         }
         _ => {}

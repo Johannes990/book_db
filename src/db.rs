@@ -7,6 +7,7 @@ use crate::column::column_info::ColumnInfo;
 use crate::row::row_info::RowInfo;
 
 
+#[allow(dead_code)]
 #[derive(Debug)]
 pub enum DBError {
     ConnectionCreationError(String),
@@ -277,7 +278,7 @@ impl DB {
     }
 
     pub fn _select_row_statement(&self, table_name: &String, cols: &Vec<String>) -> Result<Statement<'_>, DBError> {
-        self.check_table_exists(&table_name)?;
+        self.check_table_exists(table_name)?;
 
         let table_cols = self.db_tab_col_map.get(table_name).unwrap();
 
@@ -292,7 +293,7 @@ impl DB {
 
     pub fn delete_row_statement(&self, table_name: &str, col_name: &str, value: &str) -> Result<usize, DBError> {
         self.check_table_exists(table_name)?;
-        self.check_col_exists_in_table(&table_name, &col_name)?;
+        self.check_col_exists_in_table(table_name, col_name)?;
         
         let sql = if value.parse::<u32>().is_ok() {
             format!("DELETE FROM {} WHERE {} = {}", table_name, col_name, value)
@@ -323,7 +324,7 @@ impl DB {
         }
     }
 
-    fn _check_cols_match_existing(&self, existing_cols: &Vec<String>, cols: &Vec<String>) -> Result<(), DBError> {
+    fn _check_cols_match_existing(&self, existing_cols: &[String], cols: &Vec<String>) -> Result<(), DBError> {
         for col in cols {
             if !existing_cols.contains(col) {
                 return Err(DBError::ColumnDoesNotExist(col.to_string()));
@@ -361,7 +362,7 @@ impl DB {
         Ok(())
     }
 
-    fn _col_names_from_sql<'a>(&self, columns: &Vec<String>) -> Vec<String> {
+    fn _col_names_from_sql(&self, columns: &Vec<String>) -> Vec<String> {
         let mut col_names = Vec::new();
         for col_str in columns {
             let col_parts: Vec<_> = col_str.split(' ').collect();

@@ -33,7 +33,7 @@ impl ColumnListView {
             if self.index == 0 {
                 self.index = self.items.len() - 1;
             } else {
-                self.index = self.index - 1;
+                self.index -= 1;
             }
             self.state.select(Some(self.index));
             self.scroll_state = self.scroll_state.position(self.index * ITEM_HEIGHT);

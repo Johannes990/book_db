@@ -131,9 +131,9 @@ impl App {
                 Ok(tables) => {
                     let mut table_info_vec: Vec<TableInfo> = Vec::new();
                     for table_name in &tables {
-                        let is_view = db.is_table_view(&table_name).unwrap_or(false);
+                        let is_view = db.is_table_view(table_name).unwrap_or(false);
                         let row_count = if !is_view {
-                            db.get_table_row_count(&table_name).unwrap_or(0)
+                            db.get_table_row_count(table_name).unwrap_or(0)
                         } else {
                             0 // views dont store rows, so we keep this 0, if table is a view
                         };
@@ -228,7 +228,7 @@ impl App {
     }
 
     pub fn create_new_db_form(&mut self) {
-        let title_text = format!("Create a new database");
+        let title_text = "Create a new database".to_string();
         self.create_db_form = Some(TextForm::new(vec!["Database name".to_string()], title_text));
     }
 

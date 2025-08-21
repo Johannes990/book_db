@@ -3,7 +3,6 @@ use strum::{EnumIter, IntoEnumIterator};
 use serde::{Serialize, Deserialize};
 use std::{fs, io};
 use directories_next::ProjectDirs;
-use toml;
 
 #[derive(EnumIter, Clone, Copy, PartialEq, Serialize, Deserialize)]
 pub enum SelectedOption {

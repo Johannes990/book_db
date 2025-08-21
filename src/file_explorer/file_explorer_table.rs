@@ -65,7 +65,7 @@ impl FileExplorerTable {
     pub fn update_file_list(&mut self) {
         let mut items = get_data_from_path(&self.current_path);
         
-        if let Some(_) = self.current_path.parent() {
+        if self.current_path.parent().is_some() {
             items.insert(0, FileExplorerData::new(
                 "..".to_string(),
                 "".to_string(),

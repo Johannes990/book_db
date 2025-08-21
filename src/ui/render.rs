@@ -7,7 +7,6 @@ use std::{io, rc::Rc, vec};
 use crate::{
     app::{App, PopUp, Screen},
     column::column_info::ColumnInfo,
-    file_explorer::file_explorer_data::FileExplorerData,
     options::SelectedOption,
     row::row_info::RowInfo,
     widgets::selectable_line::SelectableLine,
@@ -33,20 +32,14 @@ where
             },
             Screen::CreateNewFile => {
                 render_new_database_screen(frame, app);
-                match app.current_popup {
-                    PopUp::Error(ref err) => {
-                        let msg = format!("{}", err);
-                        render_error_popup(frame, app, &msg);
-                    },
-                    _ => {}
-                    
+                if let PopUp::Error(ref err) = app.current_popup {
+                    let msg = format!("{}", err);
+                    render_error_popup(frame, app, &msg);
                 }
+
             },
             Screen::FileExplorer => {
                 render_file_explorer_screen(frame, app);
-                match app.current_popup {
-                    _ => {},
-                }
             },
             Screen::DatabaseSchema => {
                 render_database_schema_screen(frame, app);
@@ -70,9 +63,6 @@ where
             },
             Screen::Options => {
                 render_options_screen(frame, app);
-                match app.current_popup {
-                    _ => {},
-                }
             },
         }
         
@@ -107,13 +97,7 @@ fn render_file_explorer_screen(frame: &mut Frame, app: &mut App) {
     let fexp_page_style = Style::default()
         .bg(app.general_page_bg_color())
         .fg(app.general_text_color());
-    let mut fex_items: Vec<FileExplorerData> = Vec::new();
-    fex_items.push(
-        FileExplorerData::new("..".to_string(),
-        "".to_string(), 
-        "".to_string(), 
-        true)
-    );
+
     let header = ["File/Folder", "Size", "Date created"]
         .into_iter()
         .map(Cell::from)
@@ -127,7 +111,7 @@ fn render_file_explorer_screen(frame: &mut Frame, app: &mut App) {
         };
         let item = data.ref_array();
         item.into_iter()
-            .map(|content| Cell::from(Text::from(format!("{content}"))))
+            .map(|content| Cell::from(Text::from(content.to_string())))
             .collect::<Row>()
             .style(Style::new().bg(color).fg(app.general_text_color()))
     }).collect();
@@ -276,7 +260,7 @@ fn render_options_screen(frame: &mut Frame, app: &mut App) {
     let horizontal_chunks = get_chunks_from_percentages(vertical_chunks[1], Direction::Horizontal, vec![50, 50]);
 
     let color_schemes: &Vec<ColorScheme> = app.list_available_color_schemes();
-    let color_scheme_items: Vec<ListItem> = color_schemes.into_iter()
+    let color_scheme_items: Vec<ListItem> = color_schemes.iter()
         .map(|scheme| {
             let scheme_name = format!("{:?}", scheme);
             let style = if *scheme == app.options.selected_color_scheme {
@@ -652,7 +636,7 @@ fn render_column_list(frame: &mut Frame, app: &mut App, area: Rect) {
 
 fn render_color_scheme_preview(frame: &mut Frame, area: Rect, color_scheme: &ColorScheme) {
     let colors = color_scheme.colors();
-    let color_vec = vec![
+    let color_vec = [
         colors.general_text_color,
         colors.alt_text_color_1,
         colors.alt_text_color_2,
@@ -690,6 +674,7 @@ fn render_vertical_scrollbar(frame: &mut Frame, area: Rect, endpoints: Option<&s
     );
 }
 
+#[allow(clippy::too_many_arguments)]
 fn render_table(frame: &mut Frame, state: &mut TableState, 
                 header: Option<Row>, rows: Vec<Row>,
                 col_widths: Vec<Constraint>, area: Rect, 
@@ -725,21 +710,19 @@ fn centered_rect(percent_x: u16, percent_y: u16, area: ratatui::layout::Rect) ->
 
 fn get_chunks_from_percentages(area: Rect, direction: Direction, percentages: Vec<u16>) -> Rc<[Rect]> {
     let constraints: Vec<Constraint> = percentages.iter().map(|value| Constraint::Percentage(*value)).collect();
-    let chunks = Layout::default()
+    
+    Layout::default()
         .direction(direction)
         .constraints(constraints)
-        .split(area);
-
-    chunks
+        .split(area)
 }
 
+#[allow(dead_code)]
 fn get_chunks_from_constraints(area: Rect, direction: Direction, constraints: Vec<Constraint>) -> Rc<[Rect]> {
-    let chunks = Layout::default()
+    Layout::default()
         .direction(direction)
         .constraints(constraints)
-        .split(area);
-
-    chunks
+        .split(area)
 }
 
 fn format_info_text<'a>(text_bits: &'a [&str], app: &App) -> Text<'a> {
@@ -750,15 +733,13 @@ fn format_info_text<'a>(text_bits: &'a [&str], app: &App) -> Text<'a> {
 
     for (i, bit) in text_bits.iter().enumerate() {
         if i == 0 {
-            info_text = Text::from(Span::styled::<&str, Style>(bit.as_ref(), general_text_style));
+            info_text = Text::from(Span::styled::<&str, Style>(bit, general_text_style));
+        }
+        else if i % 2 != 0 {
+            info_text.push_line(Span::styled::<&str, Style>(bit, alt_text_style_1));
         }
         else {
-            if i % 2 != 0 {
-                info_text.push_line(Span::styled::<&str, Style>(bit.as_ref(), alt_text_style_1));
-            }
-            else {
-                info_text.push_span(Span::styled::<&str, Style>(bit.as_ref(), general_text_style));
-            }
+            info_text.push_span(Span::styled::<&str, Style>(bit, general_text_style));
         }
     }
 
