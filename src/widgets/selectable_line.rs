@@ -15,9 +15,12 @@ pub struct SelectableLine {
 
 impl Widget for SelectableLine {
     fn render(self, area: Rect, buf: &mut Buffer) {
-        let style = if self.active { self.on_style } else { self.off_style };
-        let block = Block::default()
-            .borders(Borders::NONE);
+        let style = if self.active {
+            self.on_style
+        } else {
+            self.off_style
+        };
+        let block = Block::default().borders(Borders::NONE);
         let label = Line::from(self.label);
         let paragraph = Paragraph::new(label).style(style).block(block);
 
@@ -26,16 +29,8 @@ impl Widget for SelectableLine {
 }
 
 impl SelectableLine {
-    pub fn default(
-        label: &str,
-        active: bool,
-        selected: bool,
-    ) -> Self {
-        let prefix = if selected {
-            "* "
-        } else {
-            "  "
-        };
+    pub fn default(label: &str, active: bool, selected: bool) -> Self {
+        let prefix = if selected { "* " } else { "  " };
         let postfix = if active { "ON" } else { "OFF" };
         let label = format!("{}{}{}", prefix, label, postfix);
         SelectableLine {
