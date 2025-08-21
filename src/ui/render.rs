@@ -1,21 +1,16 @@
 use ratatui::{
-    layout::{Constraint, Direction, Flex, Layout},
-    prelude::{Alignment, Margin, Rect},
-    style::{Color, Modifier, Style},
-    text::{Line, Span, Text},
-    widgets::{
+    layout::{Constraint, Direction, Flex, Layout}, prelude::{Alignment, Margin, Rect}, style::{Color, Modifier, Style}, text::{Line, Span, Text}, widgets::{
         Block, Borders, Cell, Clear, HighlightSpacing, List, ListItem, Paragraph, Row, Scrollbar, ScrollbarOrientation, ScrollbarState, Table, TableState, Wrap
-    },
-    Frame,
-    Terminal
+    }, Frame, Terminal
 };
+use unicode_width::UnicodeWidthStr;
 use std::{io, rc::Rc, vec};
 use crate::{
     app::{App, PopUp, Screen},
     column::column_info::ColumnInfo,
     file_explorer::file_explorer_data::FileExplorerData,
     options::SelectedOption,
-    row::{self, row_info::RowInfo},
+    row::row_info::RowInfo,
     widgets::selectable_line::SelectableLine,
 };
 
@@ -191,20 +186,17 @@ fn render_new_database_screen(frame: &mut Frame, app: &mut App) {
     let page_style = Style::default().bg(app.general_page_bg_color()).fg(app.general_text_color());
     let chunks = get_chunks_from_percentages(frame.area(), Direction::Vertical, vec![75, 25]);
     let insert_text_area_on_style = Style::default().bg(app.text_entry_box_bg_col()).fg(app.general_text_color());
-    let form = app.create_db_form.as_mut().unwrap();
-    form.set_on_style(insert_text_area_on_style);
-    let block = Block::default()
-        .title("Creating new database")
-        .borders(Borders::ALL)
-        .style(page_style);
-    let text_area = chunks[0].inner(Margin { horizontal: 1, vertical: 1 });
+    
+    if let Some(form) = &mut app.create_db_form {
+        form.set_styles(
+            insert_text_area_on_style,
+            Style::default(),
+            page_style
+        );
+    }
 
-    frame.render_widget(Clear, chunks[0]);
-    frame.render_widget(block, chunks[0]);
-    frame.render_widget(&form.text_field, text_area);
-
-    if let Some(cursor_pos) = form.text_field.cursor_position(text_area) {
-        frame.set_cursor_position(cursor_pos);
+    if let Some(form) = &app.create_db_form {
+        form.render_widget_and_cursor(frame, chunks[0]);
     }
 
     let info_bits = vec![
@@ -232,7 +224,7 @@ fn render_database_table_screen(frame: &mut Frame, app: &mut App) {
         .selected_table_columns
         .iter()
         .map(|col| {
-            let line = col.column_name_spans(
+            let line = col.get_line_from_col_info(
                 &app.options.display_col_metainfo_in_table_view,
                 col_name_style,
                 metadata_style,
@@ -373,62 +365,77 @@ fn render_insert_row_popup(frame: &mut Frame, app: &mut App) {
     let insert_row_popup_style = Style::default()
         .bg(app.quit_popup_bg_col())
         .fg(app.general_text_color());
-    let metadata_style = Style::default().fg(app.alt_text_color_2()).add_modifier(Modifier::ITALIC);
-    let insert_text_area_on_style = Style::default().bg(app.text_entry_box_bg_col()).fg(app.general_text_color());
-    let insert_text_area_off_style = Style::default().bg(app.text_entry_box_bg_col()).fg(app.file_exp_pg_selected_col());
-    let form = app.table_insert_form.as_mut().unwrap();
-    form.set_off_style(insert_text_area_off_style);
-    form.set_on_style(insert_text_area_on_style);
-    let title_text = format!("Enter new entry into table {}", app.selected_db_table.as_deref().unwrap());
-    let popup_block = Block::default()
-        .borders(Borders::ALL)
-        .title(title_text)
-        .style(insert_row_popup_style);
+    let metadata_style = Style::default()
+        .fg(app.alt_text_color_2()).add_modifier(Modifier::ITALIC);
+    let insert_text_area_on_style = Style::default()
+        .bg(app.text_entry_box_bg_col())
+        .fg(app.general_text_color());
+    let insert_text_area_off_style = Style::default()
+        .bg(app.text_entry_box_bg_col())
+        .fg(app.file_exp_pg_selected_col());
+    
+    if let Some(form) = &mut app.table_insert_form {
+        form.set_styles(
+            insert_text_area_on_style,
+            insert_text_area_off_style,
+            insert_row_popup_style
+        );
 
-    frame.render_widget(Clear, chunks[0]);
-    frame.render_widget(popup_block, chunks[0]);
+        let popup_block = Block::default()
+            .borders(Borders::ALL)
+            .style(insert_row_popup_style);
 
-    let text_area = chunks[0].inner(Margin { horizontal: 1, vertical: 1 });
+        frame.render_widget(Clear, chunks[0]);
+        frame.render_widget(popup_block, chunks[0]);
 
-    for (i, col_info) in app.selected_table_columns.iter().enumerate() {
-        let x = text_area.x;
-        let y = text_area.y + i as u16;
+        let text_area = chunks[0].inner(Margin { horizontal: 1, vertical: 1 });
 
-        let mut line = Line::from(vec![Span::raw(col_info.name.clone())]);
-        if app.options.display_col_metainfo_in_insert_view {
-            line.spans.push(Span::styled(
-                format!(" [{}]", col_info.col_type.clone()),
-                metadata_style
-            ));
-        }
+        for (i, col_info) in app.selected_table_columns.iter().enumerate() {
+            let x = text_area.x;
+            let y = text_area.y + i as u16;
 
-        line.spans.push(Span::raw(" "));
-        let field = &form.items[i];
-        if field.selected {
-            line.spans.push(Span::styled(field.text_value.clone(), insert_text_area_on_style))
-        } else {
-            line.spans.push(Span::styled(field.text_value.clone(), insert_text_area_off_style));
-        }
+            let mut label_line = col_info.get_line_from_col_info(
+                &app.options.display_col_metainfo_in_insert_view,
+                insert_row_popup_style,
+                metadata_style 
+            );
 
-        frame.buffer_mut().set_line(x, y, &line, text_area.width);
+            let label_width = line_width(&label_line) as u16;
 
-        if field.selected {
-            if let Some(cursor_pos) = field.cursor_position(Rect {
-                x: x + (col_info.col_name_length(&app.options.display_col_metainfo_in_insert_view) + 1) as u16,
-                y,
-                width: text_area.width,
-                height: 1
-            }) {
-                frame.set_cursor_position(cursor_pos);
+            let field = &form.fields[i];
+            if field.selected {
+                label_line.spans.push(Span::styled(
+                    field.text_value.clone(),
+                    insert_text_area_on_style
+                ))
+            } else {
+                label_line.spans.push(Span::styled(
+                    field.text_value.clone(),
+                    insert_text_area_off_style
+                ));
+            }
+
+            frame.buffer_mut().set_line(x, y, &label_line, text_area.width);
+
+            if field.selected {
+                if let Some(cursor_pos) = field.cursor_position(Rect {
+                    x: x + label_width + 1,
+                    y,
+                    width: text_area.width,
+                    height: 1
+                }) {
+                    frame.set_cursor_position(cursor_pos);
+                }
             }
         }
     }
-
+    
     let info_bits = vec![
         "Commands:",
         "CTRL + s", " - save entry",
         "ESC / ALT + q", " - return to database table view",
     ];
+
     render_info_paragraph(&info_bits, frame, app, chunks[1]);
 }
 
@@ -440,22 +447,17 @@ fn render_insert_table_popup(frame: &mut Frame, app: &mut App) {
         .fg(app.general_text_color());
     let insert_text_area_on_style = Style::default().bg(app.text_entry_box_bg_col()).fg(app.general_text_color());
     let insert_text_area_off_style = Style::default().bg(app.text_entry_box_bg_col()).fg(app.file_exp_pg_selected_col());
-    let form = app.create_table_form.as_mut().unwrap();
-    form.set_on_style(insert_text_area_on_style);
-    form.set_off_style(insert_text_area_off_style);
-    let title_text = format!("Create new table into database {}", app.selected_db.as_ref().unwrap().get_db_name());
-    let create_table_block = Block::default()
-        .borders(Borders::ALL)
-        .style(insert_table_popup_style)
-        .title(title_text);
-    let text_area = chunks[0].inner(Margin { horizontal: 1, vertical: 1 });
+    
+    if let Some(form) = &mut app.create_table_form {
+        form.set_styles(
+            insert_text_area_on_style,
+            insert_text_area_off_style,
+            insert_table_popup_style
+        );
+    }
 
-    frame.render_widget(Clear, chunks[0]);
-    frame.render_widget(create_table_block, chunks[0]);
-    frame.render_widget(&form.text_field, text_area);
-
-    if let Some(cursor_pos) = form.text_field.cursor_position(text_area) {
-        frame.set_cursor_position(cursor_pos);
+    if let Some(form) = &app.create_table_form {
+        form.render_widget_and_cursor(frame, chunks[0]);
     }
 
     let info_bits = vec![
@@ -473,21 +475,13 @@ fn render_drop_table_popup(frame: &mut Frame, app: &mut App) {
         .bg(app.quit_popup_bg_col())
         .fg(app.general_text_color());
     let text_area_style = Style::default().bg(app.text_entry_box_bg_col()).fg(app.general_text_color());
-    let form = app.drop_table_form.as_mut().unwrap();
-    form.set_on_style(text_area_style);
-    let title_text = format!("Drop table from database {}", app.selected_db.as_ref().unwrap().get_db_name());
-    let drop_table_block = Block::default()
-        .borders(Borders::ALL)
-        .style(drop_table_popup_style)
-        .title(title_text);
-    let text_area = chunks[0].inner(Margin { horizontal: 1, vertical: 1 });
 
-    frame.render_widget(Clear, chunks[0]);
-    frame.render_widget(drop_table_block, chunks[0]);
-    frame.render_widget(&form.text_field, text_area);
+    if let Some(form) = &mut app.drop_table_form {
+        form.set_styles(text_area_style, Style::default(), drop_table_popup_style);
+    }
 
-    if let Some(cursor_pos) = form.text_field.cursor_position(text_area) {
-        frame.set_cursor_position(cursor_pos);
+    if let Some(form) = &app.drop_table_form {
+        form.render_widget_and_cursor(frame, chunks[0]);
     }
 
     let info_bits = vec![
@@ -502,8 +496,7 @@ fn render_drop_table_popup(frame: &mut Frame, app: &mut App) {
 fn render_delete_row_popup(frame: &mut Frame, app: &mut App) {
     let area = centered_rect(55, 30, frame.area());
     let chunks = get_chunks_from_percentages(area, Direction::Vertical, vec![70, 30]);
-    let col_name_str = "Column name: ";
-    let row_val_str = "Row value: ";
+
     let delete_row_popup_style = Style::default()
         .bg(app.quit_popup_bg_col())
         .fg(app.general_text_color());
@@ -514,74 +507,17 @@ fn render_delete_row_popup(frame: &mut Frame, app: &mut App) {
         .bg(app.text_entry_box_bg_col())
         .fg(app.file_exp_pg_selected_col());
     if let Some(form) = &mut app.table_delete_form {
-        form.set_on_style(delete_text_area_on_style);
-        form.set_off_style(delete_text_area_off_style);
+        form.set_styles(
+            delete_text_area_on_style,
+            delete_text_area_off_style,
+            delete_row_popup_style
+        );
     }
-    let title_text = format!("Delete entry from table {}", app.selected_db_table.as_deref().unwrap());
-    let delete_form_block = Block::default()
-        .borders(Borders::ALL)
-        .title(title_text)
-        .style(delete_row_popup_style);
-
-    frame.render_widget(Clear, chunks[0]);
-    frame.render_widget(delete_form_block.clone(), chunks[0]);
-
-    let text_area = delete_form_block.inner(chunks[0]);
 
     if let Some(form) = &app.table_delete_form {
-        let mut text = Text::default();
-
-        text.push_span(Span::raw(col_name_str));
-        if form.col_name_entry.selected {
-            text.push_span(Span::styled(
-                form.col_name_entry.text_value.clone(),
-                delete_text_area_on_style
-            ));
-        } else {
-            text.push_span(Span::styled(
-                form.col_name_entry.text_value.clone(),
-                delete_text_area_off_style
-            ))
-        }
-        text.push_line("");
-
-        text.push_span(Span::raw(row_val_str));
-        if form.row_value_entry.selected {
-            text.push_span(Span::styled(
-                form.row_value_entry.text_value.clone(),
-                delete_text_area_on_style
-            ));
-        } else {
-            text.push_span(Span::styled(
-                form.row_value_entry.text_value.clone(),
-                delete_text_area_off_style
-            ));
-        }
-
-        let content_paragraph = Paragraph::new(text).wrap(Wrap { trim: false });
-        frame.render_widget(content_paragraph, text_area);
-
-        if form.col_name_entry.selected {
-            if let Some(cursor_pos) = form.col_name_entry.cursor_position(Rect {
-                x: text_area.x + col_name_str.len() as u16,
-                y:text_area.y,
-                width: text_area.width,
-                height: 1,
-            }) {
-                frame.set_cursor_position(cursor_pos);
-            }
-        } else if form.row_value_entry.selected {
-            if let Some(cursor_pos) = form.row_value_entry.cursor_position(Rect {
-                x: text_area.x + row_val_str.len() as u16,
-                y:text_area.y + 1,
-                width: text_area.width,
-                height: 1,
-            }) {
-                frame.set_cursor_position(cursor_pos);
-            }
-        }
+        form.render_widget_and_cursor(frame, chunks[0]);
     }
-
+   
     let info_bits = vec![
         "Commands:",
         "Enter", " - delete entry with given ID",
@@ -862,4 +798,8 @@ fn render_info_paragraph(info_bits : &[&str], frame: &mut Frame, app: & App, are
         .bg(app.info_block_bg_col());
 
     render_titled_paragraph(frame, app, info_bits, "Info", info_style, area);
+}
+
+fn line_width(line: &Line) -> usize {
+    line.spans.iter().map(|span| span.width()).sum()
 }

@@ -15,7 +15,7 @@ pub struct ColumnInfo {
 }
 
 impl ColumnInfo {
-    pub fn column_name_spans(&self, display_metainfo: &bool, col_name_style: Style, metadata_style: Style) -> Line<'static> {
+    pub fn get_line_from_col_info(&self, display_metainfo: &bool, col_name_style: Style, metadata_style: Style) -> Line<'static> {
         let mut col_info = vec![Span::styled(self.name.clone(), col_name_style)];
         
         if *display_metainfo {
@@ -34,6 +34,8 @@ impl ColumnInfo {
                 col_info.push(Span::styled(format!("[FK -> {}]", ref_table), metadata_style));
             }
         }
+
+        col_info.push(Span::styled(":", col_name_style));
 
         Line::from(col_info)
     }

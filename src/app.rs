@@ -10,13 +10,10 @@ use crate::{
         table_list::TableListView
     },
     ui::{colorscheme::ColorScheme, render},
-    widgets::{
-        single_field_form::SingleFieldForm, table_delete_form::TableDeleteForm, table_insert_form::TableInsertForm
-    },
+    widgets::text_form::TextForm,
 };
 use ratatui::{
-    style::Color,
-    Terminal,
+    style::Color, Terminal
 };
 use std::{io, path::PathBuf};
 
@@ -53,11 +50,11 @@ pub struct App {
     pub table_list_view: Option<TableListView>,
     pub column_list_view: Option<ColumnListView>,
     pub row_list_view: Option<RowListView>,
-    pub table_insert_form: Option<TableInsertForm>,
-    pub table_delete_form: Option<TableDeleteForm>,
-    pub create_table_form: Option<SingleFieldForm>,
-    pub drop_table_form: Option<SingleFieldForm>,
-    pub create_db_form: Option<SingleFieldForm>,
+    pub table_insert_form: Option<TextForm>,
+    pub table_delete_form: Option<TextForm>,
+    pub create_table_form: Option<TextForm>,
+    pub drop_table_form: Option<TextForm>,
+    pub create_db_form: Option<TextForm>,
     pub should_quit: bool,
     pub options: Options
 }
@@ -208,23 +205,31 @@ impl App {
     }
 
     pub fn create_table_insert_form(&mut self, table_cols: Vec<String>) {
-        self.table_insert_form = Some(TableInsertForm::new(table_cols));
+        let title_text = format!("Enter new entry into table {}", self.selected_db_table.as_deref().unwrap());
+        self.table_insert_form = Some(TextForm::new(table_cols, title_text));
     }
 
     pub fn create_table_delete_form(&mut self) {
-        self.table_delete_form = Some(TableDeleteForm::new("", ""));
+        let title_text = format!("Delete entry from table {}", self.selected_db_table.as_deref().unwrap());
+        self.table_delete_form = Some(TextForm::new(
+            vec!["Column name".to_string(), "Row value".to_string()],
+            title_text
+        ));
     }
 
     pub fn create_create_table_form(&mut self) {
-        self.create_table_form = Some(SingleFieldForm::new());
+        let title_text = format!("Create new table into database {}", self.selected_db.as_ref().unwrap().get_db_name());
+        self.create_table_form = Some(TextForm::new(vec!["Raw SQL".to_string()], title_text));
     }
 
     pub fn create_drop_table_form(&mut self) {
-        self.drop_table_form = Some(SingleFieldForm::new());
+        let title_text = format!("Drop table from database {}", self.selected_db.as_ref().unwrap().get_db_name());
+        self.drop_table_form = Some(TextForm::new(vec!["Table Name".to_string()], title_text));
     }
 
     pub fn create_new_db_form(&mut self) {
-        self.create_db_form = Some(SingleFieldForm::new());
+        let title_text = format!("Create a new database");
+        self.create_db_form = Some(TextForm::new(vec!["Database name".to_string()], title_text));
     }
 
     pub fn general_text_color(&self) -> Color {

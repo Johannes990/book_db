@@ -203,7 +203,7 @@ fn database_schema_screen_handler(app: &mut App, key_event: KeyEvent) {
                     (KeyCode::Backspace, KeyModifiers::NONE) => app.create_table_form.as_mut().unwrap().pop_char(),
                     (KeyCode::Enter, KeyModifiers::NONE) => {
                         if let Some(db) = &mut app.selected_db {
-                            match db.execute_raw_sql(app.create_table_form.as_ref().unwrap().text_field.text_value.clone()) {
+                            match db.execute_raw_sql(app.create_table_form.as_ref().unwrap().fields[0].text_value.clone()) {
                                 Ok(_) => {
                                     app.fetch_table_list();
                                     app.switch_to_popup(PopUp::None);
@@ -231,7 +231,7 @@ fn database_schema_screen_handler(app: &mut App, key_event: KeyEvent) {
                     (KeyCode::Backspace, KeyModifiers::NONE) => app.drop_table_form.as_mut().unwrap().pop_char(),
                     (KeyCode::Enter, KeyModifiers::NONE) => {
                         if let Some(db) = &mut app.selected_db {
-                            match db.drop_table(app.drop_table_form.as_ref().unwrap().text_field.text_value.clone()) {
+                            match db.drop_table(app.drop_table_form.as_ref().unwrap().fields[0].text_value.clone()) {
                                 Ok(_) => {
                                     app.fetch_table_list();
                                     app.switch_to_popup(PopUp::None);
@@ -316,7 +316,7 @@ fn database_table_screen_handler(app: &mut App, key_event: KeyEvent) {
                                     let mut values_str = Vec::new();
                                     
                                     // Pair form items with their column info
-                                    for (item, col_info) in form.items
+                                    for (item, col_info) in form.fields
                                             .iter()
                                             .zip(&app.selected_table_columns) {
                                         columns.push(col_info.name.clone());
@@ -355,21 +355,21 @@ fn database_table_screen_handler(app: &mut App, key_event: KeyEvent) {
                 match (key_event.code, key_event.modifiers) {
                     (KeyCode::Enter, KeyModifiers::NONE) => {
                         if let Some(form) = &app.table_delete_form {
-                            let col = form.col_name_entry.text_value.clone();
-                            let row = form.row_value_entry.text_value.clone();
+                            let col = form.fields[0].text_value.clone();
+                            let row = form.fields[1].text_value.clone();
                             if let Some(db) = &app.selected_db.as_mut() {
                                 if let Some(table_name) = &app.selected_db_table {
                                     match db.delete_row_statement(table_name, &col, &row) {
                                         Ok(affected) => {
                                             if affected > 0 {
                                                 if let Some(table_list) = &mut app.table_list_view {
-                                                if let Some(table_info) = table_list
-                                                        .items
-                                                        .iter_mut()
-                                                        .find(|t| t.name == *table_name) {
-                                                    table_info.decrement_row_count();
+                                                    if let Some(table_info) = table_list
+                                                            .items
+                                                            .iter_mut()
+                                                            .find(|t| t.name == *table_name) {
+                                                        table_info.decrement_row_count();
+                                                    }
                                                 }
-                                            }
                                                 println!("Deleted {} rows", affected);
                                                 
                                             } else {
@@ -387,9 +387,8 @@ fn database_table_screen_handler(app: &mut App, key_event: KeyEvent) {
                         }
                     },
                     (KeyCode::Esc, KeyModifiers::NONE) => app.switch_to_popup(PopUp::None),
-                    (KeyCode::Up, KeyModifiers::NONE) |
-                    (KeyCode::Down, KeyModifiers::NONE) |
-                    (KeyCode::Tab, KeyModifiers::NONE) => app.table_delete_form.as_mut().unwrap().switch_field(),
+                    (KeyCode::Up, KeyModifiers::NONE) => app.table_delete_form.as_mut().unwrap().previous(),
+                    (KeyCode::Down, KeyModifiers::NONE) => app.table_delete_form.as_mut().unwrap().next(),
                     (KeyCode::Char(c), KeyModifiers::NONE) => app.table_delete_form.as_mut().unwrap().enter_char(c),
                     (KeyCode::Char(c), KeyModifiers::SHIFT) => {
                         for c_uppercase in c.to_uppercase() {
@@ -472,7 +471,7 @@ fn create_new_file_screen_handler(app: &mut App, key_event: KeyEvent) {
             (KeyCode::Char('s'), KeyModifiers::CONTROL) => {
                 if app.selected_db.is_none() {
                     if let Some(form) = &app.create_db_form {
-                        let db_name = form.text_field.text_value.clone();
+                        let db_name = form.fields[0].text_value.clone();
 
                         match DB::new(db_name) {
                             Ok(db) => {
