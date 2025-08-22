@@ -3,7 +3,7 @@ use chrono::{DateTime, Utc};
 use ratatui::widgets::{ScrollbarState, TableState};
 use std::{
     fs::{self},
-    path::PathBuf
+    path::PathBuf,
 };
 use unicode_width::UnicodeWidthStr;
 
@@ -66,7 +66,7 @@ impl FileExplorerTable {
 
     pub fn update_file_list(&mut self) {
         let mut items = get_data_from_path(&self.current_path);
-        
+
         if self.current_path.parent().is_some() {
             items.insert(
                 0,
@@ -108,7 +108,7 @@ fn constraint_len_calculator(items: &[FileExplorerData]) -> (u16, u16, u16) {
     (
         name_len as u16,
         size_field_len as u16,
-        creation_timestamp_len as u16
+        creation_timestamp_len as u16,
     )
 }
 

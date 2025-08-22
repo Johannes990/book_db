@@ -19,7 +19,7 @@ impl ColumnInfo {
         &self,
         display_metainfo: &bool,
         col_name_style: Style,
-        metadata_style: Style
+        metadata_style: Style,
     ) -> Line<'static> {
         let mut col_info = vec![Span::styled(self.name.clone(), col_name_style)];
         

@@ -57,8 +57,8 @@ impl DB {
             .map_err(|text| DBError::ConnectionCreationError(text.to_string()))?;
 
         Ok(Self {
-            db_name: name, 
-            db_conn: conn, 
+            db_name: name,
+            db_conn: conn,
             db_tab_col_map: HashMap::new(),
         })
     }
@@ -127,7 +127,7 @@ impl DB {
 
     pub fn _get_autoincrement_pk_column(
         &self,
-        table_name: &str
+        table_name: &str,
     ) -> Result<Option<String>, DBError> {
         let columns = self.get_table_columns(table_name)?;
 
@@ -147,7 +147,7 @@ impl DB {
             .prepare(&format!("PRAGMA table_info({})", table_name))?;
         let mut columns = statement
             .query_map([], |row| {
-                Ok(ColumnInfo { 
+                Ok(ColumnInfo {
                     name: row.get(1)?,
                     col_type: row.get(2)?,
                     is_pk: row.get::<_, i32>(5)? != 0, // checks if column has PK constraint
@@ -158,7 +158,7 @@ impl DB {
                 })
             })?
             .collect::<Result<Vec<_>, _>>()?;
-        
+
         // foreign key constraints
         let mut fk_statement = self.db_conn.prepare(&format!(
             "PRAGMA foreign_key_list({})",
@@ -224,7 +224,7 @@ impl DB {
         &mut self,
         table_name: String,
         columns: Vec<String>,
-        constraints: Vec<String>
+        constraints: Vec<String>,
     ) -> Result<(), DBError> {
         self._check_table_does_not_exist(&table_name)?;
 
@@ -280,7 +280,7 @@ impl DB {
         &mut self,
         table_name: String,
         columns: Vec<String>,
-        values: Vec<&dyn ToSql>
+        values: Vec<&dyn ToSql>,
     ) -> Result<(), DBError> {
         self.check_table_exists(&table_name)?;
 
@@ -302,7 +302,7 @@ impl DB {
     pub fn _select_row_statement(
         &self,
         table_name: &String,
-        cols: &Vec<String>
+        cols: &Vec<String>,
     ) -> Result<Statement<'_>, DBError> {
         self.check_table_exists(table_name)?;
 
@@ -321,7 +321,7 @@ impl DB {
         &self,
         table_name: &str,
         col_name: &str,
-        value: &str
+        value: &str,
     ) -> Result<usize, DBError> {
         self.check_table_exists(table_name)?;
         self.check_col_exists_in_table(table_name, col_name)?;
@@ -361,7 +361,7 @@ impl DB {
     fn _check_cols_match_existing(
         &self,
         existing_cols: &[String],
-        cols: &Vec<String>
+        cols: &Vec<String>,
     ) -> Result<(), DBError> {
         for col in cols {
             if !existing_cols.contains(col) {

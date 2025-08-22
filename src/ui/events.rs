@@ -252,7 +252,7 @@ fn database_schema_screen_handler(app: &mut App, key_event: KeyEvent) {
                             match db.drop_table(
                                 app.drop_table_form.as_ref().unwrap().fields[0]
                                     .text_value
-                                    .clone()
+                                    .clone(),
                             ) {
                                 Ok(_) => {
                                     app.fetch_table_list();
@@ -339,10 +339,7 @@ fn database_table_screen_handler(app: &mut App, key_event: KeyEvent) {
                         }
                     }
                     (KeyCode::Backspace, KeyModifiers::NONE) => {
-                        app.table_insert_form
-                            .as_mut()
-                            .unwrap()
-                            .pop_char()
+                        app.table_insert_form.as_mut().unwrap().pop_char()
                     }
                     (KeyCode::Char('s'), KeyModifiers::CONTROL) => {
                         if let Some(db) = app.selected_db.as_mut() {
@@ -492,14 +489,14 @@ fn options_screen_handler(app: &mut App, key_event: KeyEvent) -> io::Result<()> 
                         !app.options.display_col_metainfo_in_insert_view,
                     );
                     changed = true;
-                },
+                }
                 SelectedOption::TableMetainfoToggle => {
                     app.options.set_display_col_metainfo_in_table_view(
                         !app.options.display_col_metainfo_in_table_view,
                     );
                     changed = true;
-                },
-            }
+                }
+            },
             _ => {}
         }
     }

@@ -301,8 +301,7 @@ impl App {
     }
 
     pub fn info_block_bg_col(&self) -> Color {
-        self
-            .options
+        self.options
             .selected_color_scheme
             .colors()
             .info_block_bg_col
