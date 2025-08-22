@@ -11,7 +11,7 @@ impl FileExplorerData {
             path_name,
             path_size,
             date_created,
-            is_dir
+            is_dir,
         }
     }
     

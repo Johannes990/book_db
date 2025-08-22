@@ -5,10 +5,7 @@ use crate::{
     handle_key_events,
     options::Options,
     row::row_list::RowListView,
-    table::{
-        table_info::TableInfo,
-        table_list::TableListView
-    },
+    table::{table_info::TableInfo, table_list::TableListView},
     ui::{colorscheme::ColorScheme, render},
     widgets::text_form::TextForm,
 };
@@ -100,7 +97,7 @@ impl App {
     ) -> io::Result<()> {
         loop {
             render::render(terminal, self)?;
-    
+
             if handle_key_events(self)? {
                 break;
             }
@@ -228,7 +225,7 @@ impl App {
         );
         self.table_delete_form = Some(TextForm::new(
             vec!["Column name".to_string(), "Row value".to_string()],
-            title_text
+            title_text,
         ));
     }
 
@@ -261,17 +258,11 @@ impl App {
     }
 
     pub fn alt_text_color_1(&self) -> Color {
-        self.options
-            .selected_color_scheme
-            .colors()
-            .alt_text_color_1
+        self.options.selected_color_scheme.colors().alt_text_color_1
     }
 
     pub fn alt_text_color_2(&self) -> Color {
-        self.options
-            .selected_color_scheme
-            .colors()
-            .alt_text_color_2
+        self.options.selected_color_scheme.colors().alt_text_color_2
     }
 
     pub fn general_page_bg_color(&self) -> Color {
@@ -310,7 +301,11 @@ impl App {
     }
 
     pub fn info_block_bg_col(&self) -> Color {
-        self.options.selected_color_scheme.colors().info_block_bg_col
+        self
+            .options
+            .selected_color_scheme
+            .colors()
+            .info_block_bg_col
     }
 
     pub fn text_entry_box_bg_col(&self) -> Color {

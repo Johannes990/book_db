@@ -915,7 +915,8 @@ fn compute_col_widths(
         .enumerate()
         .map(|(i, col)| {
             let header_len = col.col_name_length(display_metainfo);
-            let max_data_len = rows.iter()
+            let max_data_len = rows
+                .iter()
                 .map(|row| row.values.get(i).map_or(0, |val| val.len()))
                 .max()
                 .unwrap_or(0);

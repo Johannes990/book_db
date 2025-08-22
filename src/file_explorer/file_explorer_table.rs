@@ -1,9 +1,11 @@
 use crate::file_explorer::file_explorer_data::FileExplorerData;
-use ratatui::widgets::{ScrollbarState, TableState};
-use unicode_width::UnicodeWidthStr;
-use std::{fs::{self}, path::PathBuf};
 use chrono::{DateTime, Utc};
-
+use ratatui::widgets::{ScrollbarState, TableState};
+use std::{
+    fs::{self},
+    path::PathBuf
+};
+use unicode_width::UnicodeWidthStr;
 
 pub const ITEM_HEIGHT: usize = 1;
 
@@ -29,7 +31,7 @@ impl FileExplorerTable {
             index: 0,
         }
     }
-    
+
     pub fn next(&mut self) {
         let i = match self.state.selected() {
             Some(i) => {
@@ -66,12 +68,10 @@ impl FileExplorerTable {
         let mut items = get_data_from_path(&self.current_path);
         
         if self.current_path.parent().is_some() {
-            items.insert(0, FileExplorerData::new(
-                "..".to_string(),
-                "".to_string(),
-                "".to_string(),
-                true
-            ));
+            items.insert(
+                0,
+                FileExplorerData::new("..".to_string(), "".to_string(), "".to_string(), true),
+            );
         }
         self.items = get_data_from_path(&self.current_path);
         self.state = TableState::new().with_selected(self.index);
@@ -105,7 +105,11 @@ fn constraint_len_calculator(items: &[FileExplorerData]) -> (u16, u16, u16) {
         .unwrap_or(0);
 
     #[allow(clippy::cast_possible_truncation)]
-    (name_len as u16, size_field_len as u16, creation_timestamp_len as u16)
+    (
+        name_len as u16,
+        size_field_len as u16,
+        creation_timestamp_len as u16
+    )
 }
 
 fn get_data_from_path(path: &PathBuf) -> Vec<FileExplorerData> {
@@ -118,7 +122,10 @@ fn get_data_from_path(path: &PathBuf) -> Vec<FileExplorerData> {
                     Ok(meta) => meta,
                     Err(_) => {
                         return FileExplorerData::new(
-                            entry.file_name().into_string().unwrap_or_else(|_| "Invalid UTF-8".into()),
+                            entry
+                                .file_name()
+                                .into_string()
+                                .unwrap_or_else(|_| "Invalid UTF-8".into()),
                             "N/A".into(),
                             "N/A".into(),
                             false,
@@ -126,7 +133,10 @@ fn get_data_from_path(path: &PathBuf) -> Vec<FileExplorerData> {
                     }
                 };
                 let is_dir = metadata.is_dir();
-                let file_name = entry.file_name().into_string().unwrap_or_else(|_| "Invalid UTF-8".into());
+                let file_name = entry
+                    .file_name()
+                    .into_string()
+                    .unwrap_or_else(|_| "Invalid UTF-8".into());
                 let file_size = if is_dir {
                     "<DIR>".to_string()
                 } else {
@@ -147,17 +157,15 @@ fn get_data_from_path(path: &PathBuf) -> Vec<FileExplorerData> {
             "<Error reading directory>".into(),
             "N/A".into(),
             "N/A".into(),
-            false
+            false,
         )],
     };
 
     if path.parent().is_some() {
-        entries.insert(0, FileExplorerData::new(
-            "..".to_string(),
-            "".to_string(),
-            "".to_string(),
-            true
-        ));
+        entries.insert(
+            0,
+            FileExplorerData::new("..".to_string(), "".to_string(), "".to_string(), true),
+        );
     }
 
     entries
