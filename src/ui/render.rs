@@ -25,47 +25,27 @@ where
     B: ratatui::backend::Backend,
 {
     // Call terminal.draw and convert its output to io::Result<()>
-    terminal.draw(|frame| match app.current_screen {
-        Screen::Splash => {
-            render_splash_screen(frame, app);
-            match app.current_popup {
-                PopUp::NoDBLoaded => render_no_db_loaded_popup(frame, app),
-                PopUp::Quit => render_quit_popup(frame, app),
-                _ => {}
-            }
+    terminal.draw(|frame| {
+        match app.current_screen {
+            Screen::Splash => render_splash_screen(frame, app),
+            Screen::FileExplorer => render_file_explorer_screen(frame, app),
+            Screen::DatabaseSchema => render_database_schema_screen(frame, app),
+            Screen::DataBaseTable => render_database_table_screen(frame, app),
+            Screen::CreateNewFile => render_new_database_screen(frame, app),
+            Screen::Options => render_options_screen(frame, app),
         }
-        Screen::CreateNewFile => {
-            render_new_database_screen(frame, app);
-            if let PopUp::Error(ref err) = app.current_popup {
+        match app.current_popup {
+            PopUp::None => {},
+            PopUp::Quit => render_quit_popup(frame, app),
+            PopUp::NoDBLoaded => render_no_db_loaded_popup(frame, app),
+            PopUp::InsertRow => render_insert_row_popup(frame, app),
+            PopUp::DeleteRow => render_delete_row_popup(frame, app),
+            PopUp::InsertTable => render_insert_table_popup(frame, app),
+            PopUp::DeleteTable => render_drop_table_popup(frame, app),
+            PopUp::Error(ref err) => {
                 let msg = format!("{}", err);
                 render_error_popup(frame, app, &msg);
             }
-        }
-        Screen::FileExplorer => {
-            render_file_explorer_screen(frame, app);
-        }
-        Screen::DatabaseSchema => {
-            render_database_schema_screen(frame, app);
-            match app.current_popup {
-                PopUp::InsertTable => render_insert_table_popup(frame, app),
-                PopUp::DeleteTable => render_drop_table_popup(frame, app),
-                _ => {}
-            }
-        }
-        Screen::DataBaseTable => {
-            render_database_table_screen(frame, app);
-            match app.current_popup {
-                PopUp::InsertRow => render_insert_row_popup(frame, app),
-                PopUp::DeleteRow => render_delete_row_popup(frame, app),
-                PopUp::Error(ref err) => {
-                    let msg = format!("{}", err);
-                    render_error_popup(frame, app, &msg);
-                }
-                _ => {}
-            }
-        }
-        Screen::Options => {
-            render_options_screen(frame, app);
         }
     })?;
     Ok(())
@@ -102,6 +82,11 @@ fn render_file_explorer_screen(frame: &mut Frame, app: &mut App) {
     let fexp_page_style = Style::default()
         .bg(app.general_page_bg_color())
         .fg(app.general_text_color());
+    let file_explorer_block = Block::default()
+        .title("File explorer screen")
+        .style(fexp_page_style);
+
+    frame.render_widget(file_explorer_block, chunks[0]);
 
     let header = ["File/Folder", "Size", "Date created"]
         .into_iter()
@@ -133,13 +118,15 @@ fn render_file_explorer_screen(frame: &mut Frame, app: &mut App) {
     ];
     let highlight_col = app.file_exp_pg_selected_col();
 
+    let (table_area, scrollbar_area) = get_table_and_scrollbar_areas(chunks[0]);
+
     render_table(
         frame,
         &mut app.file_explorer_table.state,
         Some(header),
         rows,
         col_constraints.to_vec(),
-        chunks[0],
+        table_area,
         highlight_col,
         Borders::NONE,
         None,
@@ -147,7 +134,7 @@ fn render_file_explorer_screen(frame: &mut Frame, app: &mut App) {
 
     render_vertical_scrollbar(
         frame,
-        chunks[0],
+        scrollbar_area,
         None,
         &mut app.file_explorer_table.scroll_state,
     );
@@ -956,4 +943,22 @@ fn render_info_paragraph(info_bits: &[&str], frame: &mut Frame, app: &App, area:
 
 fn line_width(line: &Line) -> usize {
     line.spans.iter().map(|span| span.width()).sum()
+}
+
+fn get_table_and_scrollbar_areas(area: Rect) -> (Rect, Rect) {
+    let scrollbar_width = 3;
+    let table_area = Rect {
+        x: area.x,
+        y: area.y,
+        width: area.width.saturating_sub(scrollbar_width),
+        height: area.height,
+    };
+    let scrollbar_area = Rect {
+        x: area.x + table_area.width,
+        y: area.y,
+        width: scrollbar_width,
+        height: area.height,
+    };
+
+    (table_area, scrollbar_area)
 }
