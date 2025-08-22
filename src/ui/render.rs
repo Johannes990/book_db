@@ -35,7 +35,7 @@ where
             Screen::Options => render_options_screen(frame, app),
         }
         match app.current_popup {
-            PopUp::None => {},
+            PopUp::None => {}
             PopUp::Quit => render_quit_popup(frame, app),
             PopUp::NoDBLoaded => render_no_db_loaded_popup(frame, app),
             PopUp::InsertRow => render_insert_row_popup(frame, app),
