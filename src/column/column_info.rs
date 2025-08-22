@@ -22,7 +22,7 @@ impl ColumnInfo {
         metadata_style: Style,
     ) -> Line<'static> {
         let mut col_info = vec![Span::styled(self.name.clone(), col_name_style)];
-        
+
         if *display_metainfo {
             col_info.push(Span::raw(" "));
             if self.is_pk {

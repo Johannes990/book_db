@@ -160,10 +160,9 @@ impl DB {
             .collect::<Result<Vec<_>, _>>()?;
 
         // foreign key constraints
-        let mut fk_statement = self.db_conn.prepare(&format!(
-            "PRAGMA foreign_key_list({})",
-            table_name
-        ))?;
+        let mut fk_statement = self
+            .db_conn
+            .prepare(&format!("PRAGMA foreign_key_list({})", table_name))?;
 
         let foreign_keys: Vec<(String, String)> = fk_statement
             .query_map([], |row| {
