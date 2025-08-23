@@ -808,9 +808,7 @@ fn render_color_scheme_preview(
     color_scheme: &SelectedScheme,
     border_style: Style,
 ) {
-    let border_block = Block::default()
-        .style(border_style)
-        .borders(Borders::ALL);
+    let border_block = Block::default().style(border_style).borders(Borders::ALL);
     let colors = color_scheme.colors();
     let color_vec = [
         colors.text,
@@ -837,7 +835,7 @@ fn render_color_scheme_preview(
         .split(inner_area);
 
     for (color, chunk) in color_vec.iter().zip(chunks.iter()) {
-        frame.render_widget(Block::default().style(Style::default().bg(*color)),*chunk);
+        frame.render_widget(Block::default().style(Style::default().bg(*color)), *chunk);
     }
 }
 
