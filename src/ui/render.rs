@@ -14,8 +14,7 @@ use ratatui::{
     widgets::{
         Block, Borders, Cell, Clear, HighlightSpacing, List, ListItem, Paragraph, Row, Scrollbar,
         ScrollbarOrientation, ScrollbarState, Table, TableState, Wrap,
-    },
-    Frame, Terminal,
+    }, Frame, Terminal
 };
 use std::{io, rc::Rc, vec};
 
@@ -116,7 +115,14 @@ fn render_file_explorer_screen(frame: &mut Frame, app: &mut App) {
         Constraint::Length(app.file_explorer_table.longest_item_lens.1 + 1),
         Constraint::Length(app.file_explorer_table.longest_item_lens.2 + 4),
     ];
+
     let highlight_col = app.background_highlight_color();
+    let border_block_style = Style::default()
+        .bg(app.background_color())
+        .fg(app.border_color());
+    let border_block = Block::new()
+        .borders(Borders::ALL)
+        .style(border_block_style);
 
     let (table_area, scrollbar_area) = get_table_and_scrollbar_areas(chunks[0]);
 
@@ -128,8 +134,7 @@ fn render_file_explorer_screen(frame: &mut Frame, app: &mut App) {
         col_constraints.to_vec(),
         table_area,
         highlight_col,
-        Borders::NONE,
-        None,
+        border_block
     );
 
     render_vertical_scrollbar(
@@ -264,6 +269,15 @@ fn render_database_table_screen(frame: &mut Frame, app: &mut App) {
             Row::new(row_cells).style(db_page_style)
         })
         .collect();
+
+    let table_title = table_name.to_string();
+    let border_block_style = Style::default()
+        .bg(app.background_color())
+        .fg(app.border_color());
+    let border_block = Block::new()
+        .borders(Borders::ALL)
+        .style(border_block_style)
+        .title(table_title);
     let unwrapped_row_list = app.row_list_view.as_mut().unwrap();
     let min = 5;
     let max = 40;
@@ -283,8 +297,7 @@ fn render_database_table_screen(frame: &mut Frame, app: &mut App) {
         col_constraints,
         inner_area,
         highlight_col,
-        Borders::ALL,
-        Some(table_name.to_string()),
+        border_block
     );
 
     render_vertical_scrollbar(
@@ -687,6 +700,15 @@ fn render_table_list(frame: &mut Frame, app: &mut App, area: Rect) {
             Constraint::Min(7),    // row count
             Constraint::Length(7), // type (table, view)
         ];
+
+        let table_title = "Tables";
+        let border_block_style = Style::default()
+            .bg(app.background_color())
+            .fg(app.border_color());
+        let border_block = Block::new()
+            .borders(Borders::ALL)
+            .style(border_block_style)
+            .title(table_title);
         let highlight_color = app.background_highlight_color();
         let unwrapped_table_list = app.table_list_view.as_mut().unwrap();
 
@@ -698,8 +720,7 @@ fn render_table_list(frame: &mut Frame, app: &mut App, area: Rect) {
             col_constraints.to_vec(),
             area,
             highlight_color,
-            Borders::ALL,
-            Some("Tables".to_string()),
+            border_block
         );
 
         render_vertical_scrollbar(
@@ -768,8 +789,17 @@ fn render_column_list(frame: &mut Frame, app: &mut App, area: Rect) {
             Constraint::Length(8),
             Constraint::Min(10),
         ];
+
         let highlight_color = app.background_highlight_color();
-        let unwrapped_column_list = app.column_list_view.as_mut().unwrap();
+        let table_title = "Columns";
+        let border_block_style = Style::default()
+            .bg(app.background_color())
+            .fg(app.border_color());
+        let border_block = Block::new()
+            .borders(Borders::ALL)
+            .style(border_block_style)
+            .title(table_title);
+        let unwrapped_column_list: &mut crate::column::column_list::ColumnListView = app.column_list_view.as_mut().unwrap();
 
         render_table(
             frame,
@@ -779,8 +809,7 @@ fn render_column_list(frame: &mut Frame, app: &mut App, area: Rect) {
             col_constraints.to_vec(),
             area,
             highlight_color,
-            Borders::ALL,
-            Some("Columns".to_string()),
+            border_block
         );
 
         render_vertical_scrollbar(
@@ -869,14 +898,11 @@ fn render_table(
     col_widths: Vec<Constraint>,
     area: Rect,
     highlight_col: Color,
-    borders: Borders,
-    title: Option<String>,
+    block: Block,
 ) {
-    let table_title = title.unwrap_or_default();
-    let block_style = Block::new().borders(borders).title(table_title);
     let selected_style = Style::default().bg(highlight_col);
     let mut table = Table::new(rows, col_widths)
-        .block(block_style)
+        .block(block)
         .row_highlight_style(selected_style)
         .highlight_spacing(HighlightSpacing::Always);
 
@@ -976,7 +1002,9 @@ fn render_titled_paragraph(
 }
 
 fn render_info_paragraph(info_bits: &[&str], frame: &mut Frame, app: &App, area: Rect) {
-    let info_style = Style::default().bg(app.background_alt_color());
+    let info_style = Style::default()
+        .fg(app.border_color())
+        .bg(app.background_alt_color());
 
     render_titled_paragraph(frame, app, info_bits, "Info", info_style, area);
 }
