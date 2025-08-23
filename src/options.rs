@@ -52,7 +52,10 @@ impl Options {
 
             options.available_color_schemes = ColorScheme::iter().collect();
 
-            if !options.available_color_schemes.contains(&options.selected_color_scheme) {
+            if !options
+                .available_color_schemes
+                .contains(&options.selected_color_scheme)
+            {
                 options.selected_color_scheme = default_color_scheme;
             }
 
