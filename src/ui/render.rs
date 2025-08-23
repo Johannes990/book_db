@@ -14,7 +14,8 @@ use ratatui::{
     widgets::{
         Block, Borders, Cell, Clear, HighlightSpacing, List, ListItem, Paragraph, Row, Scrollbar,
         ScrollbarOrientation, ScrollbarState, Table, TableState, Wrap,
-    }, Frame, Terminal
+    }, 
+    Frame, Terminal,
 };
 use std::{io, rc::Rc, vec};
 
@@ -120,9 +121,7 @@ fn render_file_explorer_screen(frame: &mut Frame, app: &mut App) {
     let border_block_style = Style::default()
         .bg(app.background_color())
         .fg(app.border_color());
-    let border_block = Block::new()
-        .borders(Borders::ALL)
-        .style(border_block_style);
+    let border_block = Block::new().borders(Borders::ALL).style(border_block_style);
 
     let (table_area, scrollbar_area) = get_table_and_scrollbar_areas(chunks[0]);
 
@@ -134,7 +133,7 @@ fn render_file_explorer_screen(frame: &mut Frame, app: &mut App) {
         col_constraints.to_vec(),
         table_area,
         highlight_col,
-        border_block
+        border_block,
     );
 
     render_vertical_scrollbar(
@@ -297,7 +296,7 @@ fn render_database_table_screen(frame: &mut Frame, app: &mut App) {
         col_constraints,
         inner_area,
         highlight_col,
-        border_block
+        border_block,
     );
 
     render_vertical_scrollbar(
@@ -720,7 +719,7 @@ fn render_table_list(frame: &mut Frame, app: &mut App, area: Rect) {
             col_constraints.to_vec(),
             area,
             highlight_color,
-            border_block
+            border_block,
         );
 
         render_vertical_scrollbar(
@@ -809,7 +808,7 @@ fn render_column_list(frame: &mut Frame, app: &mut App, area: Rect) {
             col_constraints.to_vec(),
             area,
             highlight_color,
-            border_block
+            border_block,
         );
 
         render_vertical_scrollbar(
