@@ -312,8 +312,7 @@ fn render_options_screen(frame: &mut Frame, app: &mut App) {
     let general_page_style = Style::default()
         .fg(app.text_color())
         .bg(app.background_color());
-    let selected_style = Style::default()
-        .fg(app.error_color());
+    let selected_style = Style::default().fg(app.error_color());
     let options_block = Block::default()
         .title("Options View")
         .style(general_page_style);
@@ -707,7 +706,7 @@ fn render_table_list(frame: &mut Frame, app: &mut App, area: Rect) {
             scrollbar_style,
             area,
             None,
-            &mut unwrapped_table_list.scroll_state
+            &mut unwrapped_table_list.scroll_state,
         );
     } else {
         let style = Style::default()
@@ -788,7 +787,7 @@ fn render_column_list(frame: &mut Frame, app: &mut App, area: Rect) {
             scrollbar_style,
             area,
             None,
-            &mut unwrapped_column_list.scroll_state
+            &mut unwrapped_column_list.scroll_state,
         );
     } else {
         let style = Style::default()
@@ -814,7 +813,7 @@ fn render_color_scheme_preview(frame: &mut Frame, area: Rect, color_scheme: &Col
         colors.warning,
         colors.error,
         colors.border,
-        colors.accent
+        colors.accent,
     ];
     let block_width = area.width / color_vec.len() as u16;
     for (i, color) in color_vec.iter().enumerate() {

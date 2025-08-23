@@ -34,7 +34,7 @@ impl SelectableLine {
         active: bool,
         selected: bool,
         on_style: Style,
-        off_style: Style
+        off_style: Style,
     ) -> Self {
         let prefix = if selected { "* " } else { "  " };
         let postfix = if active { "ON" } else { "OFF" };

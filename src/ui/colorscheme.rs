@@ -30,7 +30,7 @@ impl ColorScheme {
                 text_highlight: Color::Rgb(64, 35, 33),
                 background: Color::Rgb(247, 201, 35),
                 background_alt: Color::Rgb(247, 173, 35),
-                background_highlight : Color::Rgb(191, 112, 75),
+                background_highlight: Color::Rgb(191, 112, 75),
                 warning: Color::Rgb(255, 255, 0),
                 error: Color::Rgb(255, 0, 0),
                 border: Color::Rgb(64, 35, 33),

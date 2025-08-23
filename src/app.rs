@@ -251,10 +251,7 @@ impl App {
     }
 
     pub fn text_color(&self) -> Color {
-        self.options
-            .selected_color_scheme
-            .colors()
-            .text
+        self.options.selected_color_scheme.colors().text
     }
 
     pub fn text_alt_color(&self) -> Color {
@@ -266,17 +263,11 @@ impl App {
     }
 
     pub fn background_color(&self) -> Color {
-        self.options
-            .selected_color_scheme
-            .colors()
-            .background
+        self.options.selected_color_scheme.colors().background
     }
 
     pub fn background_alt_color(&self) -> Color {
-        self.options
-            .selected_color_scheme
-            .colors()
-            .background_alt
+        self.options.selected_color_scheme.colors().background_alt
     }
 
     pub fn background_highlight_color(&self) -> Color {
@@ -287,32 +278,20 @@ impl App {
     }
 
     pub fn warning_color(&self) -> Color {
-        self.options
-            .selected_color_scheme
-            .colors()
-            .warning
+        self.options.selected_color_scheme.colors().warning
     }
 
     pub fn error_color(&self) -> Color {
-        self.options
-            .selected_color_scheme
-            .colors()
-            .error
+        self.options.selected_color_scheme.colors().error
     }
 
     pub fn border_color(&self) -> Color {
-        self.options
-            .selected_color_scheme
-            .colors()
-            .border
+        self.options.selected_color_scheme.colors().border
     }
 
     #[allow(dead_code)]
     pub fn accent_color(&self) -> Color {
-        self.options
-            .selected_color_scheme
-            .colors()
-            .accent
+        self.options.selected_color_scheme.colors().accent
     }
 
     pub fn switch_to_screen(&mut self, screen: Screen) {
