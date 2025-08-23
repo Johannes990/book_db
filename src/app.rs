@@ -250,68 +250,69 @@ impl App {
         self.create_db_form = Some(TextForm::new(vec!["Database name".to_string()], title_text));
     }
 
-    pub fn general_text_color(&self) -> Color {
+    pub fn text_color(&self) -> Color {
         self.options
             .selected_color_scheme
             .colors()
-            .general_text_color
+            .text
     }
 
-    pub fn alt_text_color_1(&self) -> Color {
-        self.options.selected_color_scheme.colors().alt_text_color_1
+    pub fn text_alt_color(&self) -> Color {
+        self.options.selected_color_scheme.colors().text_alt
     }
 
-    pub fn alt_text_color_2(&self) -> Color {
-        self.options.selected_color_scheme.colors().alt_text_color_2
+    pub fn text_highlight_color(&self) -> Color {
+        self.options.selected_color_scheme.colors().text_highlight
     }
 
-    pub fn general_page_bg_color(&self) -> Color {
+    pub fn background_color(&self) -> Color {
         self.options
             .selected_color_scheme
             .colors()
-            .general_page_bg_color
+            .background
     }
 
-    pub fn quit_popup_bg_col(&self) -> Color {
+    pub fn background_alt_color(&self) -> Color {
         self.options
             .selected_color_scheme
             .colors()
-            .quit_popup_bg_col
+            .background_alt
     }
 
-    pub fn file_exp_pg_selected_col(&self) -> Color {
+    pub fn background_highlight_color(&self) -> Color {
         self.options
             .selected_color_scheme
             .colors()
-            .file_exp_pg_selected_col
+            .background_highlight
     }
 
-    pub fn table_row_normal_col(&self) -> Color {
+    pub fn warning_color(&self) -> Color {
         self.options
             .selected_color_scheme
             .colors()
-            .table_row_normal_col
+            .warning
     }
 
-    pub fn table_row_alt_color(&self) -> Color {
+    pub fn error_color(&self) -> Color {
         self.options
             .selected_color_scheme
             .colors()
-            .table_row_alt_color
+            .error
     }
 
-    pub fn info_block_bg_col(&self) -> Color {
+    pub fn border_color(&self) -> Color {
         self.options
             .selected_color_scheme
             .colors()
-            .info_block_bg_col
+            .border
     }
 
-    pub fn text_entry_box_bg_col(&self) -> Color {
+    #[allow(dead_code)]
+    pub fn accent_color(&self) -> Color {
         self.options
             .selected_color_scheme
             .colors()
-            .text_entry_box_bg_col
+            .accent
     }
 
     pub fn switch_to_screen(&mut self, screen: Screen) {

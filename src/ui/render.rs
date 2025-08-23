@@ -54,8 +54,8 @@ where
 fn render_splash_screen(frame: &mut Frame, app: &App) {
     let chunks = get_chunks_from_percentages(frame.area(), Direction::Vertical, vec![75, 25]);
     let main_page_style = Style::default()
-        .bg(app.general_page_bg_color())
-        .fg(app.general_text_color());
+        .bg(app.background_color())
+        .fg(app.text_color());
     let main_page_content =
         Paragraph::new("Database terminal app v0.0.1".to_owned()).style(main_page_style);
 
@@ -79,9 +79,10 @@ fn render_splash_screen(frame: &mut Frame, app: &App) {
 
 fn render_file_explorer_screen(frame: &mut Frame, app: &mut App) {
     let chunks = get_chunks_from_percentages(frame.area(), Direction::Vertical, vec![75, 25]);
+    let scrollbar_style = Style::default().fg(app.border_color());
     let fexp_page_style = Style::default()
-        .bg(app.general_page_bg_color())
-        .fg(app.general_text_color());
+        .bg(app.background_color())
+        .fg(app.text_color());
     let file_explorer_block = Block::default()
         .title("File explorer screen")
         .style(fexp_page_style);
@@ -101,14 +102,14 @@ fn render_file_explorer_screen(frame: &mut Frame, app: &mut App) {
         .enumerate()
         .map(|(i, data)| {
             let color = match i % 2 {
-                0 => app.table_row_normal_col(),
-                _ => app.table_row_alt_color(),
+                0 => app.background_color(),
+                _ => app.background_alt_color(),
             };
             let item = data.ref_array();
             item.into_iter()
                 .map(|content| Cell::from(Text::from(content.to_string())))
                 .collect::<Row>()
-                .style(Style::new().bg(color).fg(app.general_text_color()))
+                .style(Style::new().bg(color).fg(app.text_color()))
         })
         .collect();
     let col_constraints = [
@@ -116,7 +117,7 @@ fn render_file_explorer_screen(frame: &mut Frame, app: &mut App) {
         Constraint::Length(app.file_explorer_table.longest_item_lens.1 + 1),
         Constraint::Length(app.file_explorer_table.longest_item_lens.2 + 4),
     ];
-    let highlight_col = app.file_exp_pg_selected_col();
+    let highlight_col = app.background_highlight_color();
 
     let (table_area, scrollbar_area) = get_table_and_scrollbar_areas(chunks[0]);
 
@@ -134,6 +135,7 @@ fn render_file_explorer_screen(frame: &mut Frame, app: &mut App) {
 
     render_vertical_scrollbar(
         frame,
+        scrollbar_style,
         scrollbar_area,
         None,
         &mut app.file_explorer_table.scroll_state,
@@ -151,8 +153,8 @@ fn render_file_explorer_screen(frame: &mut Frame, app: &mut App) {
 
 fn render_database_schema_screen(frame: &mut Frame, app: &mut App) {
     let db_page_style = Style::default()
-        .bg(app.general_page_bg_color())
-        .fg(app.general_text_color());
+        .bg(app.background_color())
+        .fg(app.text_color());
     let chunks = get_chunks_from_percentages(frame.area(), Direction::Vertical, vec![75, 25]);
     let db_name = app
         .selected_db
@@ -191,12 +193,12 @@ fn render_database_schema_screen(frame: &mut Frame, app: &mut App) {
 
 fn render_new_database_screen(frame: &mut Frame, app: &mut App) {
     let page_style = Style::default()
-        .bg(app.general_page_bg_color())
-        .fg(app.general_text_color());
+        .bg(app.background_color())
+        .fg(app.text_color());
     let chunks = get_chunks_from_percentages(frame.area(), Direction::Vertical, vec![75, 25]);
     let insert_text_area_on_style = Style::default()
-        .bg(app.text_entry_box_bg_col())
-        .fg(app.general_text_color());
+        .bg(app.background_highlight_color())
+        .fg(app.text_highlight_color());
 
     if let Some(form) = &mut app.create_db_form {
         form.set_styles(insert_text_area_on_style, Style::default(), page_style);
@@ -218,14 +220,15 @@ fn render_new_database_screen(frame: &mut Frame, app: &mut App) {
 
 fn render_database_table_screen(frame: &mut Frame, app: &mut App) {
     let db_page_style = Style::default()
-        .bg(app.general_page_bg_color())
-        .fg(app.general_text_color());
+        .bg(app.background_color())
+        .fg(app.text_color());
     let col_name_style = Style::default()
-        .fg(app.general_text_color())
+        .fg(app.text_color())
         .add_modifier(Modifier::ITALIC | Modifier::UNDERLINED);
     let metadata_style = Style::default()
-        .fg(app.alt_text_color_2())
+        .fg(app.text_alt_color())
         .add_modifier(Modifier::ITALIC);
+    let scrollbar_style = Style::default().fg(app.border_color());
     let chunks = get_chunks_from_percentages(frame.area(), Direction::Vertical, vec![75, 25]);
     let table_name = app.selected_db_table.as_ref().expect("unknown");
     let outer_block = Block::default().title(" Table View").style(db_page_style);
@@ -246,7 +249,7 @@ fn render_database_table_screen(frame: &mut Frame, app: &mut App) {
         })
         .collect();
     let header = Row::new(header_cells).style(db_page_style);
-    let highlight_col = app.file_exp_pg_selected_col();
+    let highlight_col = app.background_highlight_color();
     let rows: Vec<_> = app
         .row_list_view
         .as_ref()
@@ -287,6 +290,7 @@ fn render_database_table_screen(frame: &mut Frame, app: &mut App) {
 
     render_vertical_scrollbar(
         frame,
+        scrollbar_style,
         inner_area,
         None,
         &mut unwrapped_row_list.scroll_bar_state,
@@ -306,14 +310,16 @@ fn render_database_table_screen(frame: &mut Frame, app: &mut App) {
 
 fn render_options_screen(frame: &mut Frame, app: &mut App) {
     let general_page_style = Style::default()
-        .fg(app.general_text_color())
-        .bg(app.general_page_bg_color());
+        .fg(app.text_color())
+        .bg(app.background_color());
+    let selected_style = Style::default()
+        .fg(app.error_color());
     let options_block = Block::default()
         .title("Options View")
         .style(general_page_style);
 
     frame.render_widget(options_block, frame.area());
-    
+
     let vertical_chunks =
         get_chunks_from_percentages(frame.area(), Direction::Vertical, vec![50, 25, 25]);
     let horizontal_chunks =
@@ -326,10 +332,10 @@ fn render_options_screen(frame: &mut Frame, app: &mut App) {
             let scheme_name = format!("{:?}", scheme);
             let style = if *scheme == app.options.selected_color_scheme {
                 Style::default()
-                    .fg(app.file_exp_pg_selected_col())
+                    .fg(app.text_highlight_color())
                     .add_modifier(Modifier::BOLD)
             } else {
-                Style::default().fg(app.general_text_color())
+                Style::default().fg(app.text_color())
             };
             ListItem::new(scheme_name).style(style)
         })
@@ -340,7 +346,7 @@ fn render_options_screen(frame: &mut Frame, app: &mut App) {
                 .borders(Borders::ALL)
                 .title("Color Schemes"),
         )
-        .highlight_style(Style::default().bg(app.general_page_bg_color()));
+        .highlight_style(Style::default().bg(app.background_highlight_color()));
 
     frame.render_widget(color_scheme_list, horizontal_chunks[0]);
 
@@ -357,12 +363,14 @@ fn render_options_screen(frame: &mut Frame, app: &mut App) {
             app.options.selected_option,
             SelectedOption::TableMetainfoToggle
         ),
+        general_page_style,
+        selected_style,
     );
     let table_metainfo_toggle_area = Rect {
         x: vertical_chunks[0].x + 1,
-        y: vertical_chunks[0].y + 10,
+        y: vertical_chunks[0].y + 1,
         width: 50,
-        height: 3,
+        height: 1,
     };
     let insert_metainfo_toggle_button = SelectableLine::default(
         "Display column metadata in insert view: ",
@@ -371,12 +379,14 @@ fn render_options_screen(frame: &mut Frame, app: &mut App) {
             app.options.selected_option,
             SelectedOption::InsertMetainfoToggle
         ),
+        general_page_style,
+        selected_style,
     );
     let insert_metainfo_toggle_area = Rect {
         x: vertical_chunks[0].x + 1,
-        y: vertical_chunks[0].y + 12,
+        y: vertical_chunks[0].y + 2,
         width: 50,
-        height: 3,
+        height: 1,
     };
 
     frame.render_widget(table_metainfo_toggle_button, table_metainfo_toggle_area);
@@ -397,8 +407,8 @@ fn render_options_screen(frame: &mut Frame, app: &mut App) {
 fn render_quit_popup(frame: &mut Frame, app: &App) {
     let area = centered_rect(55, 30, frame.area());
     let quit_popup_style = Style::default()
-        .bg(app.quit_popup_bg_col())
-        .fg(app.general_text_color());
+        .bg(app.warning_color())
+        .fg(app.text_color());
     let info_bits = vec![
         "",
         "y",
@@ -419,8 +429,8 @@ fn render_quit_popup(frame: &mut Frame, app: &App) {
 fn render_no_db_loaded_popup(frame: &mut Frame, app: &mut App) {
     let area = centered_rect(55, 30, frame.area());
     let popup_style = Style::default()
-        .bg(app.quit_popup_bg_col())
-        .fg(app.general_text_color());
+        .bg(app.background_alt_color())
+        .fg(app.text_color());
     let info_bits = vec![
         "",
         "CTRL + f",
@@ -442,17 +452,17 @@ fn render_insert_row_popup(frame: &mut Frame, app: &mut App) {
     let area = centered_rect(55, 55, frame.area());
     let chunks = get_chunks_from_percentages(area, Direction::Vertical, vec![70, 30]);
     let insert_row_popup_style = Style::default()
-        .bg(app.quit_popup_bg_col())
-        .fg(app.general_text_color());
+        .bg(app.background_alt_color())
+        .fg(app.text_color());
     let metadata_style = Style::default()
-        .fg(app.alt_text_color_2())
+        .fg(app.text_alt_color())
         .add_modifier(Modifier::ITALIC);
     let insert_text_area_on_style = Style::default()
-        .bg(app.text_entry_box_bg_col())
-        .fg(app.general_text_color());
+        .bg(app.background_highlight_color())
+        .fg(app.text_highlight_color());
     let insert_text_area_off_style = Style::default()
-        .bg(app.text_entry_box_bg_col())
-        .fg(app.file_exp_pg_selected_col());
+        .bg(app.background_alt_color())
+        .fg(app.text_color());
 
     if let Some(form) = &mut app.table_insert_form {
         form.set_styles(
@@ -504,7 +514,7 @@ fn render_insert_row_popup(frame: &mut Frame, app: &mut App) {
 
             if field.selected {
                 if let Some(cursor_pos) = field.cursor_position(Rect {
-                    x: x + label_width + 1,
+                    x: x + label_width,
                     y,
                     width: text_area.width,
                     height: 1,
@@ -530,14 +540,14 @@ fn render_insert_table_popup(frame: &mut Frame, app: &mut App) {
     let area = centered_rect(55, 40, frame.area());
     let chunks = get_chunks_from_percentages(area, Direction::Vertical, vec![70, 30]);
     let insert_table_popup_style = Style::default()
-        .bg(app.quit_popup_bg_col())
-        .fg(app.general_text_color());
+        .bg(app.background_alt_color())
+        .fg(app.text_color());
     let insert_text_area_on_style = Style::default()
-        .bg(app.text_entry_box_bg_col())
-        .fg(app.general_text_color());
+        .bg(app.background_highlight_color())
+        .fg(app.text_highlight_color());
     let insert_text_area_off_style = Style::default()
-        .bg(app.text_entry_box_bg_col())
-        .fg(app.file_exp_pg_selected_col());
+        .bg(app.text_color())
+        .fg(app.background_alt_color());
 
     if let Some(form) = &mut app.create_table_form {
         form.set_styles(
@@ -565,11 +575,11 @@ fn render_drop_table_popup(frame: &mut Frame, app: &mut App) {
     let area = centered_rect(55, 30, frame.area());
     let chunks = get_chunks_from_percentages(area, Direction::Vertical, vec![40, 60]);
     let drop_table_popup_style = Style::default()
-        .bg(app.quit_popup_bg_col())
-        .fg(app.general_text_color());
+        .bg(app.background_alt_color())
+        .fg(app.text_color());
     let text_area_style = Style::default()
-        .bg(app.text_entry_box_bg_col())
-        .fg(app.general_text_color());
+        .bg(app.background_highlight_color())
+        .fg(app.text_highlight_color());
 
     if let Some(form) = &mut app.drop_table_form {
         form.set_styles(text_area_style, Style::default(), drop_table_popup_style);
@@ -595,14 +605,14 @@ fn render_delete_row_popup(frame: &mut Frame, app: &mut App) {
     let chunks = get_chunks_from_percentages(area, Direction::Vertical, vec![70, 30]);
 
     let delete_row_popup_style = Style::default()
-        .bg(app.quit_popup_bg_col())
-        .fg(app.general_text_color());
+        .bg(app.background_alt_color())
+        .fg(app.text_color());
     let delete_text_area_on_style = Style::default()
-        .bg(app.text_entry_box_bg_col())
-        .fg(app.general_text_color());
+        .bg(app.background_highlight_color())
+        .fg(app.text_color());
     let delete_text_area_off_style = Style::default()
-        .bg(app.text_entry_box_bg_col())
-        .fg(app.file_exp_pg_selected_col());
+        .bg(app.background_alt_color())
+        .fg(app.text_color());
     if let Some(form) = &mut app.table_delete_form {
         form.set_styles(
             delete_text_area_on_style,
@@ -627,15 +637,12 @@ fn render_delete_row_popup(frame: &mut Frame, app: &mut App) {
 
 fn render_error_popup(frame: &mut Frame, app: &mut App, msg: &str) {
     let area = centered_rect(40, 30, frame.area());
+    let style = Style::default().bg(app.error_color()).fg(app.text_color());
     let error_block = Block::default()
         .borders(Borders::ALL)
         .title("Error")
         .border_style(Style::default().fg(Color::Red))
-        .style(
-            Style::default()
-                .bg(app.quit_popup_bg_col())
-                .fg(Color::White),
-        );
+        .style(style);
     let mut error_text = Text::default();
     error_text.push_line(Span::raw(msg));
     error_text.push_line(Span::raw("Press ESC to close this popup"));
@@ -649,9 +656,10 @@ fn render_error_popup(frame: &mut Frame, app: &mut App, msg: &str) {
 
 fn render_table_list(frame: &mut Frame, app: &mut App, area: Rect) {
     if app.table_list_view.is_some() {
+        let scrollbar_style = Style::default().fg(app.border_color());
         let row_style = Style::default()
-            .bg(app.general_page_bg_color())
-            .fg(app.general_text_color());
+            .bg(app.background_color())
+            .fg(app.text_color());
         let header = Row::new(vec![
             Cell::new("Name"),
             Cell::new("Rows"),
@@ -679,7 +687,7 @@ fn render_table_list(frame: &mut Frame, app: &mut App, area: Rect) {
             Constraint::Min(7),    // row count
             Constraint::Length(7), // type (table, view)
         ];
-        let highlight_color = app.file_exp_pg_selected_col();
+        let highlight_color = app.background_highlight_color();
         let unwrapped_table_list = app.table_list_view.as_mut().unwrap();
 
         render_table(
@@ -694,11 +702,17 @@ fn render_table_list(frame: &mut Frame, app: &mut App, area: Rect) {
             Some("Tables".to_string()),
         );
 
-        render_vertical_scrollbar(frame, area, None, &mut unwrapped_table_list.scroll_state);
+        render_vertical_scrollbar(
+            frame,
+            scrollbar_style,
+            area,
+            None,
+            &mut unwrapped_table_list.scroll_state
+        );
     } else {
         let style = Style::default()
-            .bg(app.general_page_bg_color())
-            .fg(app.general_text_color());
+            .bg(app.background_color())
+            .fg(app.text_color());
         let empty_block = Block::default().title("Tables").borders(Borders::ALL);
         let paragraph = Paragraph::new("Empty Schema")
             .block(empty_block)
@@ -711,11 +725,13 @@ fn render_table_list(frame: &mut Frame, app: &mut App, area: Rect) {
 
 fn render_column_list(frame: &mut Frame, app: &mut App, area: Rect) {
     if app.column_list_view.is_some() {
+        let scrollbar_style = Style::default().fg(app.border_color());
+
         let header = ["Name", "Type", "Constraints"]
             .into_iter()
             .map(Cell::from)
             .collect::<Row>()
-            .style(Style::default().fg(app.general_text_color()));
+            .style(Style::default().fg(app.text_color()));
 
         let rows: Vec<Row> = app
             .column_list_view
@@ -752,7 +768,7 @@ fn render_column_list(frame: &mut Frame, app: &mut App, area: Rect) {
             Constraint::Length(8),
             Constraint::Min(10),
         ];
-        let highlight_color = app.file_exp_pg_selected_col();
+        let highlight_color = app.background_highlight_color();
         let unwrapped_column_list = app.column_list_view.as_mut().unwrap();
 
         render_table(
@@ -767,11 +783,17 @@ fn render_column_list(frame: &mut Frame, app: &mut App, area: Rect) {
             Some("Columns".to_string()),
         );
 
-        render_vertical_scrollbar(frame, area, None, &mut unwrapped_column_list.scroll_state);
+        render_vertical_scrollbar(
+            frame,
+            scrollbar_style,
+            area,
+            None,
+            &mut unwrapped_column_list.scroll_state
+        );
     } else {
         let style = Style::default()
-            .bg(app.general_page_bg_color())
-            .fg(app.general_text_color());
+            .bg(app.background_color())
+            .fg(app.text_color());
         let empty_block = Block::default().title("Columns").borders(Borders::ALL);
         let paragraph = Paragraph::new("No columns").block(empty_block).style(style);
 
@@ -783,15 +805,16 @@ fn render_column_list(frame: &mut Frame, app: &mut App, area: Rect) {
 fn render_color_scheme_preview(frame: &mut Frame, area: Rect, color_scheme: &ColorScheme) {
     let colors = color_scheme.colors();
     let color_vec = [
-        colors.general_text_color,
-        colors.alt_text_color_1,
-        colors.alt_text_color_2,
-        colors.quit_popup_bg_col,
-        colors.general_page_bg_color,
-        colors.file_exp_pg_selected_col,
-        colors.table_row_normal_col,
-        colors.table_row_alt_color,
-        colors.info_block_bg_col,
+        colors.text,
+        colors.text_alt,
+        colors.text_highlight,
+        colors.background,
+        colors.background_alt,
+        colors.background_highlight,
+        colors.warning,
+        colors.error,
+        colors.border,
+        colors.accent
     ];
     let block_width = area.width / color_vec.len() as u16;
     for (i, color) in color_vec.iter().enumerate() {
@@ -810,6 +833,7 @@ fn render_color_scheme_preview(frame: &mut Frame, area: Rect, color_scheme: &Col
 
 fn render_vertical_scrollbar(
     frame: &mut Frame,
+    style: Style,
     area: Rect,
     endpoints: Option<&str>,
     scroll_bar_state: &mut ScrollbarState,
@@ -819,7 +843,7 @@ fn render_vertical_scrollbar(
             .orientation(ScrollbarOrientation::VerticalRight)
             .begin_symbol(endpoints)
             .end_symbol(endpoints)
-            .style(Style::default()),
+            .style(style),
         area.inner(Margin {
             vertical: 1,
             horizontal: 1,
@@ -881,8 +905,8 @@ fn get_chunks_from_percentages(
 }
 
 fn format_info_text<'a>(text_bits: &'a [&str], app: &App) -> Text<'a> {
-    let general_text_style = Style::default().fg(app.general_text_color());
-    let alt_text_style_1 = Style::default().fg(app.alt_text_color_1());
+    let general_text_style = Style::default().fg(app.text_color());
+    let alt_text_style_1 = Style::default().fg(app.text_alt_color());
 
     let mut info_text = Text::default();
 
@@ -944,7 +968,7 @@ fn render_titled_paragraph(
 }
 
 fn render_info_paragraph(info_bits: &[&str], frame: &mut Frame, app: &App, area: Rect) {
-    let info_style = Style::default().bg(app.info_block_bg_col());
+    let info_style = Style::default().bg(app.background_alt_color());
 
     render_titled_paragraph(frame, app, info_bits, "Info", info_style, area);
 }
