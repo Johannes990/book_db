@@ -2,7 +2,7 @@ use ratatui::style::Color;
 use serde::{Deserialize, Serialize};
 use strum_macros::EnumIter;
 
-use crate::ui::colors::colors::{Colors, ColorScheme};
+use crate::ui::colors::colors::{ColorScheme, Colors};
 
 #[derive(Clone, Copy, EnumIter, Debug, PartialEq, Serialize, Deserialize)]
 pub enum StaticColors {
@@ -74,8 +74,8 @@ impl ColorScheme for StaticColors {
                 warning: Color::Rgb(255, 0, 0),
                 error: Color::Rgb(255, 0, 0),
                 border: Color::Rgb(255, 0, 0),
-                accent: Color::Rgb(0, 0, 0)
-            }
+                accent: Color::Rgb(0, 0, 0),
+            },
         }
     }
 }

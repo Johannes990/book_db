@@ -3,7 +3,10 @@ use serde::{Deserialize, Serialize};
 use std::{fs, io};
 use strum::{EnumIter, IntoEnumIterator};
 
-use crate::ui::colors::{colors::{ColorScheme, Colors}, static_colors::StaticColors};
+use crate::ui::colors::{
+    colors::{ColorScheme, Colors},
+    static_colors::StaticColors,
+};
 
 #[derive(EnumIter, Clone, Copy, PartialEq, Serialize, Deserialize)]
 pub enum SelectedOption {
@@ -38,8 +41,7 @@ pub struct Options {
 impl Options {
     pub fn new(default_color_scheme: StaticColors) -> Self {
         let available_color_schemes = StaticColors::iter()
-            .map(SelectedScheme::Static)
-            .collect();
+            .map(SelectedScheme::Static).collect();
         let available_options = SelectedOption::iter().collect();
         Self {
             available_color_schemes,
@@ -68,8 +70,7 @@ impl Options {
                 .map_err(|err| io::Error::new(io::ErrorKind::InvalidData, err))?;
 
             options.available_color_schemes = StaticColors::iter()
-                .map(SelectedScheme::Static)
-                .collect();
+                .map(SelectedScheme::Static).collect();
 
             if !options
                 .available_color_schemes

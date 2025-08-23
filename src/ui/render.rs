@@ -802,7 +802,12 @@ fn render_column_list(frame: &mut Frame, app: &mut App, area: Rect) {
     }
 }
 
-fn render_color_scheme_preview(frame: &mut Frame, area: Rect, color_scheme: &SelectedScheme, border_style: Style) {
+fn render_color_scheme_preview(
+    frame: &mut Frame,
+    area: Rect,
+    color_scheme: &SelectedScheme,
+    border_style: Style,
+) {
     let border_block = Block::default()
         .style(border_style)
         .borders(Borders::ALL);
@@ -825,14 +830,14 @@ fn render_color_scheme_preview(frame: &mut Frame, area: Rect, color_scheme: &Sel
     let inner_area = border_block.inner(area);
     let chunks = Layout::default()
         .direction(Direction::Horizontal)
-        .constraints(vec![Constraint::Ratio(1, color_vec.len() as u32); color_vec.len()])
+        .constraints(vec![
+            Constraint::Ratio(1, color_vec.len() as u32);
+            color_vec.len()
+        ])
         .split(inner_area);
 
     for (_, (color, chunk)) in color_vec.iter().zip(chunks.iter()).enumerate() {
-        frame.render_widget(
-            Block::default().style(Style::default().bg(*color)),
-            *chunk,
-        );
+        frame.render_widget(Block::default().style(Style::default().bg(*color)),*chunk);
     }
 }
 
