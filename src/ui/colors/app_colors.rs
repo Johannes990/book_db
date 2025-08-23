@@ -1,6 +1,6 @@
 use ratatui::style::Color;
 
-pub struct Colors {
+pub struct AppColors {
     pub text: Color,
     pub text_alt: Color,
     pub text_highlight: Color,
@@ -14,5 +14,5 @@ pub struct Colors {
 }
 
 pub trait ColorScheme {
-    fn colors(&self) -> Colors;
+    fn colors(&self) -> AppColors;
 }

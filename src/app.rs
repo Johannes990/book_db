@@ -7,7 +7,7 @@ use crate::{
     row::row_list::RowListView,
     table::{table_info::TableInfo, table_list::TableListView},
     ui::{
-        colors::{colors::ColorScheme, static_colors::StaticColors},
+        colors::{app_colors::ColorScheme, static_colors::StaticColors},
         render,
     },
     widgets::text_form::TextForm,

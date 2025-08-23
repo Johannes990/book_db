@@ -4,7 +4,7 @@ use std::{fs, io};
 use strum::{EnumIter, IntoEnumIterator};
 
 use crate::ui::colors::{
-    colors::{ColorScheme, Colors},
+    app_colors::{ColorScheme, AppColors},
     static_colors::StaticColors,
 };
 
@@ -21,7 +21,7 @@ pub enum SelectedScheme {
 }
 
 impl ColorScheme for SelectedScheme {
-    fn colors(&self) -> Colors {
+    fn colors(&self) -> AppColors {
         match self {
             SelectedScheme::Static(s) => s.colors(),
         }

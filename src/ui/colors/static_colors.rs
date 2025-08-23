@@ -2,7 +2,7 @@ use ratatui::style::Color;
 use serde::{Deserialize, Serialize};
 use strum_macros::EnumIter;
 
-use crate::ui::colors::colors::{ColorScheme, Colors};
+use crate::ui::colors::app_colors::{ColorScheme, AppColors};
 
 #[derive(Clone, Copy, EnumIter, Debug, PartialEq, Serialize, Deserialize)]
 pub enum StaticColors {
@@ -14,9 +14,9 @@ pub enum StaticColors {
 }
 
 impl ColorScheme for StaticColors {
-    fn colors(&self) -> Colors {
+    fn colors(&self) -> AppColors {
         match self {
-            StaticColors::Autumn => Colors {
+            StaticColors::Autumn => AppColors {
                 text: Color::Rgb(64, 35, 33),
                 text_alt: Color::Rgb(189, 62, 34),
                 text_highlight: Color::Rgb(64, 35, 33),
@@ -28,7 +28,7 @@ impl ColorScheme for StaticColors {
                 border: Color::Rgb(64, 35, 33),
                 accent: Color::Rgb(150, 167, 35),
             },
-            StaticColors::CoolLilac => Colors {
+            StaticColors::CoolLilac => AppColors {
                 text: Color::Rgb(11, 57, 97),
                 text_alt: Color::Rgb(87, 54, 145),
                 text_highlight: Color::Rgb(8, 18, 105),
@@ -40,7 +40,7 @@ impl ColorScheme for StaticColors {
                 border: Color::Rgb(53, 6, 62),
                 accent: Color::Rgb(0, 0, 0),
             },
-            StaticColors::CoolBlue => Colors {
+            StaticColors::CoolBlue => AppColors {
                 text: Color::Rgb(28, 47, 87),
                 text_alt: Color::Rgb(26, 48, 145),
                 text_highlight: Color::Rgb(4, 13, 51),
@@ -52,7 +52,7 @@ impl ColorScheme for StaticColors {
                 border: Color::Rgb(28, 47, 87),
                 accent: Color::Rgb(0, 190, 230),
             },
-            StaticColors::SeaFoam => Colors {
+            StaticColors::SeaFoam => AppColors {
                 text: Color::Rgb(15, 30, 60),
                 text_alt: Color::Rgb(30, 70, 100),
                 text_highlight: Color::Rgb(0, 90, 140),
@@ -64,7 +64,7 @@ impl ColorScheme for StaticColors {
                 border: Color::Rgb(40, 80, 120),
                 accent: Color::Rgb(0, 170, 200),
             },
-            StaticColors::Test => Colors {
+            StaticColors::Test => AppColors {
                 text: Color::Rgb(0, 0, 0),
                 text_alt: Color::Rgb(255, 0, 0),
                 text_highlight: Color::Rgb(255, 0, 0),
