@@ -3,7 +3,7 @@ use crate::{
     column::column_info::ColumnInfo,
     options::{SelectedOption, SelectedScheme},
     row::row_info::RowInfo,
-    ui::colors::colors::ColorScheme,
+    ui::colors::app_colors::ColorScheme,
     widgets::selectable_line::SelectableLine,
 };
 use ratatui::{
@@ -836,7 +836,7 @@ fn render_color_scheme_preview(
         ])
         .split(inner_area);
 
-    for (_, (color, chunk)) in color_vec.iter().zip(chunks.iter()).enumerate() {
+    for (color, chunk) in color_vec.iter().zip(chunks.iter()) {
         frame.render_widget(Block::default().style(Style::default().bg(*color)),*chunk);
     }
 }
