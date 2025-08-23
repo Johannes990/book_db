@@ -1,8 +1,9 @@
 use crate::{
     app::{App, PopUp, Screen},
     column::column_info::ColumnInfo,
-    options::SelectedOption,
+    options::{SelectedOption, SelectedScheme},
     row::row_info::RowInfo,
+    ui::colors::colors::ColorScheme,
     widgets::selectable_line::SelectableLine,
 };
 use ratatui::{
@@ -17,8 +18,6 @@ use ratatui::{
     Frame, Terminal,
 };
 use std::{io, rc::Rc, vec};
-
-use super::colorscheme::ColorScheme;
 
 pub fn render<B>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<()>
 where
@@ -324,7 +323,7 @@ fn render_options_screen(frame: &mut Frame, app: &mut App) {
     let horizontal_chunks =
         get_chunks_from_percentages(vertical_chunks[1], Direction::Horizontal, vec![50, 50]);
 
-    let color_schemes: &Vec<ColorScheme> = app.list_available_color_schemes();
+    let color_schemes: &Vec<SelectedScheme> = app.list_available_color_schemes();
     let color_scheme_items: Vec<ListItem> = color_schemes
         .iter()
         .map(|scheme| {
@@ -801,7 +800,7 @@ fn render_column_list(frame: &mut Frame, app: &mut App, area: Rect) {
     }
 }
 
-fn render_color_scheme_preview(frame: &mut Frame, area: Rect, color_scheme: &ColorScheme) {
+fn render_color_scheme_preview(frame: &mut Frame, area: Rect, color_scheme: &SelectedScheme) {
     let colors = color_scheme.colors();
     let color_vec = [
         colors.text,

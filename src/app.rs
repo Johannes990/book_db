@@ -3,10 +3,10 @@ use crate::{
     db::{DBError, DB},
     file_explorer::file_explorer_table::FileExplorerTable,
     handle_key_events,
-    options::Options,
+    options::{Options, SelectedScheme},
     row::row_list::RowListView,
     table::{table_info::TableInfo, table_list::TableListView},
-    ui::{colorscheme::ColorScheme, render},
+    ui::{colors::{colors::ColorScheme, static_colors::StaticColors}, render},
     widgets::text_form::TextForm,
 };
 use ratatui::{style::Color, Terminal};
@@ -59,7 +59,7 @@ impl App {
         qualifier: String,
         organization: String,
         application: String,
-        default_color_scheme: ColorScheme,
+        default_color_scheme: StaticColors,
     ) -> io::Result<Self> {
         let options = Options::load_or_default(
             &qualifier,
@@ -302,7 +302,7 @@ impl App {
         self.current_popup = popup;
     }
 
-    pub fn list_available_color_schemes(&self) -> &Vec<ColorScheme> {
+    pub fn list_available_color_schemes(&self) -> &Vec<SelectedScheme> {
         self.options.list_color_schemes()
     }
 

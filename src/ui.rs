@@ -1,3 +1,4 @@
-pub mod colorscheme;
+pub mod colors;
 pub mod events;
 pub mod render;
+
