@@ -10,6 +10,7 @@ pub enum StaticColors {
     CoolLilac,
     CoolBlue,
     SeaFoam,
+    Test,
 }
 
 impl ColorScheme for StaticColors {
@@ -63,6 +64,18 @@ impl ColorScheme for StaticColors {
                 border: Color::Rgb(40, 80, 120),
                 accent: Color::Rgb(0, 170, 200),
             },
+            StaticColors::Test => Colors {
+                text: Color::Rgb(0, 0, 0),
+                text_alt: Color::Rgb(255, 0, 0),
+                text_highlight: Color::Rgb(255, 0, 0),
+                background: Color::Rgb(255, 0, 0),
+                background_alt: Color::Rgb(255, 0, 0),
+                background_highlight: Color::Rgb(255, 0, 0),
+                warning: Color::Rgb(255, 0, 0),
+                error: Color::Rgb(255, 0, 0),
+                border: Color::Rgb(255, 0, 0),
+                accent: Color::Rgb(0, 0, 0)
+            }
         }
     }
 }

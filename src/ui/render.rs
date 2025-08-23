@@ -323,6 +323,7 @@ fn render_options_screen(frame: &mut Frame, app: &mut App) {
     let horizontal_chunks =
         get_chunks_from_percentages(vertical_chunks[1], Direction::Horizontal, vec![50, 50]);
 
+    let preview_border_style = Style::default().fg(app.border_color());
     let color_schemes: &Vec<SelectedScheme> = app.list_available_color_schemes();
     let color_scheme_items: Vec<ListItem> = color_schemes
         .iter()
@@ -352,6 +353,7 @@ fn render_options_screen(frame: &mut Frame, app: &mut App) {
         frame,
         horizontal_chunks[1],
         &app.options.selected_color_scheme,
+        preview_border_style,
     );
 
     let table_metainfo_toggle_button = SelectableLine::default(
@@ -800,7 +802,10 @@ fn render_column_list(frame: &mut Frame, app: &mut App, area: Rect) {
     }
 }
 
-fn render_color_scheme_preview(frame: &mut Frame, area: Rect, color_scheme: &SelectedScheme) {
+fn render_color_scheme_preview(frame: &mut Frame, area: Rect, color_scheme: &SelectedScheme, border_style: Style) {
+    let border_block = Block::default()
+        .style(border_style)
+        .borders(Borders::ALL);
     let colors = color_scheme.colors();
     let color_vec = [
         colors.text,
@@ -814,17 +819,19 @@ fn render_color_scheme_preview(frame: &mut Frame, area: Rect, color_scheme: &Sel
         colors.border,
         colors.accent,
     ];
-    let block_width = area.width / color_vec.len() as u16;
-    for (i, color) in color_vec.iter().enumerate() {
-        let color_area = Rect::new(
-            area.width + (i as u16) * block_width,
-            area.y,
-            block_width,
-            block_width / 2,
-        );
+
+    frame.render_widget(border_block.clone(), area);
+
+    let inner_area = border_block.inner(area);
+    let chunks = Layout::default()
+        .direction(Direction::Horizontal)
+        .constraints(vec![Constraint::Ratio(1, color_vec.len() as u32); color_vec.len()])
+        .split(inner_area);
+
+    for (_, (color, chunk)) in color_vec.iter().zip(chunks.iter()).enumerate() {
         frame.render_widget(
             Block::default().style(Style::default().bg(*color)),
-            color_area,
+            *chunk,
         );
     }
 }
