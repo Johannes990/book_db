@@ -47,8 +47,15 @@ impl Options {
 
         if config_dir_path.exists() {
             let data = fs::read_to_string(&config_dir_path)?;
-            let options: Self = toml::from_str(&data)
+            let mut options: Self = toml::from_str(&data)
                 .map_err(|err| io::Error::new(io::ErrorKind::InvalidData, err))?;
+
+            options.available_color_schemes = ColorScheme::iter().collect();
+
+            if !options.available_color_schemes.contains(&options.selected_color_scheme) {
+                options.selected_color_scheme = default_color_scheme;
+            }
+
             Ok(options)
         } else {
             Ok(Self::new(default_color_scheme))

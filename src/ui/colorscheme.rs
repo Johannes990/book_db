@@ -5,7 +5,9 @@ use strum_macros::EnumIter;
 #[derive(Clone, Copy, EnumIter, Debug, PartialEq, Serialize, Deserialize)]
 pub enum ColorScheme {
     Autumn,
+    CoolLilac,
     CoolBlue,
+    SeaFoam,
 }
 
 pub struct Colors {
@@ -36,17 +38,41 @@ impl ColorScheme {
                 border: Color::Rgb(64, 35, 33),
                 accent: Color::Rgb(150, 167, 35),
             },
-            ColorScheme::CoolBlue => Colors {
-                text: Color::Rgb(255, 255, 255),
-                text_alt: Color::Rgb(255, 255, 0),
-                text_highlight: Color::Rgb(255, 0, 0),
-                background: Color::Rgb(60, 25, 220),
-                background_alt: Color::Rgb(0, 0, 0),
-                background_highlight: Color::Rgb(0, 0, 0),
-                warning: Color::Rgb(255, 255, 0),
+            ColorScheme::CoolLilac => Colors {
+                text: Color::Rgb(11, 57, 97),
+                text_alt: Color::Rgb(87, 54, 145),
+                text_highlight: Color::Rgb(8, 18, 105),
+                background: Color::Rgb(181, 197, 255),
+                background_alt: Color::Rgb(114, 135, 212),
+                background_highlight: Color::Rgb(174, 99, 255),
+                warning: Color::Rgb(168, 109, 155),
                 error: Color::Rgb(255, 0, 0),
-                border: Color::Rgb(0, 0, 0),
+                border: Color::Rgb(53, 6, 62),
                 accent: Color::Rgb(0, 0, 0),
+            },
+            ColorScheme::CoolBlue => Colors {
+                text: Color::Rgb(28, 47, 87),
+                text_alt: Color::Rgb(26, 48, 145),
+                text_highlight: Color::Rgb(4, 13, 51),
+                background: Color::Rgb(242, 247, 255),
+                background_alt: Color::Rgb(227, 237, 255),
+                background_highlight: Color::Rgb(140, 207, 255),
+                warning: Color::Rgb(150, 188, 255),
+                error: Color::Rgb(220, 60, 80),
+                border: Color::Rgb(28, 47, 87),
+                accent: Color::Rgb(0, 190, 230),
+            },
+            ColorScheme::SeaFoam => Colors {
+                text: Color::Rgb(15, 30, 60),
+                text_alt: Color::Rgb(30, 70, 100),
+                text_highlight: Color::Rgb(0, 90, 140),
+                background: Color::Rgb(225, 245, 255),
+                background_alt: Color::Rgb(200, 230, 245),
+                background_highlight: Color::Rgb(180, 220, 240),
+                warning: Color::Rgb(255, 200, 120),
+                error: Color::Rgb(220, 60, 80),
+                border: Color::Rgb(40, 80, 120),
+                accent: Color::Rgb(0, 170, 200),
             },
         }
     }
