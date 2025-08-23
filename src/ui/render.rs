@@ -305,7 +305,15 @@ fn render_database_table_screen(frame: &mut Frame, app: &mut App) {
 }
 
 fn render_options_screen(frame: &mut Frame, app: &mut App) {
-    let general_text_style = Style::default().fg(app.general_text_color());
+    let general_page_style = Style::default()
+        .fg(app.general_text_color())
+        .bg(app.general_page_bg_color());
+    let options_block = Block::default()
+        .title("Options View")
+        .style(general_page_style);
+
+    frame.render_widget(options_block, frame.area());
+    
     let vertical_chunks =
         get_chunks_from_percentages(frame.area(), Direction::Vertical, vec![50, 25, 25]);
     let horizontal_chunks =
@@ -321,7 +329,7 @@ fn render_options_screen(frame: &mut Frame, app: &mut App) {
                     .fg(app.file_exp_pg_selected_col())
                     .add_modifier(Modifier::BOLD)
             } else {
-                general_text_style
+                Style::default().fg(app.general_text_color())
             };
             ListItem::new(scheme_name).style(style)
         })
