@@ -15,14 +15,12 @@ pub enum KeyCodeSerializable {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
-#[repr(u8)]
 pub enum KeyModifierSerializable {
-    NONE = 0,
-    CONTROL = 1,
-    ALT = 2,
-    SHIFT = 4,
+    NONE,
+    CONTROL,
+    ALT,
+    SHIFT,
 }
-
 
 impl From<KeyCode> for KeyCodeSerializable {
     fn from(code: KeyCode) -> Self {
