@@ -2,6 +2,8 @@ use crate::{
     app::{App, PopUp, Screen},
     db::{DBError, DB},
     options::SelectedOption,
+    ui::input::key_bindings::AppInputEvent,
+    log::log,
 };
 use crossterm::event::{KeyEvent, KeyModifiers};
 use ratatui::crossterm::event::{self, Event, KeyCode, KeyEventKind};
@@ -18,6 +20,14 @@ pub fn handle_key_events(app: &mut App) -> io::Result<bool> {
             Screen::Options => options_screen_handler(app, key_event)?,
             Screen::CreateNewFile => create_new_file_screen_handler(app, key_event),
         }
+    }
+
+    if app.should_quit {
+        let _ = app.key_bindings.save(
+            &app.qualifier,
+            &app.organization,
+            &app.application
+        );
     }
 
     Ok(app.should_quit)
@@ -461,45 +471,68 @@ fn database_table_screen_handler(app: &mut App, key_event: KeyEvent) {
 
 fn options_screen_handler(app: &mut App, key_event: KeyEvent) -> io::Result<()> {
     let mut changed: bool = false;
+    log("options screen");
 
-    if key_event.kind == KeyEventKind::Press {
-        match (key_event.code, key_event.modifiers) {
-            (KeyCode::Char('q'), KeyModifiers::NONE) | (KeyCode::Esc, KeyModifiers::NONE) => {
-                app.switch_to_screen(Screen::Splash)
-            }
-            (KeyCode::Up, KeyModifiers::NONE) => {
-                app.options.previous_option();
-                changed = true;
-            }
-            (KeyCode::Down, KeyModifiers::NONE) => {
-                app.options.next_option();
-                changed = true;
-            }
-            (KeyCode::Left, KeyModifiers::NONE) => {
-                app.options.previous_color_scheme();
-                changed = true;
-            }
-            (KeyCode::Right, KeyModifiers::NONE) => {
-                app.options.next_color_scheme();
-                changed = true;
-            }
-            (KeyCode::Enter, KeyModifiers::NONE) => match app.options.selected_option {
-                SelectedOption::InsertMetainfoToggle => {
-                    app.options.set_display_col_metainfo_in_insert_view(
-                        !app.options.display_col_metainfo_in_insert_view,
-                    );
-                    changed = true;
+    match app.current_popup {
+        PopUp::None => {
+            log("popup None");
+            if key_event.kind == KeyEventKind::Press {
+                if let Some(event) = app.key_bindings.resolve_event(key_event) {
+                    match event {
+                        AppInputEvent::MoveUpPrimary => {
+                            app.options.previous_option();
+                            changed = true;
+                        }
+                        AppInputEvent::MoveDownPrimary => {
+                            app.options.next_option();
+                            changed = true;
+                        }
+                        AppInputEvent::MoveUpSecondary => {
+                            app.options.previous_color_scheme();
+                            changed = true;
+                        }
+                        AppInputEvent::MoveDownSecondary => {
+                            app.options.next_color_scheme();
+                            changed = true;
+                        }
+                        AppInputEvent::ToggleOption => match app.options.selected_option {
+                            SelectedOption::InsertMetainfoToggle => {
+                                app.options.set_display_col_metainfo_in_insert_view(
+                                    !app.options.display_col_metainfo_in_insert_view
+                                );
+                                changed = true;
+                            }
+                            SelectedOption::TableMetainfoToggle => {
+                                app.options.set_display_col_metainfo_in_table_view(
+                                    !app.options.display_col_metainfo_in_table_view
+                                );
+                                changed = true;
+                            }
+                        }
+                        AppInputEvent::QuitApp => app.switch_to_popup(PopUp::Quit),
+                        AppInputEvent::OpenSplashScreen => app.switch_to_screen(Screen::Splash),
+                        _ => {}
+                    }
                 }
-                SelectedOption::TableMetainfoToggle => {
-                    app.options.set_display_col_metainfo_in_table_view(
-                        !app.options.display_col_metainfo_in_table_view,
-                    );
-                    changed = true;
-                }
-            },
-            _ => {}
+            }
         }
+        PopUp::Quit => {
+            log("popup quit");
+            if key_event.kind == KeyEventKind::Press {
+                if let Some(event) = app.key_bindings.resolve_event(key_event) {
+                    match event {
+                        AppInputEvent::QuitApp => {
+                            app.should_quit = true;
+                            log(format!("app.should_quit: {:?}", app.should_quit).as_str());
+                        }
+                        _ => {}
+                    }
+                }
+            }
+        }
+        _ => {}
     }
+    
 
     if changed {
         app.options

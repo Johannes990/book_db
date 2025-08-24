@@ -12,8 +12,6 @@ pub enum StaticColors {
     Test,
 }
 
-
-
 impl ColorScheme for StaticColors {
     fn colors(&self) -> AppColors {
         match self {

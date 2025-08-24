@@ -8,9 +8,9 @@ use crate::{
     table::{table_info::TableInfo, table_list::TableListView},
     ui::{
         colors::{app_colors::ColorScheme, static_colors::StaticColors},
-        render,
-    },
-    widgets::text_form::TextForm,
+        input::key_bindings::KeyBindings,
+        render
+    }, widgets::text_form::TextForm
 };
 use ratatui::{style::Color, Terminal};
 use std::{io, path::PathBuf};
@@ -55,6 +55,7 @@ pub struct App {
     pub create_db_form: Option<TextForm>,
     pub should_quit: bool,
     pub options: Options,
+    pub key_bindings: KeyBindings,
 }
 
 impl App {
@@ -69,6 +70,12 @@ impl App {
             &organization,
             &application,
             default_color_scheme,
+        )?;
+
+        let key_bindings = KeyBindings::load_or_default(
+            &qualifier,
+            &organization,
+            &application
         )?;
 
         Ok(Self {
@@ -91,6 +98,7 @@ impl App {
             create_db_form: None,
             should_quit: false,
             options,
+            key_bindings,
         })
     }
 

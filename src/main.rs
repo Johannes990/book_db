@@ -7,6 +7,7 @@ mod row;
 mod table;
 mod ui;
 mod widgets;
+mod log;
 
 use app::App;
 use crossterm::{
