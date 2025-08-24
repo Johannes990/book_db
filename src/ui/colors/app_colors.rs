@@ -16,3 +16,8 @@ pub struct AppColors {
 pub trait ColorScheme {
     fn colors(&self) -> AppColors;
 }
+
+// this is for YivColor, so it can recognize rgb(x, y, z) pattern
+pub fn rgb(r: u8, g: u8, b: u8) -> Color {
+    Color::Rgb(r, g, b)
+}
