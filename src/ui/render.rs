@@ -14,7 +14,7 @@ use ratatui::{
     widgets::{
         Block, Borders, Cell, Clear, HighlightSpacing, List, ListItem, Paragraph, Row, Scrollbar,
         ScrollbarOrientation, ScrollbarState, Table, TableState, Wrap,
-    }, 
+    },
     Frame, Terminal,
 };
 use std::{io, rc::Rc, vec};
@@ -798,7 +798,8 @@ fn render_column_list(frame: &mut Frame, app: &mut App, area: Rect) {
             .borders(Borders::ALL)
             .style(border_block_style)
             .title(table_title);
-        let unwrapped_column_list: &mut crate::column::column_list::ColumnListView = app.column_list_view.as_mut().unwrap();
+        let unwrapped_column_list: &mut crate::column::column_list::ColumnListView =
+            app.column_list_view.as_mut().unwrap();
 
         render_table(
             frame,
