@@ -13,12 +13,22 @@ use std::io;
 pub fn handle_key_events(app: &mut App) -> io::Result<bool> {
     if let Event::Key(key_event) = event::read()? {
         match app.current_screen {
-            Screen::Splash => splash_screen_handler(app, key_event),
+            Screen::Splash => splash_screen_handler(app, key_event)?,
             Screen::FileExplorer => file_explorer_screen_handler(app, key_event),
             Screen::DatabaseSchema => database_schema_screen_handler(app, key_event),
             Screen::DataBaseTable => database_table_screen_handler(app, key_event),
             Screen::Options => options_screen_handler(app, key_event)?,
             Screen::CreateNewFile => create_new_file_screen_handler(app, key_event),
+        }
+        match app.current_popup {
+            PopUp::None => {},
+            PopUp::Quit => quit_popup_handler(app, key_event)?,
+            PopUp::NoDBLoaded => no_db_loaded_popup_handler(app, key_event)?,
+            PopUp::InsertRow => insert_row_popup_handler(app, key_event),
+            PopUp::DeleteRow => delete_row_popup_handler(app, key_event),
+            PopUp::InsertTable => insert_table_popup_handler(app, key_event),
+            PopUp::DeleteTable => delete_table_popup_handler(app, key_event),
+            PopUp::Error(_) => error_popup_handler(app, key_event),
         }
     }
 
@@ -33,7 +43,35 @@ pub fn handle_key_events(app: &mut App) -> io::Result<bool> {
     Ok(app.should_quit)
 }
 
-fn splash_screen_handler(app: &mut App, key_event: KeyEvent) {
+fn splash_screen_handler(app: &mut App, key_event: KeyEvent) -> io::Result<()> {
+    if app.current_popup != PopUp::None {
+        return Ok(())
+    }
+
+    if key_event.kind != KeyEventKind::Press {
+        return Ok(())
+    }
+
+    if let Some(event) = app.key_bindings.resolve_event(key_event) {
+        match event {
+            AppInputEvent::OpenQuitAppPopUp => app.switch_to_popup(PopUp::Quit),
+            AppInputEvent::OpenFileExplorerScreen => app.switch_to_screen(Screen::FileExplorer),
+            AppInputEvent::OpenDBSchemaScreen => {
+                if app.selected_db.is_some() {
+                    app.switch_to_screen(Screen::DatabaseSchema);
+                } else {
+                    app.switch_to_popup(PopUp::NoDBLoaded);
+                }
+            }
+            AppInputEvent::OpenCreateNewFileScreen => {
+                app.create_new_db_form();
+                app.switch_to_screen(Screen::CreateNewFile);
+            }
+            AppInputEvent::OpenOptionsScreen => app.switch_to_screen(Screen::Options),
+            _ => {}
+        }
+    }
+    /*
     match app.current_popup {
         PopUp::None => {
             if key_event.kind == KeyEventKind::Press {
@@ -84,7 +122,9 @@ fn splash_screen_handler(app: &mut App, key_event: KeyEvent) {
             }
         }
         _ => {}
-    }
+    }*/
+
+    Ok(())
 }
 
 fn file_explorer_screen_handler(app: &mut App, key_event: KeyEvent) {
@@ -470,69 +510,53 @@ fn database_table_screen_handler(app: &mut App, key_event: KeyEvent) {
 }
 
 fn options_screen_handler(app: &mut App, key_event: KeyEvent) -> io::Result<()> {
+    if app.current_popup != PopUp::None {
+        return Ok(())
+    }
+
+    if key_event.kind != KeyEventKind::Press {
+        return Ok(())
+    }
     let mut changed: bool = false;
     log("options screen");
 
-    match app.current_popup {
-        PopUp::None => {
-            log("popup None");
-            if key_event.kind == KeyEventKind::Press {
-                if let Some(event) = app.key_bindings.resolve_event(key_event) {
-                    match event {
-                        AppInputEvent::MoveUpPrimary => {
-                            app.options.previous_option();
-                            changed = true;
-                        }
-                        AppInputEvent::MoveDownPrimary => {
-                            app.options.next_option();
-                            changed = true;
-                        }
-                        AppInputEvent::MoveUpSecondary => {
-                            app.options.previous_color_scheme();
-                            changed = true;
-                        }
-                        AppInputEvent::MoveDownSecondary => {
-                            app.options.next_color_scheme();
-                            changed = true;
-                        }
-                        AppInputEvent::ToggleOption => match app.options.selected_option {
-                            SelectedOption::InsertMetainfoToggle => {
-                                app.options.set_display_col_metainfo_in_insert_view(
-                                    !app.options.display_col_metainfo_in_insert_view
-                                );
-                                changed = true;
-                            }
-                            SelectedOption::TableMetainfoToggle => {
-                                app.options.set_display_col_metainfo_in_table_view(
-                                    !app.options.display_col_metainfo_in_table_view
-                                );
-                                changed = true;
-                            }
-                        }
-                        AppInputEvent::QuitApp => app.switch_to_popup(PopUp::Quit),
-                        AppInputEvent::OpenSplashScreen => app.switch_to_screen(Screen::Splash),
-                        _ => {}
-                    }
+    if let Some(event) = app.key_bindings.resolve_event(key_event) {
+        match event {
+            AppInputEvent::MoveUpPrimary => {
+                app.options.previous_option();
+                changed = true;
+            }
+            AppInputEvent::MoveDownPrimary => {
+                app.options.next_option();
+                changed = true;
+            }
+            AppInputEvent::MoveUpSecondary => {
+                app.options.previous_color_scheme();
+                changed = true;
+            }
+            AppInputEvent::MoveDownSecondary => {
+                app.options.next_color_scheme();
+                changed = true;
+            }
+            AppInputEvent::ToggleOption => match app.options.selected_option {
+                SelectedOption::InsertMetainfoToggle => {
+                    app.options.set_display_col_metainfo_in_insert_view(
+                        !app.options.display_col_metainfo_in_insert_view
+                    );
+                    changed = true;
+                }
+                SelectedOption::TableMetainfoToggle => {
+                    app.options.set_display_col_metainfo_in_table_view(
+                        !app.options.display_col_metainfo_in_table_view
+                    );
+                    changed = true;
                 }
             }
+            AppInputEvent::OpenQuitAppPopUp => app.switch_to_popup(PopUp::Quit),
+            AppInputEvent::OpenSplashScreen => app.switch_to_screen(Screen::Splash),
+            _ => {}
         }
-        PopUp::Quit => {
-            log("popup quit");
-            if key_event.kind == KeyEventKind::Press {
-                if let Some(event) = app.key_bindings.resolve_event(key_event) {
-                    match event {
-                        AppInputEvent::QuitApp => {
-                            app.should_quit = true;
-                            log(format!("app.should_quit: {:?}", app.should_quit).as_str());
-                        }
-                        _ => {}
-                    }
-                }
-            }
-        }
-        _ => {}
     }
-    
 
     if changed {
         app.options
@@ -582,4 +606,61 @@ fn create_new_file_screen_handler(app: &mut App, key_event: KeyEvent) {
             _ => {}
         }
     }
+}
+
+fn quit_popup_handler(app: &mut App, key_event: KeyEvent) -> io::Result<()> {
+    if key_event.kind != KeyEventKind::Press {
+        return Ok(())
+    }
+
+    log("popup quit");
+
+    if let Some(event) = app.key_bindings.resolve_event(key_event) {
+        match event {
+            AppInputEvent::QuitAppConfirm => {
+                app.should_quit = true;
+                log(format!("app.should_quit: {:?}", app.should_quit).as_str());
+            },
+            AppInputEvent::ClosePopUp => app.switch_to_popup(PopUp::None),
+            _ => {}
+        }
+    }
+
+    Ok(())
+}
+
+fn no_db_loaded_popup_handler(app: &mut App, key_event: KeyEvent) -> io::Result<()> {
+    if key_event.kind != KeyEventKind::Press {
+        return Ok(())
+    }
+    if let Some(event) = app.key_bindings.resolve_event(key_event) {
+        match event {
+            AppInputEvent::OpenQuitAppPopUp => app.switch_to_popup(PopUp::Quit),
+            AppInputEvent::ClosePopUp => app.switch_to_popup(PopUp::None),
+            AppInputEvent::OpenFileExplorerScreen => app.switch_to_screen(Screen::FileExplorer),
+            _ => {}
+        }
+    }
+
+    return Ok(())
+}
+
+fn insert_row_popup_handler(app: &mut App, key_event: KeyEvent) {
+
+}
+
+fn delete_row_popup_handler(app: &mut App, key_event: KeyEvent) {
+
+}
+
+fn insert_table_popup_handler(app: &mut App, key_event: KeyEvent) {
+
+}
+
+fn delete_table_popup_handler(app: &mut App, key_event: KeyEvent) {
+
+}
+
+fn error_popup_handler(app: &mut App, key_event: KeyEvent) {
+
 }

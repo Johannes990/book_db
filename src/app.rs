@@ -24,6 +24,7 @@ pub enum Screen {
     Options,
 }
 
+#[derive(PartialEq)]
 pub enum PopUp {
     None,
     Quit,

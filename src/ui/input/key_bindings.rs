@@ -25,7 +25,9 @@ pub enum AppInputEvent {
     OpenDeleteRowPopUp,         // open delete row popup
     OpenInsertTablePopUp,       // open insert new table popup
     OpenDeleteTablePopUp,       // open delete table popup
-    QuitApp,                    // open quit app popup
+    OpenQuitAppPopUp,           // open quit app popup
+    ClosePopUp,                 // close popup meaning switch to PopUp::None
+    QuitAppConfirm,             // confirm quit while in quit app
     MoveUpPrimary,              // go up in primary table or in options
     MoveDownPrimary,            // go down in primary table or in options
     MoveUpSecondary,            // go up in secondary table or in colorschemes
@@ -125,7 +127,9 @@ impl KeyBindings {
             (AppInputEvent::OpenDeleteRowPopUp, KeyBinding { key_code: KeyCode::Char('d').into(), key_modifier: KeyModifiers::NONE.into() }),
             (AppInputEvent::OpenInsertTablePopUp, KeyBinding { key_code: KeyCode::Char('i').into(), key_modifier: KeyModifiers::NONE.into() }),
             (AppInputEvent::OpenDeleteTablePopUp, KeyBinding { key_code: KeyCode::Char('d').into(), key_modifier: KeyModifiers::NONE.into() }),
-            (AppInputEvent::QuitApp, KeyBinding { key_code: KeyCode::Char('q').into(), key_modifier: KeyModifiers::NONE.into() }),
+            (AppInputEvent::OpenQuitAppPopUp, KeyBinding { key_code: KeyCode::Char('q').into(), key_modifier: KeyModifiers::NONE.into() }),
+            (AppInputEvent::ClosePopUp, KeyBinding { key_code: KeyCode::Esc.into(), key_modifier: KeyModifiers::NONE.into() }),
+            (AppInputEvent::QuitAppConfirm, KeyBinding { key_code: KeyCode::Char('y').into(), key_modifier: KeyModifiers::NONE.into() }),
             (AppInputEvent::MoveUpPrimary, KeyBinding { key_code: KeyCode::Up.into(), key_modifier: KeyModifiers::NONE.into() }),
             (AppInputEvent::MoveDownPrimary, KeyBinding { key_code: KeyCode::Down.into(), key_modifier: KeyModifiers::NONE.into() }),
             (AppInputEvent::MoveUpSecondary, KeyBinding { key_code: KeyCode::Left.into(), key_modifier: KeyModifiers::NONE.into() }),

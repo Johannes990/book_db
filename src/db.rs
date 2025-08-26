@@ -7,14 +7,14 @@ use std::collections::HashMap;
 use std::fmt;
 
 #[allow(dead_code)]
-#[derive(Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum DBError {
     ConnectionCreationError(String),
     TableAlreadyExists(String),
     TableDoesNotExist(String),
     ColumnDoesNotExist(String),
-    SqlError(Error),
-    ParseError(ParserError),
+    SqlError(String),
+    ParseError(String),
 }
 
 impl fmt::Display for DBError {
@@ -34,13 +34,13 @@ impl fmt::Display for DBError {
 
 impl From<Error> for DBError {
     fn from(err: Error) -> DBError {
-        DBError::SqlError(err)
+        DBError::SqlError(err.to_string())
     }
 }
 
 impl From<ParserError> for DBError {
     fn from(err: ParserError) -> DBError {
-        DBError::ParseError(err)
+        DBError::ParseError(err.to_string())
     }
 }
 
@@ -262,13 +262,8 @@ impl DB {
 
         //validate by rusqlite
         let explain_sql = format!("EXPLAIN {}", raw_sql);
-        self.db_conn
-            .prepare(&explain_sql)
-            .map_err(DBError::SqlError)?;
-
-        self.db_conn
-            .execute(&raw_sql, [])
-            .map_err(DBError::SqlError)?;
+        self.db_conn.prepare(&explain_sql)?;
+        self.db_conn.execute(&raw_sql, [])?;
 
         self.refresh_tables()?;
 
