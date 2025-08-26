@@ -1,7 +1,7 @@
 use ratatui::{
     buffer::Buffer,
     layout::Rect,
-    style::{Color, Style},
+    style::Style,
     text::Line,
     widgets::{Block, Borders, Paragraph, Widget},
 };
@@ -29,15 +29,21 @@ impl Widget for SelectableLine {
 }
 
 impl SelectableLine {
-    pub fn default(label: &str, active: bool, selected: bool) -> Self {
+    pub fn default(
+        label: &str,
+        active: bool,
+        selected: bool,
+        on_style: Style,
+        off_style: Style,
+    ) -> Self {
         let prefix = if selected { "* " } else { "  " };
         let postfix = if active { "ON" } else { "OFF" };
         let label = format!("{}{}{}", prefix, label, postfix);
         SelectableLine {
             label,
             active,
-            on_style: Style::default().fg(Color::Green),
-            off_style: Style::default().fg(Color::Red),
+            on_style,
+            off_style,
         }
     }
 }

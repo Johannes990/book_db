@@ -3,14 +3,14 @@ use crate::{
     db::{DBError, DB},
     file_explorer::file_explorer_table::FileExplorerTable,
     handle_key_events,
-    options::Options,
+    options::{Options, SelectedScheme},
     row::row_list::RowListView,
-    table::{
-        table_info::TableInfo,
-        table_list::TableListView
-    },
-    ui::{colorscheme::ColorScheme, render},
-    widgets::text_form::TextForm,
+    table::{table_info::TableInfo, table_list::TableListView},
+    ui::{
+        colors::{app_colors::ColorScheme, static_colors::StaticColors},
+        input::key_bindings::KeyBindings,
+        render
+    }, widgets::text_form::TextForm
 };
 use ratatui::{style::Color, Terminal};
 use std::{collections::HashSet, ffi::OsString, io, path::PathBuf};
@@ -55,6 +55,7 @@ pub struct App {
     pub create_db_form: Option<TextForm>,
     pub should_quit: bool,
     pub options: Options,
+    pub key_bindings: KeyBindings,
 }
 
 impl App {
@@ -62,13 +63,19 @@ impl App {
         qualifier: String,
         organization: String,
         application: String,
-        default_color_scheme: ColorScheme,
+        default_color_scheme: StaticColors,
     ) -> io::Result<Self> {
         let options = Options::load_or_default(
             &qualifier,
             &organization,
             &application,
             default_color_scheme,
+        )?;
+
+        let key_bindings = KeyBindings::load_or_default(
+            &qualifier,
+            &organization,
+            &application
         )?;
 
         Ok(Self {
@@ -91,6 +98,7 @@ impl App {
             create_db_form: None,
             should_quit: false,
             options,
+            key_bindings,
         })
     }
 
@@ -100,7 +108,7 @@ impl App {
     ) -> io::Result<()> {
         loop {
             render::render(terminal, self)?;
-    
+
             if handle_key_events(self)? {
                 break;
             }
@@ -237,7 +245,7 @@ impl App {
         );
         self.table_delete_form = Some(TextForm::new(
             vec!["Column name".to_string(), "Row value".to_string()],
-            title_text
+            title_text,
         ));
     }
 
@@ -262,71 +270,48 @@ impl App {
         self.create_db_form = Some(TextForm::new(vec!["Database name".to_string()], title_text));
     }
 
-    pub fn general_text_color(&self) -> Color {
+    pub fn text_color(&self) -> Color {
+        self.options.selected_color_scheme.colors().text
+    }
+
+    pub fn text_alt_color(&self) -> Color {
+        self.options.selected_color_scheme.colors().text_alt
+    }
+
+    pub fn text_highlight_color(&self) -> Color {
+        self.options.selected_color_scheme.colors().text_highlight
+    }
+
+    pub fn background_color(&self) -> Color {
+        self.options.selected_color_scheme.colors().background
+    }
+
+    pub fn background_alt_color(&self) -> Color {
+        self.options.selected_color_scheme.colors().background_alt
+    }
+
+    pub fn background_highlight_color(&self) -> Color {
         self.options
             .selected_color_scheme
             .colors()
-            .general_text_color
+            .background_highlight
     }
 
-    pub fn alt_text_color_1(&self) -> Color {
-        self.options
-            .selected_color_scheme
-            .colors()
-            .alt_text_color_1
+    pub fn warning_color(&self) -> Color {
+        self.options.selected_color_scheme.colors().warning
     }
 
-    pub fn alt_text_color_2(&self) -> Color {
-        self.options
-            .selected_color_scheme
-            .colors()
-            .alt_text_color_2
+    pub fn error_color(&self) -> Color {
+        self.options.selected_color_scheme.colors().error
     }
 
-    pub fn general_page_bg_color(&self) -> Color {
-        self.options
-            .selected_color_scheme
-            .colors()
-            .general_page_bg_color
+    pub fn border_color(&self) -> Color {
+        self.options.selected_color_scheme.colors().border
     }
 
-    pub fn quit_popup_bg_col(&self) -> Color {
-        self.options
-            .selected_color_scheme
-            .colors()
-            .quit_popup_bg_col
-    }
-
-    pub fn file_exp_pg_selected_col(&self) -> Color {
-        self.options
-            .selected_color_scheme
-            .colors()
-            .file_exp_pg_selected_col
-    }
-
-    pub fn table_row_normal_col(&self) -> Color {
-        self.options
-            .selected_color_scheme
-            .colors()
-            .table_row_normal_col
-    }
-
-    pub fn table_row_alt_color(&self) -> Color {
-        self.options
-            .selected_color_scheme
-            .colors()
-            .table_row_alt_color
-    }
-
-    pub fn info_block_bg_col(&self) -> Color {
-        self.options.selected_color_scheme.colors().info_block_bg_col
-    }
-
-    pub fn text_entry_box_bg_col(&self) -> Color {
-        self.options
-            .selected_color_scheme
-            .colors()
-            .text_entry_box_bg_col
+    #[allow(dead_code)]
+    pub fn accent_color(&self) -> Color {
+        self.options.selected_color_scheme.colors().accent
     }
 
     pub fn switch_to_screen(&mut self, screen: Screen) {
@@ -337,7 +322,7 @@ impl App {
         self.current_popup = popup;
     }
 
-    pub fn list_available_color_schemes(&self) -> &Vec<ColorScheme> {
+    pub fn list_available_color_schemes(&self) -> &Vec<SelectedScheme> {
         self.options.list_color_schemes()
     }
 

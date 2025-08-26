@@ -1,8 +1,12 @@
-use crate::ui::colorscheme::ColorScheme;
 use directories_next::ProjectDirs;
 use serde::{Deserialize, Serialize};
 use std::{fs, io};
 use strum::{EnumIter, IntoEnumIterator};
+
+use crate::ui::colors::{
+    app_colors::{AppColors, ColorScheme},
+    static_colors::StaticColors,
+};
 
 #[derive(EnumIter, Clone, Copy, PartialEq, Serialize, Deserialize)]
 pub enum SelectedOption {
@@ -10,10 +14,24 @@ pub enum SelectedOption {
     InsertMetainfoToggle,
 }
 
+#[derive(Clone, Copy, Debug, Deserialize, Serialize, PartialEq)]
+#[serde(untagged)]
+pub enum SelectedScheme {
+    Static(StaticColors),
+}
+
+impl ColorScheme for SelectedScheme {
+    fn colors(&self) -> AppColors {
+        match self {
+            SelectedScheme::Static(s) => s.colors(),
+        }
+    }
+}
+
 #[derive(Serialize, Deserialize)]
 pub struct Options {
-    pub available_color_schemes: Vec<ColorScheme>,
-    pub selected_color_scheme: ColorScheme,
+    pub available_color_schemes: Vec<SelectedScheme>,
+    pub selected_color_scheme: SelectedScheme,
     pub available_options: Vec<SelectedOption>,
     pub selected_option: SelectedOption,
     pub display_col_metainfo_in_table_view: bool,
@@ -21,12 +39,12 @@ pub struct Options {
 }
 
 impl Options {
-    pub fn new(default_color_scheme: ColorScheme) -> Self {
-        let available_color_schemes = ColorScheme::iter().collect();
+    pub fn new(default_color_scheme: StaticColors) -> Self {
+        let available_color_schemes = StaticColors::iter().map(SelectedScheme::Static).collect();
         let available_options = SelectedOption::iter().collect();
         Self {
             available_color_schemes,
-            selected_color_scheme: default_color_scheme,
+            selected_color_scheme: SelectedScheme::Static(default_color_scheme),
             available_options,
             selected_option: SelectedOption::TableMetainfoToggle,
             display_col_metainfo_in_table_view: true,
@@ -38,7 +56,7 @@ impl Options {
         qualifier_str: &str,
         organization_str: &str,
         application_str: &str,
-        default_color_scheme: ColorScheme,
+        default_color_scheme: StaticColors,
     ) -> io::Result<Self> {
         let project_dirs = ProjectDirs::from(qualifier_str, organization_str, application_str)
             .expect("Could not determine directoy!");
@@ -47,8 +65,19 @@ impl Options {
 
         if config_dir_path.exists() {
             let data = fs::read_to_string(&config_dir_path)?;
-            let options: Self = toml::from_str(&data)
+            let mut options: Self = toml::from_str(&data)
                 .map_err(|err| io::Error::new(io::ErrorKind::InvalidData, err))?;
+
+            options.available_color_schemes =
+                StaticColors::iter().map(SelectedScheme::Static).collect();
+
+            if !options
+                .available_color_schemes
+                .contains(&options.selected_color_scheme)
+            {
+                options.selected_color_scheme = SelectedScheme::Static(default_color_scheme);
+            }
+
             Ok(options)
         } else {
             Ok(Self::new(default_color_scheme))
@@ -71,13 +100,13 @@ impl Options {
         Ok(())
     }
 
-    fn select_color_scheme(&mut self, color_scheme: ColorScheme) {
+    fn select_color_scheme(&mut self, color_scheme: SelectedScheme) {
         if self.available_color_schemes.contains(&color_scheme) {
             self.selected_color_scheme = color_scheme;
         }
     }
 
-    pub fn list_color_schemes(&self) -> &Vec<ColorScheme> {
+    pub fn list_color_schemes(&self) -> &Vec<SelectedScheme> {
         &self.available_color_schemes
     }
 
@@ -85,7 +114,7 @@ impl Options {
         if let Some(index) = self
             .available_color_schemes
             .iter()
-            .position(|&cs| cs == self.selected_color_scheme)
+            .position(|cs| cs == &self.selected_color_scheme)
         {
             let prev_index = if index == 0 {
                 self.available_color_schemes.len() - 1
@@ -100,7 +129,7 @@ impl Options {
         if let Some(index) = self
             .available_color_schemes
             .iter()
-            .position(|&cs| cs == self.selected_color_scheme)
+            .position(|cs| cs == &self.selected_color_scheme)
         {
             let next_index = (index + 1) % self.available_color_schemes.len();
             self.select_color_scheme(self.available_color_schemes[next_index]);

@@ -7,6 +7,7 @@ mod row;
 mod table;
 mod ui;
 mod widgets;
+mod log;
 
 use app::App;
 use crossterm::{
@@ -20,7 +21,9 @@ use ratatui::{
 };
 use rusqlite::Result;
 use std::io;
-use ui::{colorscheme::ColorScheme, events::handle_key_events};
+use ui::events::handle_key_events;
+
+use crate::ui::colors::static_colors::StaticColors;
 
 fn main() -> io::Result<()> {
     let qualifier = "".to_string();
@@ -39,7 +42,7 @@ fn main() -> io::Result<()> {
 
     let backend = CrosstermBackend::new(io::stdout());
     let mut terminal = setup_terminal(backend)?;
-    let default_color_scheme = ColorScheme::Autumn;
+    let default_color_scheme = StaticColors::Autumn;
     let mut app = setup_app(
         &terminal,
         qualifier,
@@ -72,7 +75,7 @@ fn setup_app<B>(
     qual_str: String,
     org_str: String,
     app_str: String,
-    color_scheme: ColorScheme,
+    color_scheme: StaticColors,
 ) -> Result<App, io::Error>
 where
     B: Backend,

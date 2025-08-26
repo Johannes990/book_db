@@ -2,6 +2,8 @@ use crate::{
     app::{App, PopUp, Screen},
     db::{DBError, DB},
     options::SelectedOption,
+    ui::input::key_bindings::AppInputEvent,
+    log::log,
 };
 use crossterm::event::{KeyEvent, KeyModifiers};
 use ratatui::crossterm::event::{self, Event, KeyCode, KeyEventKind};
@@ -18,6 +20,14 @@ pub fn handle_key_events(app: &mut App) -> io::Result<bool> {
             Screen::Options => options_screen_handler(app, key_event)?,
             Screen::CreateNewFile => create_new_file_screen_handler(app, key_event),
         }
+    }
+
+    if app.should_quit {
+        let _ = app.key_bindings.save(
+            &app.qualifier,
+            &app.organization,
+            &app.application
+        );
     }
 
     Ok(app.should_quit)
@@ -130,7 +140,8 @@ fn database_schema_screen_handler(app: &mut App, key_event: KeyEvent) {
                         if let Some(db) = &app.selected_db {
                             let tables = db.get_table_list().unwrap_or_default();
                             if let Some(selected_table) = &app.selected_db_table {
-                                let current_idx = tables.iter().position(|t| t == selected_table).unwrap_or(0);
+                                let current_idx =
+                                    tables.iter().position(|t| t == selected_table).unwrap_or(0);
                                 if current_idx > 0 {
                                     app.select_table(tables[current_idx - 1].clone());
                                 } else if current_idx == 0 {
@@ -160,7 +171,6 @@ fn database_schema_screen_handler(app: &mut App, key_event: KeyEvent) {
                     (KeyCode::Char('s'), KeyModifiers::NONE) => {
                         if app.selected_db.is_some() && app.column_list_view.is_some() {
                             let _ = &app.column_list_view.as_mut().unwrap().previous();
-
                         }
                     }
                     (KeyCode::Char('x'), KeyModifiers::NONE) => {
@@ -193,9 +203,7 @@ fn database_schema_screen_handler(app: &mut App, key_event: KeyEvent) {
         PopUp::InsertTable => {
             if key_event.kind == KeyEventKind::Press {
                 match (key_event.code, key_event.modifiers) {
-                    (KeyCode::Esc, KeyModifiers::NONE) => {
-                        app.switch_to_popup(PopUp::None)
-                    }
+                    (KeyCode::Esc, KeyModifiers::NONE) => app.switch_to_popup(PopUp::None),
                     (KeyCode::Char(c), KeyModifiers::NONE) => {
                         app.create_table_form.as_mut().unwrap().enter_char(c)
                     }
@@ -212,9 +220,10 @@ fn database_schema_screen_handler(app: &mut App, key_event: KeyEvent) {
                     }
                     (KeyCode::Enter, KeyModifiers::NONE) => {
                         if let Some(db) = &mut app.selected_db {
-                            match db.execute_raw_sql(app.create_table_form.as_ref().unwrap().fields[0]
-                                .text_value
-                                .clone()
+                            match db.execute_raw_sql(
+                                app.create_table_form.as_ref().unwrap().fields[0]
+                                    .text_value
+                                    .clone(),
                             ) {
                                 Ok(_) => {
                                     app.fetch_table_list();
@@ -233,9 +242,7 @@ fn database_schema_screen_handler(app: &mut App, key_event: KeyEvent) {
         PopUp::DeleteTable => {
             if key_event.kind == KeyEventKind::Press {
                 match (key_event.code, key_event.modifiers) {
-                    (KeyCode::Esc, KeyModifiers::NONE) => {
-                        app.switch_to_popup(PopUp::None)
-                    }
+                    (KeyCode::Esc, KeyModifiers::NONE) => app.switch_to_popup(PopUp::None),
                     (KeyCode::Char(c), KeyModifiers::NONE) => {
                         app.drop_table_form.as_mut().unwrap().enter_char(c)
                     }
@@ -255,7 +262,7 @@ fn database_schema_screen_handler(app: &mut App, key_event: KeyEvent) {
                             match db.drop_table(
                                 app.drop_table_form.as_ref().unwrap().fields[0]
                                     .text_value
-                                    .clone()
+                                    .clone(),
                             ) {
                                 Ok(_) => {
                                     app.fetch_table_list();
@@ -301,7 +308,8 @@ fn database_table_screen_handler(app: &mut App, key_event: KeyEvent) {
                         }
                     }
                     (KeyCode::Char('i'), KeyModifiers::NONE) => {
-                        let table_cols: Vec<String> = app.selected_table_columns
+                        let table_cols: Vec<String> = app
+                            .selected_table_columns
                             .iter()
                             .map(|col_info| col_info.name.clone())
                             .collect();
@@ -319,7 +327,8 @@ fn database_table_screen_handler(app: &mut App, key_event: KeyEvent) {
         PopUp::InsertRow => {
             if key_event.kind == KeyEventKind::Press {
                 match (key_event.code, key_event.modifiers) {
-                    (KeyCode::Esc, KeyModifiers::NONE) | (KeyCode::Char('q'), KeyModifiers::ALT) => {
+                    (KeyCode::Esc, KeyModifiers::NONE)
+                    | (KeyCode::Char('q'), KeyModifiers::ALT) => {
                         app.switch_to_popup(PopUp::None);
                     }
                     (KeyCode::Up, KeyModifiers::NONE) => {
@@ -338,8 +347,10 @@ fn database_table_screen_handler(app: &mut App, key_event: KeyEvent) {
                                 .unwrap()
                                 .enter_char(c_uppercase);
                         }
-                    },
-                    (KeyCode::Backspace, KeyModifiers::NONE) => app.table_insert_form.as_mut().unwrap().pop_char(),
+                    }
+                    (KeyCode::Backspace, KeyModifiers::NONE) => {
+                        app.table_insert_form.as_mut().unwrap().pop_char()
+                    }
                     (KeyCode::Char('s'), KeyModifiers::CONTROL) => {
                         if let Some(db) = app.selected_db.as_mut() {
                             if let Some(table_name) = &app.selected_db_table {
@@ -373,12 +384,12 @@ fn database_table_screen_handler(app: &mut App, key_event: KeyEvent) {
                                                 }
                                             }
                                             app.switch_to_popup(PopUp::None);
-                                            
+
                                             if let Some(selected_table) = &app.selected_db_table {
                                                 app.select_table_rows(selected_table.to_string());
                                             }
                                         }
-                                        Err(e) => eprintln!("Insert failed: {}", e)
+                                        Err(e) => eprintln!("Insert failed: {}", e),
                                     }
                                 }
                             }
@@ -424,9 +435,7 @@ fn database_table_screen_handler(app: &mut App, key_event: KeyEvent) {
                             }
                         }
                     }
-                    (KeyCode::Esc, KeyModifiers::NONE) => {
-                        app.switch_to_popup(PopUp::None)
-                    }
+                    (KeyCode::Esc, KeyModifiers::NONE) => app.switch_to_popup(PopUp::None),
                     (KeyCode::Up, KeyModifiers::NONE) => {
                         app.table_delete_form.as_mut().unwrap().previous()
                     }
@@ -438,7 +447,10 @@ fn database_table_screen_handler(app: &mut App, key_event: KeyEvent) {
                     }
                     (KeyCode::Char(c), KeyModifiers::SHIFT) => {
                         for c_uppercase in c.to_uppercase() {
-                            app.table_delete_form.as_mut().unwrap().enter_char(c_uppercase);
+                            app.table_delete_form
+                                .as_mut()
+                                .unwrap()
+                                .enter_char(c_uppercase);
                         }
                     }
                     (KeyCode::Backspace, KeyModifiers::NONE) => {
@@ -459,45 +471,68 @@ fn database_table_screen_handler(app: &mut App, key_event: KeyEvent) {
 
 fn options_screen_handler(app: &mut App, key_event: KeyEvent) -> io::Result<()> {
     let mut changed: bool = false;
+    log("options screen");
 
-    if key_event.kind == KeyEventKind::Press {
-        match (key_event.code, key_event.modifiers) {
-            (KeyCode::Char('q'), KeyModifiers::NONE) | (KeyCode::Esc, KeyModifiers::NONE) => {
-                app.switch_to_screen(Screen::Splash)
+    match app.current_popup {
+        PopUp::None => {
+            log("popup None");
+            if key_event.kind == KeyEventKind::Press {
+                if let Some(event) = app.key_bindings.resolve_event(key_event) {
+                    match event {
+                        AppInputEvent::MoveUpPrimary => {
+                            app.options.previous_option();
+                            changed = true;
+                        }
+                        AppInputEvent::MoveDownPrimary => {
+                            app.options.next_option();
+                            changed = true;
+                        }
+                        AppInputEvent::MoveUpSecondary => {
+                            app.options.previous_color_scheme();
+                            changed = true;
+                        }
+                        AppInputEvent::MoveDownSecondary => {
+                            app.options.next_color_scheme();
+                            changed = true;
+                        }
+                        AppInputEvent::ToggleOption => match app.options.selected_option {
+                            SelectedOption::InsertMetainfoToggle => {
+                                app.options.set_display_col_metainfo_in_insert_view(
+                                    !app.options.display_col_metainfo_in_insert_view
+                                );
+                                changed = true;
+                            }
+                            SelectedOption::TableMetainfoToggle => {
+                                app.options.set_display_col_metainfo_in_table_view(
+                                    !app.options.display_col_metainfo_in_table_view
+                                );
+                                changed = true;
+                            }
+                        }
+                        AppInputEvent::QuitApp => app.switch_to_popup(PopUp::Quit),
+                        AppInputEvent::OpenSplashScreen => app.switch_to_screen(Screen::Splash),
+                        _ => {}
+                    }
+                }
             }
-            (KeyCode::Up, KeyModifiers::NONE) => {
-                app.options.previous_option();
-                changed = true;
-            }
-            (KeyCode::Down, KeyModifiers::NONE) => {
-                app.options.next_option();
-                changed = true;
-            }
-            (KeyCode::Left, KeyModifiers::NONE) => {
-                app.options.previous_color_scheme();
-                changed = true;
-            }
-            (KeyCode::Right, KeyModifiers::NONE) => {
-                app.options.next_color_scheme();
-                changed = true;
-            }
-            (KeyCode::Enter, KeyModifiers::NONE) => match app.options.selected_option {
-                SelectedOption::InsertMetainfoToggle => {
-                    app.options.set_display_col_metainfo_in_insert_view(
-                        !app.options.display_col_metainfo_in_insert_view
-                    );
-                    changed = true;
-                },
-                SelectedOption::TableMetainfoToggle => {
-                    app.options.set_display_col_metainfo_in_table_view(
-                        !app.options.display_col_metainfo_in_table_view
-                    );
-                    changed = true;
-                },
-            }
-            _ => {}
         }
+        PopUp::Quit => {
+            log("popup quit");
+            if key_event.kind == KeyEventKind::Press {
+                if let Some(event) = app.key_bindings.resolve_event(key_event) {
+                    match event {
+                        AppInputEvent::QuitApp => {
+                            app.should_quit = true;
+                            log(format!("app.should_quit: {:?}", app.should_quit).as_str());
+                        }
+                        _ => {}
+                    }
+                }
+            }
+        }
+        _ => {}
     }
+    
 
     if changed {
         app.options

@@ -1,6 +1,6 @@
 use ratatui::{
     style::Style,
-    text::{Line, Span}
+    text::{Line, Span},
 };
 
 #[derive(Clone)]
@@ -15,9 +15,14 @@ pub struct ColumnInfo {
 }
 
 impl ColumnInfo {
-    pub fn get_line_from_col_info(&self, display_metainfo: &bool, col_name_style: Style, metadata_style: Style) -> Line<'static> {
+    pub fn get_line_from_col_info(
+        &self,
+        display_metainfo: &bool,
+        col_name_style: Style,
+        metadata_style: Style,
+    ) -> Line<'static> {
         let mut col_info = vec![Span::styled(self.name.clone(), col_name_style)];
-        
+
         if *display_metainfo {
             col_info.push(Span::raw(" "));
             if self.is_pk {
@@ -31,7 +36,10 @@ impl ColumnInfo {
             }
             if self.is_fk {
                 let ref_table = self.references_table.as_deref().unwrap_or("Unknown");
-                col_info.push(Span::styled(format!("[FK -> {}]", ref_table), metadata_style));
+                col_info.push(Span::styled(
+                    format!("[FK -> {}]", ref_table),
+                    metadata_style,
+                ));
             }
         }
 
@@ -43,7 +51,7 @@ impl ColumnInfo {
     pub fn col_name_length(&self, display_metainfo: &bool) -> usize {
         let mut length = self.name.len();
 
-        if *display_metainfo{
+        if *display_metainfo {
             length += 1;
             if self.is_pk {
                 length += "[PK]".len();

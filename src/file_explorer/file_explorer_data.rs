@@ -11,10 +11,10 @@ impl FileExplorerData {
             path_name,
             path_size,
             date_created,
-            is_dir
+            is_dir,
         }
     }
-    
+
     pub const fn ref_array(&self) -> [&String; 3] {
         [&self.path_name, &self.path_size, &self.date_created]
     }
