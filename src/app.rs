@@ -13,7 +13,7 @@ use crate::{
     widgets::text_form::TextForm,
 };
 use ratatui::{style::Color, Terminal};
-use std::{io, path::PathBuf};
+use std::{collections::HashSet, ffi::OsString, io, path::PathBuf};
 
 pub enum Screen {
     Splash,
@@ -109,7 +109,16 @@ impl App {
     }
 
     pub fn open_db_file(&mut self, path: PathBuf) -> Result<(), DBError> {
-        if path.is_file() && path.extension().unwrap() == "db" {
+        let sqlite_extensions = HashSet::from([
+            OsString::from("db"),
+            OsString::from("db3"),
+            OsString::from("s3db"),
+            OsString::from("sl3"),
+            OsString::from("sqlite"),
+            OsString::from("sqlite3")
+        ]);
+
+        if path.is_file() && sqlite_extensions.contains(path.extension().unwrap()) {
             let db_name = path
                 .file_stem()
                 .unwrap_or_default()
