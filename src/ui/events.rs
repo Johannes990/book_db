@@ -645,7 +645,7 @@ fn no_db_loaded_popup_handler(app: &mut App, key_event: KeyEvent) -> io::Result<
         }
     }
 
-    return Ok(())
+    Ok(())
 }
 
 #[allow(unused_variables)]
