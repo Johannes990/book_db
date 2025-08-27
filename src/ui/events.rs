@@ -648,22 +648,31 @@ fn no_db_loaded_popup_handler(app: &mut App, key_event: KeyEvent) -> io::Result<
     return Ok(())
 }
 
+#[allow(unused_variables)]
 fn insert_row_popup_handler(app: &mut App, key_event: KeyEvent) {
 
 }
 
+
+#[allow(unused_variables)]
 fn delete_row_popup_handler(app: &mut App, key_event: KeyEvent) {
 
 }
 
+
+#[allow(unused_variables)]
 fn insert_table_popup_handler(app: &mut App, key_event: KeyEvent) {
 
 }
 
+
+#[allow(unused_variables)]
 fn delete_table_popup_handler(app: &mut App, key_event: KeyEvent) {
 
 }
 
+
+#[allow(unused_variables)]
 fn error_popup_handler(app: &mut App, key_event: KeyEvent) {
 
 }

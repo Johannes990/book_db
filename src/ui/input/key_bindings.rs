@@ -146,7 +146,7 @@ impl KeyBindings {
             context: InputContext::Global,
         };
 
-        let contexts = get_input_contexts(current_screen, current_popup, key_event);
+        let contexts = get_input_contexts(current_screen, current_popup);
 
         for context in contexts {
             let binding_with_context = KeyBinding {context, ..binding };

@@ -16,10 +16,10 @@ pub enum KeyCodeSerializable {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum KeyModifierSerializable {
-    NONE,
-    CONTROL,
-    ALT,
-    SHIFT,
+    None,
+    Control,
+    Alt,
+    Shift,
 }
 
 impl From<KeyCode> for KeyCodeSerializable {
@@ -58,10 +58,10 @@ impl From<KeyCodeSerializable> for KeyCode {
 impl From<KeyModifiers> for KeyModifierSerializable {
     fn from(modifier: KeyModifiers) -> Self {
         match modifier {
-            KeyModifiers::NONE => KeyModifierSerializable::NONE,
-            KeyModifiers::CONTROL => KeyModifierSerializable::CONTROL,
-            KeyModifiers::ALT => KeyModifierSerializable::ALT,
-            KeyModifiers::SHIFT => KeyModifierSerializable::SHIFT,
+            KeyModifiers::NONE => KeyModifierSerializable::None,
+            KeyModifiers::CONTROL => KeyModifierSerializable::Control,
+            KeyModifiers::ALT => KeyModifierSerializable::Alt,
+            KeyModifiers::SHIFT => KeyModifierSerializable::Shift,
             _ => unimplemented!("Unsupported key modifier: {:?}", modifier),
         }
     }
@@ -70,10 +70,10 @@ impl From<KeyModifiers> for KeyModifierSerializable {
 impl From<KeyModifierSerializable> for KeyModifiers {
     fn from(modifier: KeyModifierSerializable) -> Self {
         match modifier {
-            KeyModifierSerializable::NONE => KeyModifiers::NONE,
-            KeyModifierSerializable::CONTROL => KeyModifiers::CONTROL,
-            KeyModifierSerializable::ALT => KeyModifiers::ALT,
-            KeyModifierSerializable::SHIFT => KeyModifiers::SHIFT,
+            KeyModifierSerializable::None => KeyModifiers::NONE,
+            KeyModifierSerializable::Control => KeyModifiers::CONTROL,
+            KeyModifierSerializable::Alt => KeyModifiers::ALT,
+            KeyModifierSerializable::Shift => KeyModifiers::SHIFT,
         }
     }
 } 

@@ -1,7 +1,5 @@
-use crossterm::event::KeyEvent;
 use serde::{Deserialize, Serialize};
-
-use crate::{app::{PopUp, Screen}, ui::input::key_bindings::KeyBinding};
+use crate::app::{PopUp, Screen};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum InputContext {
@@ -14,8 +12,8 @@ pub enum InputContext {
      */
 }
 
-pub fn get_input_contexts(screen: Screen, popup: PopUp, key_event: KeyEvent) -> Vec<InputContext> {
-    let contexts = if popup != PopUp::None {
+pub fn get_input_contexts(screen: Screen, popup: PopUp) -> Vec<InputContext> {
+    if popup != PopUp::None {
         vec![
             InputContext::PopUp(popup),
             InputContext::Screen(screen),
@@ -26,7 +24,5 @@ pub fn get_input_contexts(screen: Screen, popup: PopUp, key_event: KeyEvent) -> 
             InputContext::Screen(screen),
             InputContext::Global,
         ]
-    };
-
-    contexts
+    }
 }
