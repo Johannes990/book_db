@@ -1,13 +1,14 @@
 use crate::column::column_info::ColumnInfo;
 use crate::row::row_info::RowInfo;
 use rusqlite::{types::ValueRef, Connection, Error, Result, Statement, ToSql};
+use serde::{Deserialize, Serialize};
 use sqlparser::dialect::SQLiteDialect;
 use sqlparser::parser::{Parser, ParserError};
 use std::collections::HashMap;
 use std::fmt;
 
 #[allow(dead_code)]
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum DBError {
     ConnectionCreationError(String),
     TableAlreadyExists(String),

@@ -12,23 +12,26 @@ use std::io;
 
 pub fn handle_key_events(app: &mut App) -> io::Result<bool> {
     if let Event::Key(key_event) = event::read()? {
-        match app.current_screen {
-            Screen::Splash => splash_screen_handler(app, key_event)?,
-            Screen::FileExplorer => file_explorer_screen_handler(app, key_event),
-            Screen::DatabaseSchema => database_schema_screen_handler(app, key_event),
-            Screen::DataBaseTable => database_table_screen_handler(app, key_event),
-            Screen::Options => options_screen_handler(app, key_event)?,
-            Screen::CreateNewFile => create_new_file_screen_handler(app, key_event),
-        }
-        match app.current_popup {
-            PopUp::None => {},
-            PopUp::Quit => quit_popup_handler(app, key_event)?,
-            PopUp::NoDBLoaded => no_db_loaded_popup_handler(app, key_event)?,
-            PopUp::InsertRow => insert_row_popup_handler(app, key_event),
-            PopUp::DeleteRow => delete_row_popup_handler(app, key_event),
-            PopUp::InsertTable => insert_table_popup_handler(app, key_event),
-            PopUp::DeleteTable => delete_table_popup_handler(app, key_event),
-            PopUp::Error(_) => error_popup_handler(app, key_event),
+        if app.current_popup != PopUp::None {
+            match app.current_popup {
+                PopUp::Quit => quit_popup_handler(app, key_event)?,
+                PopUp::NoDBLoaded => no_db_loaded_popup_handler(app, key_event)?,
+                PopUp::InsertRow => insert_row_popup_handler(app, key_event),
+                PopUp::DeleteRow => delete_row_popup_handler(app, key_event),
+                PopUp::InsertTable => insert_table_popup_handler(app, key_event),
+                PopUp::DeleteTable => delete_table_popup_handler(app, key_event),
+                PopUp::Error => error_popup_handler(app, key_event),
+                _ => {}
+            }
+        } else {
+            match app.current_screen {
+                Screen::Splash => splash_screen_handler(app, key_event)?,
+                Screen::FileExplorer => file_explorer_screen_handler(app, key_event),
+                Screen::DatabaseSchema => database_schema_screen_handler(app, key_event),
+                Screen::DataBaseTable => database_table_screen_handler(app, key_event),
+                Screen::Options => options_screen_handler(app, key_event)?,
+                Screen::CreateNewFile => create_new_file_screen_handler(app, key_event),
+            }
         }
     }
 
@@ -52,7 +55,7 @@ fn splash_screen_handler(app: &mut App, key_event: KeyEvent) -> io::Result<()> {
         return Ok(())
     }
 
-    if let Some(event) = app.key_bindings.resolve_event(key_event) {
+    if let Some(event) = app.key_bindings.resolve_event(app.current_screen, app.current_popup, key_event) {
         match event {
             AppInputEvent::OpenQuitAppPopUp => app.switch_to_popup(PopUp::Quit),
             AppInputEvent::OpenFileExplorerScreen => app.switch_to_screen(Screen::FileExplorer),
@@ -270,7 +273,7 @@ fn database_schema_screen_handler(app: &mut App, key_event: KeyEvent) {
                                     app.switch_to_popup(PopUp::None);
                                 }
                                 Err(e) => {
-                                    app.switch_to_popup(PopUp::Error(e));
+                                    app.show_error(e);
                                 }
                             }
                         }
@@ -309,7 +312,7 @@ fn database_schema_screen_handler(app: &mut App, key_event: KeyEvent) {
                                     app.switch_to_popup(PopUp::None);
                                 }
                                 Err(e) => {
-                                    app.switch_to_popup(PopUp::Error(e));
+                                    app.show_error(e);
                                 }
                             }
                         }
@@ -468,7 +471,7 @@ fn database_table_screen_handler(app: &mut App, key_event: KeyEvent) {
                                             app.switch_to_popup(PopUp::None);
                                         }
                                         Err(e) => {
-                                            app.switch_to_popup(PopUp::Error(e));
+                                            app.show_error(e);
                                         }
                                     }
                                 }
@@ -500,7 +503,7 @@ fn database_table_screen_handler(app: &mut App, key_event: KeyEvent) {
                 }
             }
         }
-        PopUp::Error(_) => {
+        PopUp::Error => {
             if let (KeyCode::Esc, KeyModifiers::NONE) = (key_event.code, key_event.modifiers) {
                 app.switch_to_popup(PopUp::None);
             }
@@ -520,7 +523,7 @@ fn options_screen_handler(app: &mut App, key_event: KeyEvent) -> io::Result<()> 
     let mut changed: bool = false;
     log("options screen");
 
-    if let Some(event) = app.key_bindings.resolve_event(key_event) {
+    if let Some(event) = app.key_bindings.resolve_event(app.current_screen, app.current_popup, key_event) {
         match event {
             AppInputEvent::MoveUpPrimary => {
                 app.options.previous_option();
@@ -586,7 +589,7 @@ fn create_new_file_screen_handler(app: &mut App, key_event: KeyEvent) {
                             }
                             Err(e) => {
                                 let err = DBError::ConnectionCreationError(e.to_string());
-                                app.switch_to_popup(PopUp::Error(err));
+                                app.show_error(err);
                             }
                         }
                     }
@@ -615,7 +618,7 @@ fn quit_popup_handler(app: &mut App, key_event: KeyEvent) -> io::Result<()> {
 
     log("popup quit");
 
-    if let Some(event) = app.key_bindings.resolve_event(key_event) {
+    if let Some(event) = app.key_bindings.resolve_event(app.current_screen, app.current_popup, key_event) {
         match event {
             AppInputEvent::QuitAppConfirm => {
                 app.should_quit = true;
@@ -633,7 +636,7 @@ fn no_db_loaded_popup_handler(app: &mut App, key_event: KeyEvent) -> io::Result<
     if key_event.kind != KeyEventKind::Press {
         return Ok(())
     }
-    if let Some(event) = app.key_bindings.resolve_event(key_event) {
+    if let Some(event) = app.key_bindings.resolve_event(app.current_screen, app.current_popup, key_event) {
         match event {
             AppInputEvent::OpenQuitAppPopUp => app.switch_to_popup(PopUp::Quit),
             AppInputEvent::ClosePopUp => app.switch_to_popup(PopUp::None),

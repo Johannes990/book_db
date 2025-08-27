@@ -41,10 +41,7 @@ where
             PopUp::DeleteRow => render_delete_row_popup(frame, app),
             PopUp::InsertTable => render_insert_table_popup(frame, app),
             PopUp::DeleteTable => render_drop_table_popup(frame, app),
-            PopUp::Error(ref err) => {
-                let msg = format!("{}", err);
-                render_error_popup(frame, app, &msg);
-            }
+            PopUp::Error => render_error_popup(frame, app),
         }
     })?;
     Ok(())
@@ -647,23 +644,26 @@ fn render_delete_row_popup(frame: &mut Frame, app: &mut App) {
     render_info_paragraph(&info_bits, frame, app, chunks[1]);
 }
 
-fn render_error_popup(frame: &mut Frame, app: &mut App, msg: &str) {
-    let area = centered_rect(40, 30, frame.area());
-    let style = Style::default().bg(app.error_color()).fg(app.text_color());
-    let error_block = Block::default()
-        .borders(Borders::ALL)
-        .title("Error")
-        .border_style(Style::default().fg(Color::Red))
-        .style(style);
-    let mut error_text = Text::default();
-    error_text.push_line(Span::raw(msg));
-    error_text.push_line(Span::raw("Press ESC to close this popup"));
-    let paragraph = Paragraph::new(error_text)
-        .block(error_block)
-        .alignment(Alignment::Center)
-        .wrap(Wrap { trim: true });
+fn render_error_popup(frame: &mut Frame, app: &mut App) {
+    if let Some(error) = &app.current_error {
+        let area = centered_rect(40, 30, frame.area());
+        let style = Style::default().bg(app.error_color()).fg(app.text_color());
+        let error_block = Block::default()
+            .borders(Borders::ALL)
+            .title("Error")
+            .border_style(Style::default().fg(Color::Red))
+            .style(style);
+        let error_message = format!("Error: {}", error);
+        let mut error_text = Text::from(error_message);
+        error_text.push_line(Span::raw("Press ESC to close this popup"));
+        let paragraph = Paragraph::new(error_text)
+            .block(error_block)
+            .alignment(Alignment::Center)
+            .wrap(Wrap { trim: true });
 
-    frame.render_widget(paragraph, area);
+        frame.render_widget(paragraph, area);
+    }
+    
 }
 
 fn render_table_list(frame: &mut Frame, app: &mut App, area: Rect) {

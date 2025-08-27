@@ -13,8 +13,10 @@ use crate::{
     }, widgets::text_form::TextForm
 };
 use ratatui::{style::Color, Terminal};
+use serde::{Deserialize, Serialize};
 use std::{collections::HashSet, ffi::OsString, io, path::PathBuf};
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum Screen {
     Splash,
     FileExplorer,
@@ -24,7 +26,7 @@ pub enum Screen {
     Options,
 }
 
-#[derive(PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum PopUp {
     None,
     Quit,
@@ -33,7 +35,7 @@ pub enum PopUp {
     DeleteRow,
     InsertTable,
     DeleteTable,
-    Error(DBError),
+    Error,
 }
 
 pub struct App {
@@ -42,6 +44,7 @@ pub struct App {
     pub application: String,
     pub current_screen: Screen,
     pub current_popup: PopUp,
+    pub current_error: Option<DBError>,
     pub selected_db: Option<DB>,
     pub selected_db_table: Option<String>,
     pub selected_table_columns: Vec<ColumnInfo>,
@@ -85,6 +88,7 @@ impl App {
             application,
             current_screen: Screen::Splash,
             current_popup: PopUp::None,
+            current_error: None,
             selected_db: None,
             selected_db_table: None,
             selected_table_columns: Vec::new(),
@@ -321,6 +325,15 @@ impl App {
 
     pub fn switch_to_popup(&mut self, popup: PopUp) {
         self.current_popup = popup;
+
+        if popup != PopUp::Error {
+            self.current_error = None;
+        }
+    }
+
+    pub fn show_error(&mut self, error: DBError) {
+        self.switch_to_popup(PopUp::Error);
+        self.current_error = Some(error);
     }
 
     pub fn list_available_color_schemes(&self) -> &Vec<SelectedScheme> {
