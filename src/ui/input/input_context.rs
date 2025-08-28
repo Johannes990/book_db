@@ -30,18 +30,23 @@ pub fn get_input_contexts(screen: Screen, popup: PopUp) -> Vec<InputContext> {
     }
 }
 
+// this might need to be refactored to use a set of InputContexts later on
+// so that we can pass in HashSet(InputContext::Global,
+//                                InputContext::Editor::Editing,
+//                                InputContext::Func(f))
+// for example.
 pub fn context_event(
     key_code: KeyCode,
     modifier: KeyModifiers,
     context: InputContext,
-    event: AppInputEvent
+    event: AppInputEvent,
 ) -> ((InputContext, AppInputEvent), KeyBinding) {
     (
         (context, event),
         KeyBinding {
             key_code: key_code.into(),
             key_modifier: modifier.into(),
-            context
+            context,
         },
     )
 }

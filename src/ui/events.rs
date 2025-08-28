@@ -37,7 +37,8 @@ pub fn handle_key_events(app: &mut App) -> io::Result<bool> {
 
     if app.should_quit {
         let _ = app
-            .key_bindings.save(&app.qualifier, &app.organization, &app.application);
+            .key_bindings
+            .save(&app.qualifier, &app.organization, &app.application);
     }
 
     Ok(app.should_quit)

@@ -16,33 +16,34 @@ use crate::{
 
 #[derive(Debug, Clone, Copy, EnumIter, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum AppInputEvent {
-    OpenSplashScreen,         // open initial screen
-    OpenFileExplorerScreen,   // open file explorer screen
-    OpenDBSchemaScreen,       // open selected database schema screen
-    OpenDBTableScreen,        // open selected db table screen
-    OpenCreateNewFileScreen,  // open create new db file screen
-    OpenOptionsScreen,        // open options screen
-    OpenInsertRowPopUp,       // open insert row popup
-    OpenDeleteRowPopUp,       // open delete row popup
-    OpenInsertTablePopUp,     // open insert new table popup
-    OpenDeleteTablePopUp,     // open delete table popup
-    ClosePopUp,               // close popup meaning switch to PopUp::None
-    OpenQuitAppPopUp,         // open quit app popup
-    QuitAppConfirm,           // confirm quit while in quit app
-    MoveUpPrimary,            // go up in primary table or in options
-    MoveDownPrimary,          // go down in primary table or in options
-    MoveUpSecondary,          // go up in secondary table or in colorschemes
-    MoveDownSecondary,        // go down in secondary table or in coloschemes
-    ExecuteAction,            // execute current popup or SQL action
-    ToggleOption,             // toggle selected option on/off
-    FileExplorerSelect,       // select folder or file to load
-    FileExplorerBack,         // go up to paren folder in file explorer
+    OpenSplashScreen,        // open initial screen
+    OpenFileExplorerScreen,  // open file explorer screen
+    OpenDBSchemaScreen,      // open selected database schema screen
+    OpenDBTableScreen,       // open selected db table screen
+    OpenCreateNewFileScreen, // open create new db file screen
+    OpenOptionsScreen,       // open options screen
+    OpenInsertRowPopUp,      // open insert row popup
+    OpenDeleteRowPopUp,      // open delete row popup
+    OpenInsertTablePopUp,    // open insert new table popup
+    OpenDeleteTablePopUp,    // open delete table popup
+    ClosePopUp,              // close popup meaning switch to PopUp::None
+    OpenQuitAppPopUp,        // open quit app popup
+    QuitAppConfirm,          // confirm quit while in quit app
+    MoveUpPrimary,           // go up in primary table or in options
+    MoveDownPrimary,         // go down in primary table or in options
+    MoveUpSecondary,         // go up in secondary table or in colorschemes
+    MoveDownSecondary,       // go down in secondary table or in coloschemes
+    ExecuteAction,           // execute current popup or SQL action
+    ToggleOption,            // toggle selected option on/off
+    FileExplorerSelect,      // select folder or file to load
+    FileExplorerBack,        // go up to paren folder in file explorer
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct KeyBinding {
     pub key_code: KeyCodeSerializable,
     pub key_modifier: KeyModifierSerializable,
+    // might use a set of InpuContexts later on if we need to check several
     pub context: InputContext,
 }
 
@@ -178,27 +179,132 @@ impl KeyBindings {
 
     fn get_default_bindings() -> Vec<((InputContext, AppInputEvent), KeyBinding)> {
         vec![
-            context_event(KeyCode::Char('s'), KeyModifiers::NONE, InputContext::Global, AppInputEvent::OpenSplashScreen),
-            context_event(KeyCode::Char('f'), KeyModifiers::NONE, InputContext::Global, AppInputEvent::OpenFileExplorerScreen),
-            context_event(KeyCode::Char('d'), KeyModifiers::NONE, InputContext::Global, AppInputEvent::OpenDBSchemaScreen),
-            context_event(KeyCode::Char('t'), KeyModifiers::NONE, InputContext::Screen(Screen::DatabaseSchema), AppInputEvent::OpenDBTableScreen),
-            context_event(KeyCode::Char('c'), KeyModifiers::NONE, InputContext::Global, AppInputEvent::OpenCreateNewFileScreen),
-            context_event(KeyCode::Char('o'), KeyModifiers::NONE, InputContext::Global, AppInputEvent::OpenOptionsScreen),
-            context_event(KeyCode::Char('i'), KeyModifiers::NONE, InputContext::Screen(Screen::DataBaseTable), AppInputEvent::OpenInsertRowPopUp),
-            context_event(KeyCode::Char('d'), KeyModifiers::NONE, InputContext::Screen(Screen::DataBaseTable), AppInputEvent::OpenDeleteRowPopUp),
-            context_event(KeyCode::Char('i'), KeyModifiers::NONE, InputContext::Screen(Screen::DatabaseSchema), AppInputEvent::OpenInsertTablePopUp),
-            context_event(KeyCode::Char('d'), KeyModifiers::NONE, InputContext::Screen(Screen::DatabaseSchema), AppInputEvent::OpenDeleteTablePopUp),
-            context_event(KeyCode::Esc, KeyModifiers::NONE, InputContext::Global, AppInputEvent::ClosePopUp),
-            context_event(KeyCode::Char('q'), KeyModifiers::NONE, InputContext::Global, AppInputEvent::OpenQuitAppPopUp),
-            context_event(KeyCode::Char('y'), KeyModifiers::NONE, InputContext::PopUp(PopUp::Quit), AppInputEvent::QuitAppConfirm),
-            context_event(KeyCode::Up, KeyModifiers::NONE, InputContext::Global, AppInputEvent::MoveUpPrimary),
-            context_event(KeyCode::Down, KeyModifiers::NONE, InputContext::Global, AppInputEvent::MoveDownPrimary),
-            context_event(KeyCode::Left, KeyModifiers::NONE, InputContext::Global, AppInputEvent::MoveUpSecondary),
-            context_event(KeyCode::Right, KeyModifiers::NONE, InputContext::Global, AppInputEvent::MoveDownSecondary),
-            context_event(KeyCode::Enter, KeyModifiers::NONE, InputContext::Global, AppInputEvent::ExecuteAction),
-            context_event(KeyCode::Tab, KeyModifiers::NONE, InputContext::Screen(Screen::Options), AppInputEvent::ToggleOption),
-            context_event(KeyCode::Enter, KeyModifiers::NONE, InputContext::Screen(Screen::FileExplorer), AppInputEvent::FileExplorerSelect),
-            context_event(KeyCode::Backspace, KeyModifiers::NONE, InputContext::Screen(Screen::FileExplorer), AppInputEvent::FileExplorerBack),
+            context_event(
+                KeyCode::Char('s'),
+                KeyModifiers::NONE,
+                InputContext::Global,
+                AppInputEvent::OpenSplashScreen,
+            ),
+            context_event(
+                KeyCode::Char('f'),
+                KeyModifiers::NONE,
+                InputContext::Global,
+                AppInputEvent::OpenFileExplorerScreen,
+            ),
+            context_event(
+                KeyCode::Char('d'),
+                KeyModifiers::NONE,
+                InputContext::Global,
+                AppInputEvent::OpenDBSchemaScreen,
+            ),
+            context_event(
+                KeyCode::Char('t'),
+                KeyModifiers::NONE,
+                InputContext::Screen(Screen::DatabaseSchema),
+                AppInputEvent::OpenDBTableScreen,
+            ),
+            context_event(
+                KeyCode::Char('c'),
+                KeyModifiers::NONE,
+                InputContext::Global,
+                AppInputEvent::OpenCreateNewFileScreen,
+            ),
+            context_event(
+                KeyCode::Char('o'),
+                KeyModifiers::NONE,
+                InputContext::Global,
+                AppInputEvent::OpenOptionsScreen,
+            ),
+            context_event(
+                KeyCode::Char('i'),
+                KeyModifiers::NONE,
+                InputContext::Screen(Screen::DataBaseTable),
+                AppInputEvent::OpenInsertRowPopUp,
+            ),
+            context_event(
+                KeyCode::Char('d'),
+                KeyModifiers::NONE,
+                InputContext::Screen(Screen::DataBaseTable),
+                AppInputEvent::OpenDeleteRowPopUp,
+            ),
+            context_event(
+                KeyCode::Char('i'),
+                KeyModifiers::NONE,
+                InputContext::Screen(Screen::DatabaseSchema),
+                AppInputEvent::OpenInsertTablePopUp,
+            ),
+            context_event(
+                KeyCode::Char('d'),
+                KeyModifiers::NONE,
+                InputContext::Screen(Screen::DatabaseSchema),
+                AppInputEvent::OpenDeleteTablePopUp,
+            ),
+            context_event(
+                KeyCode::Esc,
+                KeyModifiers::NONE,
+                InputContext::Global,
+                AppInputEvent::ClosePopUp,
+            ),
+            context_event(
+                KeyCode::Char('q'),
+                KeyModifiers::NONE,
+                InputContext::Global,
+                AppInputEvent::OpenQuitAppPopUp,
+            ),
+            context_event(
+                KeyCode::Char('y'),
+                KeyModifiers::NONE,
+                InputContext::PopUp(PopUp::Quit),
+                AppInputEvent::QuitAppConfirm,
+            ),
+            context_event(
+                KeyCode::Up,
+                KeyModifiers::NONE,
+                InputContext::Global,
+                AppInputEvent::MoveUpPrimary,
+            ),
+            context_event(
+                KeyCode::Down,
+                KeyModifiers::NONE,
+                InputContext::Global,
+                AppInputEvent::MoveDownPrimary,
+            ),
+            context_event(
+                KeyCode::Left,
+                KeyModifiers::NONE,
+                InputContext::Global,
+                AppInputEvent::MoveUpSecondary,
+            ),
+            context_event(
+                KeyCode::Right,
+                KeyModifiers::NONE,
+                InputContext::Global,
+                AppInputEvent::MoveDownSecondary,
+            ),
+            context_event(
+                KeyCode::Enter,
+                KeyModifiers::NONE,
+                InputContext::Global,
+                AppInputEvent::ExecuteAction,
+            ),
+            context_event(
+                KeyCode::Tab,
+                KeyModifiers::NONE,
+                InputContext::Screen(Screen::Options),
+                AppInputEvent::ToggleOption,
+            ),
+            context_event(
+                KeyCode::Enter,
+                KeyModifiers::NONE,
+                InputContext::Screen(Screen::FileExplorer),
+                AppInputEvent::FileExplorerSelect,
+            ),
+            context_event(
+                KeyCode::Backspace,
+                KeyModifiers::NONE,
+                InputContext::Screen(Screen::FileExplorer),
+                AppInputEvent::FileExplorerBack,
+            ),
         ]
     }
 }
