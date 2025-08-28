@@ -663,7 +663,6 @@ fn render_error_popup(frame: &mut Frame, app: &mut App) {
 
         frame.render_widget(paragraph, area);
     }
-    
 }
 
 fn render_table_list(frame: &mut Frame, app: &mut App, area: Rect) {

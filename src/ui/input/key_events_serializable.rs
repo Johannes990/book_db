@@ -1,5 +1,5 @@
 use crossterm::event::{KeyCode, KeyModifiers};
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum KeyCodeSerializable {
@@ -76,4 +76,4 @@ impl From<KeyModifierSerializable> for KeyModifiers {
             KeyModifierSerializable::Shift => KeyModifiers::SHIFT,
         }
     }
-} 
+}

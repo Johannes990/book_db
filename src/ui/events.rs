@@ -1,9 +1,9 @@
 use crate::{
     app::{App, PopUp, Screen},
     db::{DBError, DB},
+    log::log,
     options::SelectedOption,
     ui::input::key_bindings::AppInputEvent,
-    log::log,
 };
 use crossterm::event::{KeyEvent, KeyModifiers};
 use ratatui::crossterm::event::{self, Event, KeyCode, KeyEventKind};
@@ -36,11 +36,8 @@ pub fn handle_key_events(app: &mut App) -> io::Result<bool> {
     }
 
     if app.should_quit {
-        let _ = app.key_bindings.save(
-            &app.qualifier,
-            &app.organization,
-            &app.application
-        );
+        let _ = app
+            .key_bindings.save(&app.qualifier, &app.organization, &app.application);
     }
 
     Ok(app.should_quit)
@@ -48,14 +45,17 @@ pub fn handle_key_events(app: &mut App) -> io::Result<bool> {
 
 fn splash_screen_handler(app: &mut App, key_event: KeyEvent) -> io::Result<()> {
     if app.current_popup != PopUp::None {
-        return Ok(())
+        return Ok(());
     }
 
     if key_event.kind != KeyEventKind::Press {
-        return Ok(())
+        return Ok(());
     }
 
-    if let Some(event) = app.key_bindings.resolve_event(app.current_screen, app.current_popup, key_event) {
+    if let Some(event) =
+        app.key_bindings
+            .resolve_event(app.current_screen, app.current_popup, key_event)
+    {
         match event {
             AppInputEvent::OpenQuitAppPopUp => app.switch_to_popup(PopUp::Quit),
             AppInputEvent::OpenFileExplorerScreen => app.switch_to_screen(Screen::FileExplorer),
@@ -514,16 +514,19 @@ fn database_table_screen_handler(app: &mut App, key_event: KeyEvent) {
 
 fn options_screen_handler(app: &mut App, key_event: KeyEvent) -> io::Result<()> {
     if app.current_popup != PopUp::None {
-        return Ok(())
+        return Ok(());
     }
 
     if key_event.kind != KeyEventKind::Press {
-        return Ok(())
+        return Ok(());
     }
     let mut changed: bool = false;
     log("options screen");
 
-    if let Some(event) = app.key_bindings.resolve_event(app.current_screen, app.current_popup, key_event) {
+    if let Some(event) =
+        app.key_bindings
+            .resolve_event(app.current_screen, app.current_popup, key_event)
+    {
         match event {
             AppInputEvent::MoveUpPrimary => {
                 app.options.previous_option();
@@ -544,17 +547,17 @@ fn options_screen_handler(app: &mut App, key_event: KeyEvent) -> io::Result<()> 
             AppInputEvent::ToggleOption => match app.options.selected_option {
                 SelectedOption::InsertMetainfoToggle => {
                     app.options.set_display_col_metainfo_in_insert_view(
-                        !app.options.display_col_metainfo_in_insert_view
+                        !app.options.display_col_metainfo_in_insert_view,
                     );
                     changed = true;
                 }
                 SelectedOption::TableMetainfoToggle => {
                     app.options.set_display_col_metainfo_in_table_view(
-                        !app.options.display_col_metainfo_in_table_view
+                        !app.options.display_col_metainfo_in_table_view,
                     );
                     changed = true;
                 }
-            }
+            },
             AppInputEvent::OpenQuitAppPopUp => app.switch_to_popup(PopUp::Quit),
             AppInputEvent::OpenSplashScreen => app.switch_to_screen(Screen::Splash),
             _ => {}
@@ -613,17 +616,20 @@ fn create_new_file_screen_handler(app: &mut App, key_event: KeyEvent) {
 
 fn quit_popup_handler(app: &mut App, key_event: KeyEvent) -> io::Result<()> {
     if key_event.kind != KeyEventKind::Press {
-        return Ok(())
+        return Ok(());
     }
 
     log("popup quit");
 
-    if let Some(event) = app.key_bindings.resolve_event(app.current_screen, app.current_popup, key_event) {
+    if let Some(event) =
+        app.key_bindings
+            .resolve_event(app.current_screen, app.current_popup, key_event)
+    {
         match event {
             AppInputEvent::QuitAppConfirm => {
                 app.should_quit = true;
                 log(format!("app.should_quit: {:?}", app.should_quit).as_str());
-            },
+            }
             AppInputEvent::ClosePopUp => app.switch_to_popup(PopUp::None),
             _ => {}
         }
@@ -634,9 +640,12 @@ fn quit_popup_handler(app: &mut App, key_event: KeyEvent) -> io::Result<()> {
 
 fn no_db_loaded_popup_handler(app: &mut App, key_event: KeyEvent) -> io::Result<()> {
     if key_event.kind != KeyEventKind::Press {
-        return Ok(())
+        return Ok(());
     }
-    if let Some(event) = app.key_bindings.resolve_event(app.current_screen, app.current_popup, key_event) {
+    if let Some(event) =
+        app.key_bindings
+            .resolve_event(app.current_screen, app.current_popup, key_event)
+    {
         match event {
             AppInputEvent::OpenQuitAppPopUp => app.switch_to_popup(PopUp::Quit),
             AppInputEvent::ClosePopUp => app.switch_to_popup(PopUp::None),
@@ -649,30 +658,16 @@ fn no_db_loaded_popup_handler(app: &mut App, key_event: KeyEvent) -> io::Result<
 }
 
 #[allow(unused_variables)]
-fn insert_row_popup_handler(app: &mut App, key_event: KeyEvent) {
-
-}
-
+fn insert_row_popup_handler(app: &mut App, key_event: KeyEvent) {}
 
 #[allow(unused_variables)]
-fn delete_row_popup_handler(app: &mut App, key_event: KeyEvent) {
-
-}
-
+fn delete_row_popup_handler(app: &mut App, key_event: KeyEvent) {}
 
 #[allow(unused_variables)]
-fn insert_table_popup_handler(app: &mut App, key_event: KeyEvent) {
-
-}
-
+fn insert_table_popup_handler(app: &mut App, key_event: KeyEvent) {}
 
 #[allow(unused_variables)]
-fn delete_table_popup_handler(app: &mut App, key_event: KeyEvent) {
-
-}
-
+fn delete_table_popup_handler(app: &mut App, key_event: KeyEvent) {}
 
 #[allow(unused_variables)]
-fn error_popup_handler(app: &mut App, key_event: KeyEvent) {
-
-}
+fn error_popup_handler(app: &mut App, key_event: KeyEvent) {}

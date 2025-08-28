@@ -5,38 +5,45 @@ use directories_next::ProjectDirs;
 use serde::{Deserialize, Serialize};
 use strum::EnumIter;
 
-use crate::{app::{PopUp, Screen}, log::log, ui::input::{input_context::{get_input_contexts, InputContext}, key_events_serializable::{KeyCodeSerializable, KeyModifierSerializable}}};
+use crate::{
+    app::{PopUp, Screen},
+    log::log,
+    ui::input::{
+        input_context::{context_event, get_input_contexts, InputContext},
+        key_events_serializable::{KeyCodeSerializable, KeyModifierSerializable},
+    },
+};
+
+#[derive(Debug, Clone, Copy, EnumIter, PartialEq, Eq, Hash, Serialize, Deserialize)]
+pub enum AppInputEvent {
+    OpenSplashScreen,         // open initial screen
+    OpenFileExplorerScreen,   // open file explorer screen
+    OpenDBSchemaScreen,       // open selected database schema screen
+    OpenDBTableScreen,        // open selected db table screen
+    OpenCreateNewFileScreen,  // open create new db file screen
+    OpenOptionsScreen,        // open options screen
+    OpenInsertRowPopUp,       // open insert row popup
+    OpenDeleteRowPopUp,       // open delete row popup
+    OpenInsertTablePopUp,     // open insert new table popup
+    OpenDeleteTablePopUp,     // open delete table popup
+    ClosePopUp,               // close popup meaning switch to PopUp::None
+    OpenQuitAppPopUp,         // open quit app popup
+    QuitAppConfirm,           // confirm quit while in quit app
+    MoveUpPrimary,            // go up in primary table or in options
+    MoveDownPrimary,          // go down in primary table or in options
+    MoveUpSecondary,          // go up in secondary table or in colorschemes
+    MoveDownSecondary,        // go down in secondary table or in coloschemes
+    ExecuteAction,            // execute current popup or SQL action
+    ToggleOption,             // toggle selected option on/off
+    FileExplorerSelect,       // select folder or file to load
+    FileExplorerBack,         // go up to paren folder in file explorer
+}
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct KeyBinding {
     pub key_code: KeyCodeSerializable,
     pub key_modifier: KeyModifierSerializable,
     pub context: InputContext,
-}
-
-#[derive(Debug, Clone, Copy, EnumIter, PartialEq, Eq, Hash, Serialize, Deserialize)]
-pub enum AppInputEvent {
-    OpenSplashScreen,           // open initial screen
-    OpenFileExplorerScreen,     // open file explorer screen
-    OpenDBSchemaScreen,         // open selected database schema screen
-    OpenDBTableScreen,          // open selected db table screen
-    OpenCreateNewFileScreen,    // open create new db file screen
-    OpenOptionsScreen,          // open options screen
-    OpenInsertRowPopUp,         // open insert row popup
-    OpenDeleteRowPopUp,         // open delete row popup
-    OpenInsertTablePopUp,       // open insert new table popup
-    OpenDeleteTablePopUp,       // open delete table popup
-    ClosePopUp,                 // close popup meaning switch to PopUp::None
-    OpenQuitAppPopUp,           // open quit app popup
-    QuitAppConfirm,             // confirm quit while in quit app
-    MoveUpPrimary,              // go up in primary table or in options
-    MoveDownPrimary,            // go down in primary table or in options
-    MoveUpSecondary,            // go up in secondary table or in colorschemes
-    MoveDownSecondary,          // go down in secondary table or in coloschemes
-    ExecuteAction,              // execute current popup or SQL action
-    ToggleOption,               // toggle selected option on/off
-    FileExplorerSelect,         // select folder or file to load
-    FileExplorerBack,           // go up to paren folder in file explorer
 }
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]
@@ -60,7 +67,8 @@ pub struct KeyBindings {
 
 impl KeyBindings {
     pub fn default() -> Self {
-        let defaults: Vec<((InputContext, AppInputEvent), KeyBinding)> = Self::get_default_bindings();
+        let defaults: Vec<((InputContext, AppInputEvent), KeyBinding)> =
+            Self::get_default_bindings();
         let mut bindings = Vec::new();
         let mut by_event_input = HashMap::new();
 
@@ -75,7 +83,7 @@ impl KeyBindings {
 
         Self {
             config: KeyBindingsSerializable { bindings },
-            by_event_input
+            by_event_input,
         }
     }
 
@@ -93,7 +101,6 @@ impl KeyBindings {
             let data = fs::read_to_string(&keybindings_dir_path)?;
             let config: KeyBindingsSerializable = toml::from_str(&data)
                 .map_err(|err| io::Error::new(io::ErrorKind::InvalidData, err))?;
-            
 
             let by_event_input = config
                 .bindings
@@ -101,7 +108,10 @@ impl KeyBindings {
                 .map(|entry| ((entry.context, entry.binding), entry.event))
                 .collect();
 
-            Ok(Self { config, by_event_input })
+            Ok(Self {
+                config,
+                by_event_input,
+            })
         } else {
             Ok(Self::default())
         }
@@ -123,17 +133,22 @@ impl KeyBindings {
         log("created keybindings path");
 
         let data = toml::to_string(&self.config).map_err(|err| {
-                let error_msg = format!("{}", err);
-                log(&error_msg);
-                io::Error::new(io::ErrorKind::InvalidData, err)
-            })?;
-            log("toml parsed");
+            let error_msg = format!("{}", err);
+            log(&error_msg);
+            io::Error::new(io::ErrorKind::InvalidData, err)
+        })?;
+        log("toml parsed");
         fs::write(keybindings_path, data)?;
         log("filesystem write done");
         Ok(())
     }
 
-    pub fn resolve_event(&self, current_screen: Screen, current_popup: PopUp, key_event: KeyEvent) -> Option<AppInputEvent> {
+    pub fn resolve_event(
+        &self,
+        current_screen: Screen,
+        current_popup: PopUp,
+        key_event: KeyEvent,
+    ) -> Option<AppInputEvent> {
         let log_msg = format!(
             "resolving input event: {:?}, current popup: {:?}, current screen: {:?}",
             key_event, current_popup, current_screen
@@ -149,7 +164,7 @@ impl KeyBindings {
         let contexts = get_input_contexts(current_screen, current_popup);
 
         for context in contexts {
-            let binding_with_context = KeyBinding {context, ..binding };
+            let binding_with_context = KeyBinding { context, ..binding };
 
             if let Some(event) = self.by_event_input.get(&(context, binding_with_context)) {
                 log(&format!("Found event {:?} in context {:?}", event, context));
@@ -163,111 +178,27 @@ impl KeyBindings {
 
     fn get_default_bindings() -> Vec<((InputContext, AppInputEvent), KeyBinding)> {
         vec![
-            ((InputContext::Global, AppInputEvent::OpenSplashScreen), KeyBinding {
-                key_code: KeyCode::Char('s').into(),
-                key_modifier: KeyModifiers::NONE.into(),
-                context: InputContext::Global
-            }),
-            ((InputContext::Global, AppInputEvent::OpenFileExplorerScreen), KeyBinding {
-                key_code: KeyCode::Char('f').into(),
-                key_modifier: KeyModifiers::NONE.into(),
-                context: InputContext::Global,
-            }),
-            ((InputContext::Global, AppInputEvent::OpenDBSchemaScreen), KeyBinding {
-                key_code: KeyCode::Char('d').into(),
-                key_modifier: KeyModifiers::NONE.into(),
-                context: InputContext::Global,
-            }),
-            ((InputContext::Global, AppInputEvent::OpenDBTableScreen), KeyBinding {
-                key_code: KeyCode::Char('t').into(),
-                key_modifier: KeyModifiers::NONE.into(),
-                context: InputContext::Global,
-            }),
-            ((InputContext::Global, AppInputEvent::OpenCreateNewFileScreen), KeyBinding {
-                key_code: KeyCode::Char('c').into(),
-                key_modifier: KeyModifiers::NONE.into(),
-                context: InputContext::Global,
-            }),
-            ((InputContext::Global, AppInputEvent::OpenOptionsScreen), KeyBinding {
-                key_code: KeyCode::Char('o').into(),
-                key_modifier: KeyModifiers::NONE.into(),
-                context: InputContext::Global,
-            }),
-            ((InputContext::Screen(Screen::DataBaseTable), AppInputEvent::OpenInsertRowPopUp), KeyBinding {
-                key_code: KeyCode::Char('i').into(),
-                key_modifier: KeyModifiers::NONE.into(),
-                context: InputContext::Screen(Screen::DataBaseTable),
-            }),
-            ((InputContext::Screen(Screen::DataBaseTable), AppInputEvent::OpenDeleteRowPopUp), KeyBinding {
-                key_code: KeyCode::Char('d').into(),
-                key_modifier: KeyModifiers::NONE.into(),
-                context: InputContext::Screen(Screen::DataBaseTable),
-            }),
-            ((InputContext::Screen(Screen::DatabaseSchema), AppInputEvent::OpenInsertTablePopUp), KeyBinding {
-                key_code: KeyCode::Char('i').into(),
-                key_modifier: KeyModifiers::NONE.into(),
-                context: InputContext::Screen(Screen::DatabaseSchema),
-            }),
-            ((InputContext::Screen(Screen::DatabaseSchema), AppInputEvent::OpenDeleteTablePopUp), KeyBinding {
-                key_code: KeyCode::Char('d').into(),
-                key_modifier: KeyModifiers::NONE.into(),
-                context: InputContext::Screen(Screen::DatabaseSchema),
-            }),
-            ((InputContext::Global, AppInputEvent::ClosePopUp), KeyBinding {
-                key_code: KeyCode::Esc.into(),
-                key_modifier: KeyModifiers::NONE.into(),
-                context: InputContext::Global,
-            }),
-            ((InputContext::Global, AppInputEvent::OpenQuitAppPopUp), KeyBinding {
-                key_code: KeyCode::Char('q').into(),
-                key_modifier: KeyModifiers::NONE.into(),
-                context: InputContext::Global,
-            }),
-            ((InputContext::PopUp(PopUp::Quit), AppInputEvent::QuitAppConfirm), KeyBinding {
-                key_code: KeyCode::Char('y').into(),
-                key_modifier: KeyModifiers::NONE.into(),
-                context: InputContext::PopUp(PopUp::Quit),
-            }),
-            ((InputContext::Global, AppInputEvent::MoveUpPrimary), KeyBinding {
-                key_code: KeyCode::Up.into(),
-                key_modifier: KeyModifiers::NONE.into(),
-                context: InputContext::Global,
-            }),
-            ((InputContext::Global, AppInputEvent::MoveDownPrimary), KeyBinding {
-                key_code: KeyCode::Down.into(),
-                key_modifier: KeyModifiers::NONE.into(),
-                context: InputContext::Global,
-            }),
-            ((InputContext::Global, AppInputEvent::MoveUpSecondary), KeyBinding {
-                key_code: KeyCode::Left.into(),
-                key_modifier: KeyModifiers::NONE.into(),
-                context: InputContext::Global,
-            }),
-            ((InputContext::Global, AppInputEvent::MoveDownSecondary), KeyBinding {
-                key_code: KeyCode::Right.into(),
-                key_modifier: KeyModifiers::NONE.into(),
-                context: InputContext::Global,
-            }),
-            ((InputContext::Global, AppInputEvent::ExecuteAction), KeyBinding {
-                key_code: KeyCode::Enter.into(),
-                key_modifier: KeyModifiers::NONE.into(),
-                context: InputContext::Global,
-            }),
-            ((InputContext::Screen(Screen::Options), AppInputEvent::ToggleOption), KeyBinding {
-                key_code: KeyCode::Tab.into(),
-                key_modifier: KeyModifiers::NONE.into(),
-                context: InputContext::Screen(Screen::Options),
-            }),
-            ((InputContext::Screen(Screen::FileExplorer), AppInputEvent::FileExplorerSelect), KeyBinding {
-                key_code: KeyCode::Enter.into(),
-                key_modifier: KeyModifiers::NONE.into(),
-                context: InputContext::Screen(Screen::FileExplorer),
-            }),
-            ((InputContext::Screen(Screen::FileExplorer), AppInputEvent::FileExplorerBack), KeyBinding {
-                key_code: KeyCode::Backspace.into(),
-                key_modifier: KeyModifiers::NONE.into(),
-                context: InputContext::Screen(Screen::FileExplorer),
-            }),
+            context_event(KeyCode::Char('s'), KeyModifiers::NONE, InputContext::Global, AppInputEvent::OpenSplashScreen),
+            context_event(KeyCode::Char('f'), KeyModifiers::NONE, InputContext::Global, AppInputEvent::OpenFileExplorerScreen),
+            context_event(KeyCode::Char('d'), KeyModifiers::NONE, InputContext::Global, AppInputEvent::OpenDBSchemaScreen),
+            context_event(KeyCode::Char('t'), KeyModifiers::NONE, InputContext::Screen(Screen::DatabaseSchema), AppInputEvent::OpenDBTableScreen),
+            context_event(KeyCode::Char('c'), KeyModifiers::NONE, InputContext::Global, AppInputEvent::OpenCreateNewFileScreen),
+            context_event(KeyCode::Char('o'), KeyModifiers::NONE, InputContext::Global, AppInputEvent::OpenOptionsScreen),
+            context_event(KeyCode::Char('i'), KeyModifiers::NONE, InputContext::Screen(Screen::DataBaseTable), AppInputEvent::OpenInsertRowPopUp),
+            context_event(KeyCode::Char('d'), KeyModifiers::NONE, InputContext::Screen(Screen::DataBaseTable), AppInputEvent::OpenDeleteRowPopUp),
+            context_event(KeyCode::Char('i'), KeyModifiers::NONE, InputContext::Screen(Screen::DatabaseSchema), AppInputEvent::OpenInsertTablePopUp),
+            context_event(KeyCode::Char('d'), KeyModifiers::NONE, InputContext::Screen(Screen::DatabaseSchema), AppInputEvent::OpenDeleteTablePopUp),
+            context_event(KeyCode::Esc, KeyModifiers::NONE, InputContext::Global, AppInputEvent::ClosePopUp),
+            context_event(KeyCode::Char('q'), KeyModifiers::NONE, InputContext::Global, AppInputEvent::OpenQuitAppPopUp),
+            context_event(KeyCode::Char('y'), KeyModifiers::NONE, InputContext::PopUp(PopUp::Quit), AppInputEvent::QuitAppConfirm),
+            context_event(KeyCode::Up, KeyModifiers::NONE, InputContext::Global, AppInputEvent::MoveUpPrimary),
+            context_event(KeyCode::Down, KeyModifiers::NONE, InputContext::Global, AppInputEvent::MoveDownPrimary),
+            context_event(KeyCode::Left, KeyModifiers::NONE, InputContext::Global, AppInputEvent::MoveUpSecondary),
+            context_event(KeyCode::Right, KeyModifiers::NONE, InputContext::Global, AppInputEvent::MoveDownSecondary),
+            context_event(KeyCode::Enter, KeyModifiers::NONE, InputContext::Global, AppInputEvent::ExecuteAction),
+            context_event(KeyCode::Tab, KeyModifiers::NONE, InputContext::Screen(Screen::Options), AppInputEvent::ToggleOption),
+            context_event(KeyCode::Enter, KeyModifiers::NONE, InputContext::Screen(Screen::FileExplorer), AppInputEvent::FileExplorerSelect),
+            context_event(KeyCode::Backspace, KeyModifiers::NONE, InputContext::Screen(Screen::FileExplorer), AppInputEvent::FileExplorerBack),
         ]
     }
 }

@@ -9,8 +9,9 @@ use crate::{
     ui::{
         colors::{app_colors::ColorScheme, static_colors::StaticColors},
         input::key_bindings::KeyBindings,
-        render
-    }, widgets::text_form::TextForm
+        render,
+    },
+    widgets::text_form::TextForm,
 };
 use ratatui::{style::Color, Terminal};
 use serde::{Deserialize, Serialize};
@@ -76,11 +77,7 @@ impl App {
             default_color_scheme,
         )?;
 
-        let key_bindings = KeyBindings::load_or_default(
-            &qualifier,
-            &organization,
-            &application
-        )?;
+        let key_bindings = KeyBindings::load_or_default(&qualifier, &organization, &application)?;
 
         Ok(Self {
             qualifier,
@@ -128,7 +125,7 @@ impl App {
             OsString::from("s3db"),
             OsString::from("sl3"),
             OsString::from("sqlite"),
-            OsString::from("sqlite3")
+            OsString::from("sqlite3"),
         ]);
 
         if path.is_file() && sqlite_extensions.contains(path.extension().unwrap()) {

@@ -2,12 +2,12 @@ mod app;
 mod column;
 mod db;
 mod file_explorer;
+mod log;
 mod options;
 mod row;
 mod table;
 mod ui;
 mod widgets;
-mod log;
 
 use app::App;
 use crossterm::{
