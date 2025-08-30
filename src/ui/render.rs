@@ -82,8 +82,11 @@ fn render_file_explorer_screen(frame: &mut Frame, app: &mut App) {
     let file_explorer_block = Block::default()
         .title("File explorer screen")
         .title(
-            Line::from(format!("Currently in: {} ",
-            app.file_explorer_table.current_path.display())).right_aligned(),
+            Line::from(format!(
+                "Currently in: {} ",
+                app.file_explorer_table.current_path.display()
+            ))
+            .right_aligned(),
         )
         .borders(Borders::NONE)
         .style(fexp_page_style);
@@ -124,14 +127,14 @@ fn render_file_explorer_screen(frame: &mut Frame, app: &mut App) {
         .bg(app.background_color())
         .fg(app.border_color());
     let border_block = Block::new().borders(Borders::ALL).style(border_block_style);
-    let inside_area = Rect {
+    let table_chunk_area_without_top_row = Rect {
         x: chunks[0].x,
         y: chunks[0].y + 1,
         height: chunks[0].height - 1,
-        width: chunks[0].width
+        width: chunks[0].width,
     };
 
-    let (table_area, scrollbar_area) = get_table_and_scrollbar_areas(inside_area);
+    let (table_area, scrollbar_area) = get_table_and_scrollbar_areas(table_chunk_area_without_top_row);
 
     render_table(
         frame,
