@@ -134,7 +134,8 @@ fn render_file_explorer_screen(frame: &mut Frame, app: &mut App) {
         width: chunks[0].width,
     };
 
-    let (table_area, scrollbar_area) = get_table_and_scrollbar_areas(table_chunk_area_without_top_row);
+    let (table_area, scrollbar_area) =
+        get_table_and_scrollbar_areas(table_chunk_area_without_top_row);
 
     render_table(
         frame,
