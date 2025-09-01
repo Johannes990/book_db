@@ -26,7 +26,7 @@ pub fn handle_key_events(app: &mut App) -> io::Result<bool> {
         } else {
             match app.current_screen {
                 Screen::Splash => splash_screen_handler(app, key_event)?,
-                Screen::FileExplorer => file_explorer_screen_handler(app, key_event),
+                Screen::FileExplorer => file_explorer_screen_handler(app, key_event)?,
                 Screen::DatabaseSchema => database_schema_screen_handler(app, key_event),
                 Screen::DataBaseTable => database_table_screen_handler(app, key_event),
                 Screen::Options => options_screen_handler(app, key_event)?,
@@ -75,72 +75,41 @@ fn splash_screen_handler(app: &mut App, key_event: KeyEvent) -> io::Result<()> {
             _ => {}
         }
     }
-    /*
-    match app.current_popup {
-        PopUp::None => {
-            if key_event.kind == KeyEventKind::Press {
-                match (key_event.code, key_event.modifiers) {
-                    (KeyCode::Esc, KeyModifiers::NONE)
-                    | (KeyCode::Char('q'), KeyModifiers::NONE) => app.switch_to_popup(PopUp::Quit),
-                    (KeyCode::Char('f'), KeyModifiers::NONE) => {
-                        app.switch_to_screen(Screen::FileExplorer)
-                    }
-                    (KeyCode::Char('n'), KeyModifiers::NONE) => {
-                        app.create_new_db_form();
-                        app.switch_to_screen(Screen::CreateNewFile);
-                    }
-                    (KeyCode::Char('o'), KeyModifiers::NONE) => {
-                        app.switch_to_screen(Screen::Options)
-                    }
-                    (KeyCode::Char('d'), KeyModifiers::NONE) => {
-                        if app.selected_db.is_some() {
-                            app.switch_to_screen(Screen::DatabaseSchema);
-                        } else {
-                            app.switch_to_popup(PopUp::NoDBLoaded);
-                        }
-                    }
-                    _ => {}
-                }
-            }
-        }
-        PopUp::Quit => {
-            if key_event.kind == KeyEventKind::Press {
-                match (key_event.code, key_event.modifiers) {
-                    (KeyCode::Esc, KeyModifiers::NONE)
-                    | (KeyCode::Char('n'), KeyModifiers::NONE) => app.switch_to_popup(PopUp::None),
-                    (KeyCode::Char('y'), KeyModifiers::NONE) => app.should_quit = true,
-                    _ => {}
-                }
-            }
-        }
-        PopUp::NoDBLoaded => {
-            if key_event.kind == KeyEventKind::Press {
-                match (key_event.code, key_event.modifiers) {
-                    (KeyCode::Esc, KeyModifiers::NONE) => app.switch_to_popup(PopUp::None),
-                    (KeyCode::Char('f'), KeyModifiers::CONTROL) => {
-                        app.switch_to_popup(PopUp::None);
-                        app.switch_to_screen(Screen::FileExplorer);
-                    }
-                    _ => {}
-                }
-            }
-        }
-        _ => {}
-    }*/
 
     Ok(())
 }
 
-fn file_explorer_screen_handler(app: &mut App, key_event: KeyEvent) {
-    if key_event.kind == KeyEventKind::Press {
-        match (key_event.code, key_event.modifiers) {
-            (KeyCode::Esc, KeyModifiers::NONE) | (KeyCode::Char('q'), KeyModifiers::NONE) => {
-                app.switch_to_screen(Screen::Splash)
+fn file_explorer_screen_handler(app: &mut App, key_event: KeyEvent) -> io::Result<()> {
+    if app.current_popup != PopUp::None {
+        return Ok(())
+    }
+
+    if key_event.kind != KeyEventKind::Press {
+        return Ok(())
+    }
+
+    if let Some(event) =
+        app.key_bindings
+            .resolve_event(app.current_screen, app.current_popup, key_event)
+    {
+        match event {
+            AppInputEvent::OpenQuitAppPopUp => app.switch_to_popup(PopUp::Quit),
+            AppInputEvent::OpenSplashScreen => app.switch_to_screen(Screen::Splash),
+            AppInputEvent::OpenDBSchemaScreen => {
+                if app.selected_db.is_some() {
+                    app.switch_to_screen(Screen::DatabaseSchema);
+                } else {
+                    app.switch_to_popup(PopUp::NoDBLoaded);
+                }
             }
-            (KeyCode::Up, KeyModifiers::NONE) => app.file_explorer_table.previous(),
-            (KeyCode::Down, KeyModifiers::NONE) => app.file_explorer_table.next(),
-            (KeyCode::Enter, KeyModifiers::NONE) => {
-                // app.selected_index = 0 when we have '..' selected (go back to parent dir)
+            AppInputEvent::OpenCreateNewFileScreen => {
+                app.create_new_db_form();
+                app.switch_to_screen(Screen::CreateNewFile);
+            }
+            AppInputEvent::OpenOptionsScreen => app.switch_to_screen(Screen::Options),
+            AppInputEvent::MoveUpPrimary => app.file_explorer_table.previous(),
+            AppInputEvent::MoveDownPrimary => app.file_explorer_table.next(),
+            AppInputEvent::FileExplorerSelect => {
                 if app.file_explorer_table.index == 0 {
                     if let Some(parent) = app.file_explorer_table.current_path.parent() {
                         app.file_explorer_table.current_path = parent.to_path_buf();
@@ -171,6 +140,8 @@ fn file_explorer_screen_handler(app: &mut App, key_event: KeyEvent) {
             _ => {}
         }
     }
+
+    Ok(())
 }
 
 fn database_schema_screen_handler(app: &mut App, key_event: KeyEvent) {
