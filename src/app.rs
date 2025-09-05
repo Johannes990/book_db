@@ -3,7 +3,7 @@ use crate::{
     db::{DBError, DB},
     file_explorer::file_explorer_table::FileExplorerTable,
     handle_key_events,
-    options::{Options, SelectedScheme},
+    options::Options,
     row::row_list::RowListView,
     table::{table_info::TableInfo, table_list::TableListView},
     ui::{
@@ -349,10 +349,6 @@ impl App {
     pub fn show_error(&mut self, error: DBError) {
         self.switch_to_popup(PopUp::Error);
         self.current_error = Some(error);
-    }
-
-    pub fn list_available_color_schemes(&self) -> &Vec<SelectedScheme> {
-        self.options.list_color_schemes()
     }
 
     pub fn populate_table_col_map(&mut self) {

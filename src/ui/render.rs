@@ -150,7 +150,7 @@ fn render_file_explorer_screen(frame: &mut Frame, app: &mut App) {
         Constraint::Length(app.file_explorer_table.longest_item_lens.2 + 4),
     ];
 
-    let highlight_col = app.background_highlight_color();
+    let highlight_style = Style::default().bg(app.background_highlight_color()).fg(app.text_highlight_color());
     let border_block_style = Style::default()
         .bg(app.background_color())
         .fg(app.border_color());
@@ -172,7 +172,7 @@ fn render_file_explorer_screen(frame: &mut Frame, app: &mut App) {
         rows,
         col_constraints.to_vec(),
         table_area,
-        highlight_col,
+        highlight_style,
         border_block,
     );
 
@@ -295,7 +295,7 @@ fn render_database_table_screen(frame: &mut Frame, app: &mut App) {
         })
         .collect();
     let header = Row::new(header_cells).style(db_page_style);
-    let highlight_col = app.background_highlight_color();
+    let highlight_style = Style::default().bg(app.background_highlight_color()).fg(app.text_highlight_color());
     let rows: Vec<_> = app
         .row_list_view
         .as_ref()
@@ -338,7 +338,7 @@ fn render_database_table_screen(frame: &mut Frame, app: &mut App) {
         rows,
         col_constraints,
         inner_area,
-        highlight_col,
+        highlight_style,
         border_block,
     );
 
@@ -389,8 +389,7 @@ fn render_options_screen(frame: &mut Frame, app: &mut App) {
 
     let selected_scheme = app.options.selected_color_scheme;
     let text_color = app.text_color();
-    let text_highlight_color = app.text_highlight_color();
-    let background_highlight_color = app.background_highlight_color();
+    let highlight_style = Style::default().bg(app.background_highlight_color()).fg(app.text_highlight_color());
     let border_color = app.border_color();
     let color_table = &mut app.options.available_color_schemes;
 
@@ -401,8 +400,7 @@ fn render_options_screen(frame: &mut Frame, app: &mut App) {
             let scheme_name = format!("{:?}", scheme);
             let style = if *scheme == selected_scheme {
                 Style::default()
-                    .fg(text_highlight_color)
-                    .bg(background_highlight_color)
+                    .fg(text_color)
                     .add_modifier(Modifier::BOLD)
             } else {
                 Style::default().fg(text_color)
@@ -418,7 +416,7 @@ fn render_options_screen(frame: &mut Frame, app: &mut App) {
             rows,
             constraints,
             horizontal_chunks[0],
-            background_highlight_color,
+            highlight_style,
             border_block
         );
 
@@ -779,7 +777,7 @@ fn render_table_list(frame: &mut Frame, app: &mut App, area: Rect) {
             .borders(Borders::ALL)
             .style(border_block_style)
             .title(table_title);
-        let highlight_color = app.background_highlight_color();
+        let highlight_style = Style::default().bg(app.background_highlight_color()).fg(app.text_highlight_color());
         let unwrapped_table_list = app.table_list_view.as_mut().unwrap();
 
         render_table(
@@ -789,7 +787,7 @@ fn render_table_list(frame: &mut Frame, app: &mut App, area: Rect) {
             rows,
             col_constraints.to_vec(),
             area,
-            highlight_color,
+            highlight_style,
             border_block,
         );
 
@@ -860,7 +858,7 @@ fn render_column_list(frame: &mut Frame, app: &mut App, area: Rect) {
             Constraint::Min(10),
         ];
 
-        let highlight_color = app.background_highlight_color();
+        let highlight_style = Style::default().bg(app.background_highlight_color()).fg(app.text_highlight_color());
         let table_title = "Columns";
         let border_block_style = Style::default()
             .bg(app.background_color())
@@ -879,7 +877,7 @@ fn render_column_list(frame: &mut Frame, app: &mut App, area: Rect) {
             rows,
             col_constraints.to_vec(),
             area,
-            highlight_color,
+            highlight_style,
             border_block,
         );
 
@@ -968,13 +966,12 @@ fn render_table(
     rows: Vec<Row>,
     col_widths: Vec<Constraint>,
     area: Rect,
-    highlight_col: Color,
+    highlight_style: Style,
     block: Block,
 ) {
-    let selected_style = Style::default().bg(highlight_col);
     let mut table = Table::new(rows, col_widths)
         .block(block)
-        .row_highlight_style(selected_style)
+        .row_highlight_style(highlight_style)
         .highlight_spacing(HighlightSpacing::Always);
 
     if let Some(table_header) = header {
