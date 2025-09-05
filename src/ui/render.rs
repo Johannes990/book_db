@@ -64,8 +64,7 @@ fn render_splash_screen(frame: &mut Frame, app: &App) {
         Line::from(format!(" Loaded Database: {}", loaded_db_name)),
         Line::from(format!(" Loaded Table: {}", selected_table_name)),
     ];
-    let main_page_paragraph =
-        Paragraph::new(main_page_content).style(main_page_style);
+    let main_page_paragraph = Paragraph::new(main_page_content).style(main_page_style);
 
     frame.render_widget(main_page_paragraph, chunks[0]);
 
