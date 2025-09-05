@@ -62,7 +62,7 @@ fn render_splash_screen(frame: &mut Frame, app: &App) {
         Line::from(" Database terminal app v0.1.0"),
         Line::from(""),
         Line::from(format!(" Loaded Database: {}", loaded_db_name)),
-        Line::from(format!(" Loaded Table: {}", selected_table_name))
+        Line::from(format!(" Loaded Table: {}", selected_table_name)),
     ];
     let main_page_paragraph =
         Paragraph::new(main_page_content).style(main_page_style);
@@ -100,8 +100,7 @@ fn render_file_explorer_screen(frame: &mut Frame, app: &mut App) {
             ))
             .centered(),
         )
-        .title(Line::from(format!("Mode: {} ", app.current_mode)).right_aligned()
-        )
+        .title(Line::from(format!("Mode: {} ", app.current_mode)).right_aligned())
         .borders(Borders::NONE)
         .style(fexp_page_style);
 
@@ -409,7 +408,7 @@ fn render_options_screen(frame: &mut Frame, app: &mut App) {
         constraints,
         color_scheme_table_inner_area,
         highlight_style,
-        border_block
+        border_block,
     );
 
     render_vertical_scrollbar(

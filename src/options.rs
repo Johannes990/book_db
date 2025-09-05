@@ -46,7 +46,7 @@ impl Options {
         let available_color_schemes = GenericListView::new(
             StaticColors::iter()
                 .map(SelectedScheme::Static)
-                .collect::<Vec<_>>()
+                .collect::<Vec<_>>(),
         );
         let available_options = SelectedOption::iter().collect();
         Self {
