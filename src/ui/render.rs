@@ -4,7 +4,7 @@ use crate::{
     options::{SelectedOption, SelectedScheme},
     row::row_info::RowInfo,
     ui::colors::app_colors::ColorScheme,
-    widgets::{generic_list_view::GenericListView, selectable_line::SelectableLine},
+    widgets::selectable_line::SelectableLine,
 };
 use ratatui::{
     layout::{Constraint, Direction, Flex, Layout},
@@ -12,7 +12,7 @@ use ratatui::{
     style::{Color, Modifier, Style},
     text::{Line, Span, Text},
     widgets::{
-        Block, Borders, Cell, Clear, HighlightSpacing, List, ListItem, Paragraph, Row, Scrollbar,
+        Block, Borders, Cell, Clear, HighlightSpacing, Paragraph, Row, Scrollbar,
         ScrollbarOrientation, ScrollbarState, Table, TableState, Wrap,
     },
     Frame, Terminal,
@@ -379,10 +379,6 @@ fn render_options_screen(frame: &mut Frame, app: &mut App) {
         get_chunks_from_percentages(vertical_chunks[1], Direction::Horizontal, vec![50, 50]);
 
     let header = Row::new(vec![Cell::from("Color Schemes")]);
-    let scrollbar_style = Style::default().fg(app.border_color());
-    let preview_border_style = Style::default().fg(app.border_color());
-    let highlight_col = app.background_highlight_color();
-    let color_schemes: &Vec<SelectedScheme> = app.list_available_color_schemes();
     let constraints = vec![Constraint::Min(5)];
     let border_block_style = Style::default()
         .bg(app.background_color())
@@ -391,53 +387,48 @@ fn render_options_screen(frame: &mut Frame, app: &mut App) {
         .borders(Borders::ALL)
         .style(border_block_style);
 
-    let mut color_table: GenericListView<SelectedScheme> = GenericListView::new(color_schemes.to_vec());
+    let selected_scheme = app.options.selected_color_scheme;
+    let text_color = app.text_color();
+    let text_highlight_color = app.text_highlight_color();
+    let background_highlight_color = app.background_highlight_color();
+    let border_color = app.border_color();
+    let color_table = &mut app.options.available_color_schemes;
 
     let rows: Vec<_> = color_table
         .items
         .iter()
         .map(|scheme| {
             let scheme_name = format!("{:?}", scheme);
-            let style = if *scheme == app.options.selected_color_scheme {
+            let style = if *scheme == selected_scheme {
                 Style::default()
-                    .fg(app.text_highlight_color())
-                    .bg(app.background_highlight_color())
+                    .fg(text_highlight_color)
+                    .bg(background_highlight_color)
                     .add_modifier(Modifier::BOLD)
             } else {
-                Style::default().fg(app.text_color())
+                Style::default().fg(text_color)
             };
-            Row::new(vec![
-                Cell::from(scheme_name)
-            ]).style(style)
+            Row::new(vec![Cell::from(scheme_name)]).style(style)
         })
         .collect();
 
-    //render_table(frame, &mut color_table.state, Some(header), rows, constraints, horizontal_chunks[0], highlight_col, border_block);
+        render_table(
+            frame,
+            &mut color_table.state,
+            Some(header),
+            rows,
+            constraints,
+            horizontal_chunks[0],
+            background_highlight_color,
+            border_block
+        );
 
-    let color_scheme_items: Vec<ListItem> = color_schemes
-        .iter()
-        .map(|scheme| {
-            let scheme_name = format!("{:?}", scheme);
-            let style = if *scheme == app.options.selected_color_scheme {
-                Style::default()
-                    .fg(app.text_highlight_color())
-                    .bg(app.background_highlight_color())
-                    .add_modifier(Modifier::BOLD)
-            } else {
-                Style::default().fg(app.text_color())
-            };
-            ListItem::new(scheme_name).style(style)
-        })
-        .collect();
-    let color_scheme_list = List::new(color_scheme_items)
-        .block(
-            Block::default()
-                .borders(Borders::ALL)
-                .title("Color Schemes"),
-        )
-        .highlight_style(Style::default().bg(app.background_highlight_color()));
-
-    frame.render_widget(color_scheme_list, horizontal_chunks[0]);
+        render_vertical_scrollbar(
+            frame,
+            Style::default().fg(border_color),
+            horizontal_chunks[0],
+            Some("•"),
+            &mut color_table.scroll_bar_state,
+        );
 
     render_color_scheme_preview(
         frame,

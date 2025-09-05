@@ -3,10 +3,10 @@ use serde::{Deserialize, Serialize};
 use std::{fs, io};
 use strum::{EnumIter, IntoEnumIterator};
 
-use crate::ui::colors::{
+use crate::{ui::colors::{
     app_colors::{AppColors, ColorScheme},
     static_colors::StaticColors,
-};
+}, widgets::generic_list_view::GenericListView};
 
 #[derive(EnumIter, Clone, Copy, PartialEq, Serialize, Deserialize)]
 pub enum SelectedOption {
@@ -30,7 +30,7 @@ impl ColorScheme for SelectedScheme {
 
 #[derive(Serialize, Deserialize)]
 pub struct Options {
-    pub available_color_schemes: Vec<SelectedScheme>,
+    pub available_color_schemes: GenericListView<SelectedScheme>,
     pub selected_color_scheme: SelectedScheme,
     pub available_options: Vec<SelectedOption>,
     pub selected_option: SelectedOption,
@@ -40,7 +40,8 @@ pub struct Options {
 
 impl Options {
     pub fn new(default_color_scheme: StaticColors) -> Self {
-        let available_color_schemes = StaticColors::iter().map(SelectedScheme::Static).collect();
+        let available_color_schemes =
+            GenericListView::new(StaticColors::iter().map(SelectedScheme::Static).collect::<Vec<_>>());
         let available_options = SelectedOption::iter().collect();
         Self {
             available_color_schemes,
@@ -68,11 +69,14 @@ impl Options {
             let mut options: Self = toml::from_str(&data)
                 .map_err(|err| io::Error::new(io::ErrorKind::InvalidData, err))?;
 
+            options.available_color_schemes.rebuild();
+
             options.available_color_schemes =
-                StaticColors::iter().map(SelectedScheme::Static).collect();
+                GenericListView::new(StaticColors::iter().map(SelectedScheme::Static).collect());
 
             if !options
                 .available_color_schemes
+                .items
                 .contains(&options.selected_color_scheme)
             {
                 options.selected_color_scheme = SelectedScheme::Static(default_color_scheme);
@@ -101,39 +105,21 @@ impl Options {
     }
 
     fn select_color_scheme(&mut self, color_scheme: SelectedScheme) {
-        if self.available_color_schemes.contains(&color_scheme) {
+        if self.available_color_schemes.items.contains(&color_scheme) {
             self.selected_color_scheme = color_scheme;
         }
     }
 
-    pub fn list_color_schemes(&self) -> &Vec<SelectedScheme> {
-        &self.available_color_schemes
-    }
-
     pub fn previous_color_scheme(&mut self) {
-        if let Some(index) = self
-            .available_color_schemes
-            .iter()
-            .position(|cs| cs == &self.selected_color_scheme)
-        {
-            let prev_index = if index == 0 {
-                self.available_color_schemes.len() - 1
-            } else {
-                index - 1
-            };
-            self.select_color_scheme(self.available_color_schemes[prev_index]);
-        }
+        self.available_color_schemes.previous();
+        let index = self.available_color_schemes.index;
+        self.select_color_scheme(self.available_color_schemes.items[index]);
     }
 
     pub fn next_color_scheme(&mut self) {
-        if let Some(index) = self
-            .available_color_schemes
-            .iter()
-            .position(|cs| cs == &self.selected_color_scheme)
-        {
-            let next_index = (index + 1) % self.available_color_schemes.len();
-            self.select_color_scheme(self.available_color_schemes[next_index]);
-        }
+        self.available_color_schemes.next();
+        let index = self.available_color_schemes.index;
+        self.select_color_scheme(self.available_color_schemes.items[index]);
     }
 
     pub fn set_display_col_metainfo_in_table_view(&mut self, value: bool) {
