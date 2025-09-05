@@ -1,7 +1,7 @@
 use crossterm::event::{KeyCode, KeyModifiers};
 
 use crate::{
-    app::{PopUp, Screen},
+    app::{Mode, PopUp, Screen},
     ui::input::key_bindings::{AppInputEvent, KeyBinding},
 };
 
@@ -11,22 +11,20 @@ use serde::{Deserialize, Serialize};
 pub enum InputContext {
     Screen(Screen),
     PopUp(PopUp),
+    Mode(Mode),
     Global,
-    /*
-     * Might have app input mode here as well.
-     * For instance, different input commands when searching for text vs inserting or browsing.
-     */
 }
 
-pub fn get_input_contexts(screen: Screen, popup: PopUp) -> Vec<InputContext> {
+pub fn get_input_contexts(screen: Screen, popup: PopUp, mode: Mode) -> Vec<InputContext> {
     if popup != PopUp::None {
         vec![
+            InputContext::Mode(mode),
             InputContext::PopUp(popup),
             InputContext::Screen(screen),
             InputContext::Global,
         ]
     } else {
-        vec![InputContext::Screen(screen), InputContext::Global]
+        vec![InputContext::Mode(mode), InputContext::Screen(screen), InputContext::Global]
     }
 }
 

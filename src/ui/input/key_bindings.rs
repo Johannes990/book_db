@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 use strum::EnumIter;
 
 use crate::{
-    app::{PopUp, Screen},
+    app::{Mode, PopUp, Screen},
     log::log,
     ui::input::{
         input_context::{context_event, get_input_contexts, InputContext},
@@ -36,7 +36,9 @@ pub enum AppInputEvent {
     ExecuteAction,           // execute current popup or SQL action
     ToggleOption,            // toggle selected option on/off
     FileExplorerSelect,      // select folder or file to load
-    FileExplorerBack,        // go up to paren folder in file explorer
+    FileExplorerBack,        // go up to parent folder in file explorer
+    SwitchToEdit,            // switch to app edit mode, allowing text editing in text fields
+    SwitchToBrowse,          // switch to app browse mode, allowing use of commands via simple keystrokes
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
@@ -148,11 +150,12 @@ impl KeyBindings {
         &self,
         current_screen: Screen,
         current_popup: PopUp,
+        current_mode: Mode,
         key_event: KeyEvent,
     ) -> Option<AppInputEvent> {
         let log_msg = format!(
-            "resolving input event: {:?}, current popup: {:?}, current screen: {:?}",
-            key_event, current_popup, current_screen
+            "resolving input event: {:?}, current popup: {:?}, current screen: {:?}, current mode: {:?}",
+            key_event, current_popup, current_screen, current_mode
         );
         log(&log_msg);
 
@@ -162,7 +165,7 @@ impl KeyBindings {
             context: InputContext::Global,
         };
 
-        let contexts = get_input_contexts(current_screen, current_popup);
+        let contexts = get_input_contexts(current_screen, current_popup, current_mode);
 
         for context in contexts {
             let binding_with_context = KeyBinding { context, ..binding };
@@ -305,6 +308,18 @@ impl KeyBindings {
                 InputContext::Screen(Screen::FileExplorer),
                 AppInputEvent::FileExplorerBack,
             ),
+            context_event(
+                KeyCode::BackTab,
+                KeyModifiers::SHIFT,
+                InputContext::Mode(Mode::Browse),
+                AppInputEvent::SwitchToEdit,
+            ),
+            context_event(
+                KeyCode::BackTab,
+                KeyModifiers::SHIFT,
+                InputContext::Mode(Mode::Edit),
+                AppInputEvent::SwitchToBrowse,
+            )
         ]
     }
 }

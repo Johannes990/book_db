@@ -177,8 +177,8 @@ fn render_database_schema_screen(frame: &mut Frame, app: &mut App) {
         .expect("No DB option found")
         .get_db_name();
     let outer_block = Block::default()
-        .title(" Database View")
-        .title(Line::from(format!("Currently viewing DATABASE: {}.db ", db_name)).right_aligned())
+        .title(Line::from(format!("Currently viewing DATABASE: {}.db ", db_name)))
+        .title(Line::from(format!("{}", app.current_mode)).right_aligned())
         .style(db_page_style);
     let inner_area = outer_block.inner(chunks[0]);
     let table_column_chunks =
@@ -488,7 +488,7 @@ fn render_insert_row_popup(frame: &mut Frame, app: &mut App) {
         .bg(app.background_alt_color())
         .fg(app.text_color());
 
-    if let Some(form) = &mut app.table_insert_form {
+    if let Some(form) = &mut app.row_insert_form {
         form.set_styles(
             insert_text_area_on_style,
             insert_text_area_off_style,
@@ -573,7 +573,7 @@ fn render_insert_table_popup(frame: &mut Frame, app: &mut App) {
         .bg(app.text_color())
         .fg(app.background_alt_color());
 
-    if let Some(form) = &mut app.create_table_form {
+    if let Some(form) = &mut app.table_insert_form {
         form.set_styles(
             insert_text_area_on_style,
             insert_text_area_off_style,
@@ -581,7 +581,7 @@ fn render_insert_table_popup(frame: &mut Frame, app: &mut App) {
         );
     }
 
-    if let Some(form) = &app.create_table_form {
+    if let Some(form) = &app.table_insert_form {
         form.render_widget_and_cursor(frame, chunks[0]);
     }
 
@@ -605,11 +605,11 @@ fn render_drop_table_popup(frame: &mut Frame, app: &mut App) {
         .bg(app.background_highlight_color())
         .fg(app.text_highlight_color());
 
-    if let Some(form) = &mut app.drop_table_form {
+    if let Some(form) = &mut app.table_delete_form {
         form.set_styles(text_area_style, Style::default(), drop_table_popup_style);
     }
 
-    if let Some(form) = &app.drop_table_form {
+    if let Some(form) = &app.table_delete_form {
         form.render_widget_and_cursor(frame, chunks[0]);
     }
 
@@ -637,7 +637,7 @@ fn render_delete_row_popup(frame: &mut Frame, app: &mut App) {
     let delete_text_area_off_style = Style::default()
         .bg(app.background_alt_color())
         .fg(app.text_color());
-    if let Some(form) = &mut app.table_delete_form {
+    if let Some(form) = &mut app.row_delete_form {
         form.set_styles(
             delete_text_area_on_style,
             delete_text_area_off_style,
@@ -645,7 +645,7 @@ fn render_delete_row_popup(frame: &mut Frame, app: &mut App) {
         );
     }
 
-    if let Some(form) = &app.table_delete_form {
+    if let Some(form) = &app.row_delete_form {
         form.render_widget_and_cursor(frame, chunks[0]);
     }
 

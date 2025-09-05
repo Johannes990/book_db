@@ -14,6 +14,8 @@ pub enum DBError {
     TableAlreadyExists(String),
     TableDoesNotExist(String),
     ColumnDoesNotExist(String),
+    CannotAddRow(String),
+    CannotDeleteRow(String),
     SqlError(String),
     ParseError(String),
 }
@@ -27,6 +29,8 @@ impl fmt::Display for DBError {
             DBError::TableAlreadyExists(table) => write!(f, "Table '{}' already exists", table),
             DBError::TableDoesNotExist(table) => write!(f, "Table '{}' does not exist", table),
             DBError::ColumnDoesNotExist(column) => write!(f, "Column '{}' does not exist", column),
+            DBError::CannotAddRow(row) => write!(f, "Unable to add row '{}'", row),
+            DBError::CannotDeleteRow(row) => write!(f, "Unable to delete row '{}'", row),
             Self::SqlError(e) => write!(f, "SQL Error: {}", e),
             DBError::ParseError(e) => write!(f, "SQL Parse Error: {}", e),
         }

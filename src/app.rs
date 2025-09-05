@@ -15,6 +15,7 @@ use crate::{
 };
 use ratatui::{style::Color, Terminal};
 use serde::{Deserialize, Serialize};
+use strum::Display;
 use std::{collections::HashSet, ffi::OsString, io, path::PathBuf};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
@@ -39,12 +40,19 @@ pub enum PopUp {
     Error,
 }
 
+#[derive(Clone, Copy, Debug, Display, PartialEq, Eq, Hash, Deserialize, Serialize)]
+pub enum Mode {
+    Browse,
+    Edit,
+}
+
 pub struct App {
     pub qualifier: String,
     pub organization: String,
     pub application: String,
     pub current_screen: Screen,
     pub current_popup: PopUp,
+    pub current_mode: Mode,
     pub current_error: Option<DBError>,
     pub selected_db: Option<DB>,
     pub selected_db_table: Option<String>,
@@ -53,10 +61,10 @@ pub struct App {
     pub table_list_view: Option<TableListView>,
     pub column_list_view: Option<ColumnListView>,
     pub row_list_view: Option<RowListView>,
+    pub row_insert_form: Option<TextForm>,
+    pub row_delete_form: Option<TextForm>,
     pub table_insert_form: Option<TextForm>,
     pub table_delete_form: Option<TextForm>,
-    pub create_table_form: Option<TextForm>,
-    pub drop_table_form: Option<TextForm>,
     pub create_db_form: Option<TextForm>,
     pub should_quit: bool,
     pub options: Options,
@@ -85,6 +93,7 @@ impl App {
             application,
             current_screen: Screen::Splash,
             current_popup: PopUp::None,
+            current_mode: Mode::Browse,
             current_error: None,
             selected_db: None,
             selected_db_table: None,
@@ -93,10 +102,10 @@ impl App {
             table_list_view: None,
             column_list_view: None,
             row_list_view: None,
+            row_insert_form: None,
+            row_delete_form: None,
             table_insert_form: None,
             table_delete_form: None,
-            create_table_form: None,
-            drop_table_form: None,
             create_db_form: None,
             should_quit: false,
             options,
@@ -232,39 +241,39 @@ impl App {
         }
     }
 
-    pub fn create_table_insert_form(&mut self, table_cols: Vec<String>) {
+    pub fn create_row_insert_form(&mut self, table_cols: Vec<String>) {
         let title_text = format!(
             "Enter new entry into table {}",
             self.selected_db_table.as_deref().unwrap()
         );
-        self.table_insert_form = Some(TextForm::new(table_cols, title_text));
+        self.row_insert_form = Some(TextForm::new(table_cols, title_text));
     }
 
-    pub fn create_table_delete_form(&mut self) {
+    pub fn create_row_delete_form(&mut self) {
         let title_text = format!(
             "Delete entry from table {}",
             self.selected_db_table.as_deref().unwrap()
         );
-        self.table_delete_form = Some(TextForm::new(
+        self.row_delete_form = Some(TextForm::new(
             vec!["Column name".to_string(), "Row value".to_string()],
             title_text,
         ));
     }
 
-    pub fn create_create_table_form(&mut self) {
+    pub fn create_table_insert_form(&mut self) {
         let title_text = format!(
             "Create new table into database {}",
             self.selected_db.as_ref().unwrap().get_db_name()
         );
-        self.create_table_form = Some(TextForm::new(vec!["Raw SQL".to_string()], title_text));
+        self.table_insert_form = Some(TextForm::new(vec!["Raw SQL".to_string()], title_text));
     }
 
-    pub fn create_drop_table_form(&mut self) {
+    pub fn create_table_delete_form(&mut self) {
         let title_text = format!(
             "Drop table from database {}",
             self.selected_db.as_ref().unwrap().get_db_name()
         );
-        self.drop_table_form = Some(TextForm::new(vec!["Table Name".to_string()], title_text));
+        self.table_delete_form = Some(TextForm::new(vec!["Table Name".to_string()], title_text));
     }
 
     pub fn create_new_db_form(&mut self) {
@@ -326,6 +335,10 @@ impl App {
         if popup != PopUp::Error {
             self.current_error = None;
         }
+    }
+
+    pub fn switch_mode(&mut self, mode: Mode) {
+        self.current_mode = mode;
     }
 
     pub fn show_error(&mut self, error: DBError) {

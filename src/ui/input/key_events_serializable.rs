@@ -12,6 +12,7 @@ pub enum KeyCodeSerializable {
     Left,
     Right,
     Backspace,
+    BackTab
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
@@ -34,6 +35,7 @@ impl From<KeyCode> for KeyCodeSerializable {
             KeyCode::Left => KeyCodeSerializable::Left,
             KeyCode::Right => KeyCodeSerializable::Right,
             KeyCode::Backspace => KeyCodeSerializable::Backspace,
+            KeyCode::BackTab => KeyCodeSerializable::BackTab,
             _ => unimplemented!("Unsupported keycode: {:?}", code),
         }
     }
@@ -51,6 +53,7 @@ impl From<KeyCodeSerializable> for KeyCode {
             KeyCodeSerializable::Left => KeyCode::Left,
             KeyCodeSerializable::Right => KeyCode::Right,
             KeyCodeSerializable::Backspace => KeyCode::Backspace,
+            KeyCodeSerializable::BackTab => KeyCode::BackTab,
         }
     }
 }
