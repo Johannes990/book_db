@@ -12,7 +12,7 @@ pub enum KeyCodeSerializable {
     Left,
     Right,
     Backspace,
-    BackTab
+    BackTab,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]

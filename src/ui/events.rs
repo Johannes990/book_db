@@ -57,7 +57,7 @@ fn splash_screen_handler(app: &mut App, key_event: KeyEvent) -> io::Result<()> {
         app.current_screen,
         app.current_popup,
         app.current_mode,
-        key_event
+        key_event,
     ) {
         match event {
             AppInputEvent::OpenQuitAppPopUp => app.switch_to_popup(PopUp::Quit),
@@ -184,8 +184,7 @@ fn database_schema_screen_handler(app: &mut App, key_event: KeyEvent) -> io::Res
                 let db = &app.selected_db.as_mut().unwrap();
                 let tables = db.get_table_list().unwrap_or_default();
                 if let Some(selected_table) = &app.selected_db_table {
-                    let current_idx =
-                        tables.iter().position(|t| t == selected_table).unwrap_or(0);
+                    let current_idx = tables.iter().position(|t| t == selected_table).unwrap_or(0);
                     if current_idx > 0 {
                         app.select_table(tables[current_idx - 1].clone());
                     } else if current_idx == 0 {
@@ -409,10 +408,12 @@ fn quit_popup_handler(app: &mut App, key_event: KeyEvent) -> io::Result<()> {
 
     log("popup quit");
 
-    if let Some(event) =
-        app.key_bindings
-            .resolve_event(app.current_screen, app.current_popup, app.current_mode, key_event)
-    {
+    if let Some(event) = app.key_bindings.resolve_event(
+        app.current_screen,
+        app.current_popup,
+        app.current_mode,
+        key_event,
+    ) {
         match event {
             AppInputEvent::QuitAppConfirm => {
                 app.should_quit = true;
@@ -453,7 +454,7 @@ fn insert_row_popup_handler(app: &mut App, key_event: KeyEvent) -> io::Result<()
         return Ok(());
     }
 
-    match app.current_mode{
+    match app.current_mode {
         Mode::Browse => {
             if let Some(event) = app.key_bindings.resolve_event(
                 app.current_screen,
@@ -484,7 +485,7 @@ fn insert_row_popup_handler(app: &mut App, key_event: KeyEvent) -> io::Result<()
                             values_str.push(&item.text_value);
                         }
 
-                        match db.insert_rows_statement(table_name.clone() ,columns, values) {
+                        match db.insert_rows_statement(table_name.clone(), columns, values) {
                             Ok(_) => {
                                 let table_list = app.table_list_view.as_mut().unwrap();
                                 if let Some(table_info) =
@@ -651,12 +652,11 @@ fn insert_table_popup_handler(app: &mut App, key_event: KeyEvent) -> io::Result<
     }
 
     Ok(())
-    
 }
 
 fn delete_table_popup_handler(app: &mut App, key_event: KeyEvent) -> io::Result<()> {
     if key_event.kind != KeyEventKind::Press {
-        return Ok(())
+        return Ok(());
     }
 
     match app.current_mode {
