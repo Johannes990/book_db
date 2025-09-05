@@ -419,46 +419,7 @@ fn create_new_file_screen_handler(app: &mut App, key_event: KeyEvent) -> io::Res
             }
         }
     }
-    
-    /*if key_event.kind == KeyEventKind::Press {
-        match (key_event.code, key_event.modifiers) {
-            (KeyCode::Esc, KeyModifiers::NONE) | (KeyCode::Char('q'), KeyModifiers::NONE) => {
-                app.switch_to_screen(Screen::Splash)
-            }
-            (KeyCode::Char('s'), KeyModifiers::CONTROL) => {
-                if app.selected_db.is_none() {
-                    if let Some(form) = &app.create_db_form {
-                        let db_name = form.fields[0].text_value.clone();
 
-                        match DB::new(db_name) {
-                            Ok(db) => {
-                                app.selected_db = Some(db);
-                                app.fetch_table_list();
-                                app.populate_table_col_map();
-                                app.switch_to_screen(Screen::DatabaseSchema);
-                            }
-                            Err(e) => {
-                                let err = DBError::ConnectionCreationError(e.to_string());
-                                app.show_error(err);
-                            }
-                        }
-                    }
-                }
-            }
-            (KeyCode::Char(c), KeyModifiers::NONE) => {
-                app.create_db_form.as_mut().unwrap().enter_char(c)
-            }
-            (KeyCode::Char(c), KeyModifiers::SHIFT) => {
-                for c_uppercase in c.to_uppercase() {
-                    app.create_db_form.as_mut().unwrap().enter_char(c_uppercase);
-                }
-            }
-            (KeyCode::Backspace, KeyModifiers::NONE) => {
-                app.create_db_form.as_mut().unwrap().pop_char()
-            }
-            _ => {}
-        }
-    }*/
     Ok (())
 }
 
