@@ -374,8 +374,12 @@ fn create_new_file_screen_handler(app: &mut App, key_event: KeyEvent) -> io::Res
             ) {
                 match event {
                     AppInputEvent::OpenSplashScreen => app.switch_to_screen(Screen::Splash),
-                    AppInputEvent::OpenFileExplorerScreen => app.switch_to_screen(Screen::FileExplorer),
-                    AppInputEvent::OpenDBSchemaScreen => app.switch_to_screen(Screen::DatabaseSchema),
+                    AppInputEvent::OpenFileExplorerScreen => {
+                        app.switch_to_screen(Screen::FileExplorer)
+                    }
+                    AppInputEvent::OpenDBSchemaScreen => {
+                        app.switch_to_screen(Screen::DatabaseSchema)
+                    }
                     AppInputEvent::OpenDBTableScreen => app.switch_to_screen(Screen::DataBaseTable),
                     AppInputEvent::OpenOptionsScreen => app.switch_to_screen(Screen::Options),
                     AppInputEvent::OpenQuitAppPopUp => app.switch_to_popup(PopUp::Quit),
@@ -420,7 +424,7 @@ fn create_new_file_screen_handler(app: &mut App, key_event: KeyEvent) -> io::Res
         }
     }
 
-    Ok (())
+    Ok(())
 }
 
 fn quit_popup_handler(app: &mut App, key_event: KeyEvent) -> io::Result<()> {
