@@ -12,26 +12,23 @@ use std::io;
 
 pub fn handle_key_events(app: &mut App) -> io::Result<bool> {
     if let Event::Key(key_event) = event::read()? {
-        if app.current_popup != PopUp::None {
-            match app.current_popup {
-                PopUp::Quit => quit_popup_handler(app, key_event)?,
-                PopUp::NoDBLoaded => no_db_loaded_popup_handler(app, key_event)?,
-                PopUp::InsertRow => insert_row_popup_handler(app, key_event)?,
-                PopUp::DeleteRow => delete_row_popup_handler(app, key_event)?,
-                PopUp::InsertTable => insert_table_popup_handler(app, key_event)?,
-                PopUp::DeleteTable => delete_table_popup_handler(app, key_event)?,
-                PopUp::Error => error_popup_handler(app, key_event)?,
-                _ => {}
-            }
-        } else {
-            match app.current_screen {
-                Screen::Splash => splash_screen_handler(app, key_event)?,
-                Screen::FileExplorer => file_explorer_screen_handler(app, key_event)?,
-                Screen::DatabaseSchema => database_schema_screen_handler(app, key_event)?,
-                Screen::DataBaseTable => database_table_screen_handler(app, key_event)?,
-                Screen::Options => options_screen_handler(app, key_event)?,
-                Screen::CreateNewFile => create_new_file_screen_handler(app, key_event)?,
-            }
+        match app.current_screen {
+            Screen::Splash => splash_screen_handler(app, key_event)?,
+            Screen::FileExplorer => file_explorer_screen_handler(app, key_event)?,
+            Screen::DatabaseSchema => database_schema_screen_handler(app, key_event)?,
+            Screen::DataBaseTable => database_table_screen_handler(app, key_event)?,
+            Screen::Options => options_screen_handler(app, key_event)?,
+            Screen::CreateNewFile => create_new_file_screen_handler(app, key_event)?,
+        }
+        match app.current_popup {
+            PopUp::Quit => quit_popup_handler(app, key_event)?,
+            PopUp::NoDBLoaded => no_db_loaded_popup_handler(app, key_event)?,
+            PopUp::InsertRow => insert_row_popup_handler(app, key_event)?,
+            PopUp::DeleteRow => delete_row_popup_handler(app, key_event)?,
+            PopUp::InsertTable => insert_table_popup_handler(app, key_event)?,
+            PopUp::DeleteTable => delete_table_popup_handler(app, key_event)?,
+            PopUp::Error => error_popup_handler(app, key_event)?,
+            PopUp::None => {}
         }
     }
 
