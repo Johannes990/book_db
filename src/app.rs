@@ -143,8 +143,13 @@ impl App {
                 .unwrap_or_default()
                 .to_string_lossy()
                 .to_string();
+            let db_extension = path
+                .extension()
+                .unwrap_or_default()
+                .to_string_lossy()
+                .to_string();
 
-            match DB::new(db_name) {
+            match DB::new(db_name, db_extension) {
                 Ok(db) => {
                     self.selected_db = Some(db);
                     self.fetch_table_list();

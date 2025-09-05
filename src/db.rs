@@ -51,25 +51,29 @@ impl From<ParserError> for DBError {
 
 pub struct DB {
     pub db_name: String,
+    pub db_extension: String,
     pub db_conn: Connection,
     pub db_tab_col_map: HashMap<String, Vec<String>>,
 }
 
 impl DB {
-    pub fn new(name: String) -> Result<Self, DBError> {
+    pub fn new(name: String, extension: String) -> Result<Self, DBError> {
         let db_string = name.to_owned() + ".db";
         let conn = Connection::open(&db_string)
             .map_err(|text| DBError::ConnectionCreationError(text.to_string()))?;
 
         Ok(Self {
             db_name: name,
+            db_extension : extension,
             db_conn: conn,
             db_tab_col_map: HashMap::new(),
         })
     }
 
     pub fn get_db_name(&self) -> String {
-        self.db_name.clone()
+        let name = format!("{}.{}", self.db_name, self.db_extension);
+        
+        name.to_string()
     }
 
     pub fn get_table_list(&self) -> Result<Vec<String>> {

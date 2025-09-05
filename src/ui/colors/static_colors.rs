@@ -9,7 +9,8 @@ pub enum StaticColors {
     CoolLilac,
     CoolBlue,
     SeaFoam,
-    Test,
+    BlackAndWhite,
+    WhiteAndBlack,
 }
 
 impl ColorScheme for StaticColors {
@@ -63,17 +64,29 @@ impl ColorScheme for StaticColors {
                 border: rgb(40, 80, 120),
                 accent: rgb(0, 170, 200),
             },
-            StaticColors::Test => AppColors {
+            StaticColors::BlackAndWhite => AppColors {
                 text: rgb(0, 0, 0),
-                text_alt: rgb(255, 0, 0),
-                text_highlight: rgb(255, 0, 0),
-                background: rgb(255, 0, 0),
-                background_alt: rgb(255, 0, 0),
-                background_highlight: rgb(255, 0, 0),
-                warning: rgb(255, 0, 0),
-                error: rgb(255, 0, 0),
-                border: rgb(255, 0, 0),
+                text_alt: rgb(0, 0, 0),
+                text_highlight: rgb(255, 255, 255),
+                background: rgb(255, 255, 255),
+                background_alt: rgb(255, 255, 255),
+                background_highlight: rgb(0, 0, 0),
+                warning: rgb(0, 0, 0),
+                error: rgb(0, 0, 0),
+                border: rgb(0, 0, 0),
                 accent: rgb(0, 0, 0),
+            },
+            StaticColors::WhiteAndBlack => AppColors{
+                text: rgb(255, 255, 255),
+                text_alt: rgb(255, 255, 255),
+                text_highlight: rgb(0, 0, 0),
+                background: rgb(0, 0, 0),
+                background_alt: rgb(0, 0, 0),
+                background_highlight: rgb(255, 255, 255),
+                warning: rgb(255, 255, 255),
+                error: rgb(255, 255, 255),
+                border: rgb(255, 255, 255),
+                accent: rgb(255, 255, 255),
             },
         }
     }

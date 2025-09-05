@@ -4,7 +4,7 @@ use crate::{
     options::{SelectedOption, SelectedScheme},
     row::row_info::RowInfo,
     ui::colors::app_colors::ColorScheme,
-    widgets::selectable_line::SelectableLine,
+    widgets::{generic_list_view::GenericListView, selectable_line::SelectableLine},
 };
 use ratatui::{
     layout::{Constraint, Direction, Flex, Layout},
@@ -52,10 +52,31 @@ fn render_splash_screen(frame: &mut Frame, app: &App) {
     let main_page_style = Style::default()
         .bg(app.background_color())
         .fg(app.text_color());
-    let main_page_content =
-        Paragraph::new("Database terminal app v0.0.1".to_owned()).style(main_page_style);
+    let loaded_db_name = app
+        .selected_db
+        .as_ref()
+        .map(|db| format!("{}.{}", db.db_name, db.db_extension))
+        .unwrap_or("None".to_string());
+    let selected_table_name = app
+        .selected_db_table
+        .as_ref()
+        .map_or("None", |name| name);
+    let main_page_content = vec![
+        Line::from(" Database terminal app v0.1.0"),
+        Line::from(""),
+        Line::from(format!(
+            " Loaded Database: {}",
+            loaded_db_name
+        )),
+        Line::from(format!(
+            " Loaded Table: {}",
+            selected_table_name,
+        ))
+    ];
+    let main_page_paragraph =
+        Paragraph::new(main_page_content).style(main_page_style);
 
-    frame.render_widget(main_page_content, chunks[0]);
+    frame.render_widget(main_page_paragraph, chunks[0]);
 
     let info_bits = vec![
         "Commands:",
@@ -80,13 +101,20 @@ fn render_file_explorer_screen(frame: &mut Frame, app: &mut App) {
         .bg(app.background_color())
         .fg(app.text_color());
     let file_explorer_block = Block::default()
-        .title("File explorer screen")
+        .title(" Explorer")
         .title(
             Line::from(format!(
                 "Currently in: {} ",
                 app.file_explorer_table.current_path.display()
             ))
-            .right_aligned(),
+            .centered(),
+        )
+        .title(
+            Line::from(format!(
+                "Mode: {} ",
+                app.current_mode
+            ))
+            .right_aligned()
         )
         .borders(Borders::NONE)
         .style(fexp_page_style);
@@ -174,14 +202,11 @@ fn render_database_schema_screen(frame: &mut Frame, app: &mut App) {
     let db_name = app
         .selected_db
         .as_ref()
-        .expect("No DB option found")
+        .expect("No DataBase found")
         .get_db_name();
     let outer_block = Block::default()
-        .title(Line::from(format!(
-            "Currently viewing DATABASE: {}.db ",
-            db_name
-        )))
-        .title(Line::from(format!("{}", app.current_mode)).right_aligned())
+        .title(Line::from(format!("Current Database: {} ", db_name)).left_aligned())
+        .title(Line::from(format!("Mode: {} ", app.current_mode)).right_aligned())
         .style(db_page_style);
     let inner_area = outer_block.inner(chunks[0]);
     let table_column_chunks =
@@ -249,7 +274,10 @@ fn render_database_table_screen(frame: &mut Frame, app: &mut App) {
     let scrollbar_style = Style::default().fg(app.border_color());
     let chunks = get_chunks_from_percentages(frame.area(), Direction::Vertical, vec![75, 25]);
     let table_name = app.selected_db_table.as_ref().expect("unknown");
-    let outer_block = Block::default().title(" Table View").style(db_page_style);
+    let outer_block = Block::default()
+        .title(Line::from(format!(" Current Table: {} ", table_name)).left_aligned())
+        .title(Line::from(format!("Mode: {} ", app.current_mode)).right_aligned())
+        .style(db_page_style);
     let inner_area = outer_block.inner(chunks[0]);
 
     frame.render_widget(outer_block, chunks[0]);
@@ -350,8 +378,42 @@ fn render_options_screen(frame: &mut Frame, app: &mut App) {
     let horizontal_chunks =
         get_chunks_from_percentages(vertical_chunks[1], Direction::Horizontal, vec![50, 50]);
 
+    let header = Row::new(vec![Cell::from("Color Schemes")]);
+    let scrollbar_style = Style::default().fg(app.border_color());
     let preview_border_style = Style::default().fg(app.border_color());
+    let highlight_col = app.background_highlight_color();
     let color_schemes: &Vec<SelectedScheme> = app.list_available_color_schemes();
+    let constraints = vec![Constraint::Min(5)];
+    let border_block_style = Style::default()
+        .bg(app.background_color())
+        .fg(app.border_color());
+    let border_block = Block::new()
+        .borders(Borders::ALL)
+        .style(border_block_style);
+
+    let mut color_table: GenericListView<SelectedScheme> = GenericListView::new(color_schemes.to_vec());
+
+    let rows: Vec<_> = color_table
+        .items
+        .iter()
+        .map(|scheme| {
+            let scheme_name = format!("{:?}", scheme);
+            let style = if *scheme == app.options.selected_color_scheme {
+                Style::default()
+                    .fg(app.text_highlight_color())
+                    .bg(app.background_highlight_color())
+                    .add_modifier(Modifier::BOLD)
+            } else {
+                Style::default().fg(app.text_color())
+            };
+            Row::new(vec![
+                Cell::from(scheme_name)
+            ]).style(style)
+        })
+        .collect();
+
+    //render_table(frame, &mut color_table.state, Some(header), rows, constraints, horizontal_chunks[0], highlight_col, border_block);
+
     let color_scheme_items: Vec<ListItem> = color_schemes
         .iter()
         .map(|scheme| {
@@ -359,6 +421,7 @@ fn render_options_screen(frame: &mut Frame, app: &mut App) {
             let style = if *scheme == app.options.selected_color_scheme {
                 Style::default()
                     .fg(app.text_highlight_color())
+                    .bg(app.background_highlight_color())
                     .add_modifier(Modifier::BOLD)
             } else {
                 Style::default().fg(app.text_color())
@@ -380,7 +443,7 @@ fn render_options_screen(frame: &mut Frame, app: &mut App) {
         frame,
         horizontal_chunks[1],
         &app.options.selected_color_scheme,
-        preview_border_style,
+        border_block_style,
     );
 
     let table_metainfo_toggle_button = SelectableLine::default(

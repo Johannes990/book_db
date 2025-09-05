@@ -385,8 +385,9 @@ fn create_new_file_screen_handler(app: &mut App, key_event: KeyEvent) -> io::Res
                         if app.selected_db.is_none() {
                             if let Some(form) = &app.create_db_form {
                                 let db_name = form.fields[0].text_value.clone();
+                                let db_extension = ".db".to_string();
 
-                                match DB::new(db_name) {
+                                match DB::new(db_name, db_extension) {
                                     Ok(db) => {
                                         app.selected_db = Some(db);
                                         app.fetch_table_list();
