@@ -64,7 +64,7 @@ impl DB {
 
         Ok(Self {
             db_name: name,
-            db_extension : extension,
+            db_extension: extension,
             db_conn: conn,
             db_tab_col_map: HashMap::new(),
         })
@@ -72,7 +72,7 @@ impl DB {
 
     pub fn get_db_name(&self) -> String {
         let name = format!("{}.{}", self.db_name, self.db_extension);
-        
+
         name.to_string()
     }
 

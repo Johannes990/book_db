@@ -3,10 +3,13 @@ use serde::{Deserialize, Serialize};
 use std::{fs, io};
 use strum::{EnumIter, IntoEnumIterator};
 
-use crate::{ui::colors::{
-    app_colors::{AppColors, ColorScheme},
-    static_colors::StaticColors,
-}, widgets::generic_list_view::GenericListView};
+use crate::{
+    ui::colors::{
+        app_colors::{AppColors, ColorScheme},
+        static_colors::StaticColors,
+    },
+    widgets::generic_list_view::GenericListView,
+};
 
 #[derive(EnumIter, Clone, Copy, PartialEq, Serialize, Deserialize)]
 pub enum SelectedOption {
@@ -40,8 +43,11 @@ pub struct Options {
 
 impl Options {
     pub fn new(default_color_scheme: StaticColors) -> Self {
-        let available_color_schemes =
-            GenericListView::new(StaticColors::iter().map(SelectedScheme::Static).collect::<Vec<_>>());
+        let available_color_schemes = GenericListView::new(
+            StaticColors::iter()
+                .map(SelectedScheme::Static)
+                .collect::<Vec<_>>()
+        );
         let available_options = SelectedOption::iter().collect();
         Self {
             available_color_schemes,
