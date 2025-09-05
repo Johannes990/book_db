@@ -11,6 +11,7 @@ pub enum StaticColors {
     SeaFoam,
     BlackAndWhite,
     WhiteAndBlack,
+    Rainbow,
 }
 
 impl ColorScheme for StaticColors {
@@ -76,7 +77,7 @@ impl ColorScheme for StaticColors {
                 border: rgb(0, 0, 0),
                 accent: rgb(0, 0, 0),
             },
-            StaticColors::WhiteAndBlack => AppColors{
+            StaticColors::WhiteAndBlack => AppColors {
                 text: rgb(255, 255, 255),
                 text_alt: rgb(255, 255, 255),
                 text_highlight: rgb(0, 0, 0),
@@ -87,6 +88,18 @@ impl ColorScheme for StaticColors {
                 error: rgb(255, 255, 255),
                 border: rgb(255, 255, 255),
                 accent: rgb(255, 255, 255),
+            },
+            StaticColors::Rainbow => AppColors {
+                text: rgb(255, 0, 0),
+                text_alt: rgb(255, 123, 0),
+                text_highlight: rgb(255, 217, 0),
+                background: rgb(187, 255, 0),
+                background_alt: rgb(30, 255, 0),
+                background_highlight: rgb(0, 255, 200),
+                warning: rgb(0, 81, 255),
+                error: rgb(38, 0, 255),
+                border: rgb(183, 0, 255),
+                accent: rgb(255, 0, 128),
             },
         }
     }

@@ -409,13 +409,20 @@ fn render_options_screen(frame: &mut Frame, app: &mut App) {
         })
         .collect();
 
+        let color_scheme_table_inner_area = Rect {
+            x: horizontal_chunks[0].x,
+            y: horizontal_chunks[0].y,
+            width: horizontal_chunks[0].width.saturating_sub(3),
+            height: horizontal_chunks[0].height,
+        };
+
         render_table(
             frame,
             &mut color_table.state,
             Some(header),
             rows,
             constraints,
-            horizontal_chunks[0],
+            color_scheme_table_inner_area,
             highlight_style,
             border_block
         );
@@ -424,7 +431,7 @@ fn render_options_screen(frame: &mut Frame, app: &mut App) {
             frame,
             Style::default().fg(border_color),
             horizontal_chunks[0],
-            Some("•"),
+            None,
             &mut color_table.scroll_bar_state,
         );
 
