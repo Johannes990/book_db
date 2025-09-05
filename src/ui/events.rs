@@ -30,7 +30,7 @@ pub fn handle_key_events(app: &mut App) -> io::Result<bool> {
                 Screen::DatabaseSchema => database_schema_screen_handler(app, key_event)?,
                 Screen::DataBaseTable => database_table_screen_handler(app, key_event)?,
                 Screen::Options => options_screen_handler(app, key_event)?,
-                Screen::CreateNewFile => create_new_file_screen_handler(app, key_event),
+                Screen::CreateNewFile => create_new_file_screen_handler(app, key_event)?,
             }
         }
     }
@@ -359,8 +359,68 @@ fn options_screen_handler(app: &mut App, key_event: KeyEvent) -> io::Result<()> 
     Ok(())
 }
 
-fn create_new_file_screen_handler(app: &mut App, key_event: KeyEvent) {
-    if key_event.kind == KeyEventKind::Press {
+fn create_new_file_screen_handler(app: &mut App, key_event: KeyEvent) -> io::Result<()> {
+    if key_event.kind != KeyEventKind::Press {
+        return Ok(());
+    }
+
+    match app.current_mode {
+        Mode::Browse => {
+            if let Some(event) = app.key_bindings.resolve_event(
+                app.current_screen,
+                app.current_popup,
+                app.current_mode,
+                key_event,
+            ) {
+                match event {
+                    AppInputEvent::OpenSplashScreen => app.switch_to_screen(Screen::Splash),
+                    AppInputEvent::OpenFileExplorerScreen => app.switch_to_screen(Screen::FileExplorer),
+                    AppInputEvent::OpenDBSchemaScreen => app.switch_to_screen(Screen::DatabaseSchema),
+                    AppInputEvent::OpenDBTableScreen => app.switch_to_screen(Screen::DataBaseTable),
+                    AppInputEvent::OpenOptionsScreen => app.switch_to_screen(Screen::Options),
+                    AppInputEvent::OpenQuitAppPopUp => app.switch_to_popup(PopUp::Quit),
+                    AppInputEvent::SwitchToEdit => app.switch_mode(Mode::Edit),
+                    AppInputEvent::ExecuteAction => {
+                        if app.selected_db.is_none() {
+                            if let Some(form) = &app.create_db_form {
+                                let db_name = form.fields[0].text_value.clone();
+
+                                match DB::new(db_name) {
+                                    Ok(db) => {
+                                        app.selected_db = Some(db);
+                                        app.fetch_table_list();
+                                        app.populate_table_col_map();
+                                        app.switch_to_screen(Screen::DatabaseSchema);
+                                    }
+                                    Err(e) => {
+                                        let err = DBError::ConnectionCreationError(e.to_string());
+                                        app.show_error(err);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    _ => {}
+                }
+            }
+        }
+        Mode::Edit => {
+            let form = app.create_db_form.as_mut().unwrap();
+            match (key_event.code, key_event.modifiers) {
+                (KeyCode::Char(c), KeyModifiers::NONE) => form.enter_char(c),
+                (KeyCode::Char(c), KeyModifiers::SHIFT) => {
+                    for upper in c.to_uppercase() {
+                        form.enter_char(upper);
+                    }
+                }
+                (KeyCode::Backspace, KeyModifiers::NONE) => form.pop_char(),
+                (KeyCode::BackTab, KeyModifiers::SHIFT) => app.switch_mode(Mode::Browse),
+                _ => {}
+            }
+        }
+    }
+    
+    /*if key_event.kind == KeyEventKind::Press {
         match (key_event.code, key_event.modifiers) {
             (KeyCode::Esc, KeyModifiers::NONE) | (KeyCode::Char('q'), KeyModifiers::NONE) => {
                 app.switch_to_screen(Screen::Splash)
@@ -398,7 +458,8 @@ fn create_new_file_screen_handler(app: &mut App, key_event: KeyEvent) {
             }
             _ => {}
         }
-    }
+    }*/
+    Ok (())
 }
 
 fn quit_popup_handler(app: &mut App, key_event: KeyEvent) -> io::Result<()> {
