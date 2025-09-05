@@ -15,8 +15,8 @@ use crate::{
 };
 use ratatui::{style::Color, Terminal};
 use serde::{Deserialize, Serialize};
-use strum::Display;
 use std::{collections::HashSet, ffi::OsString, io, path::PathBuf};
+use strum::Display;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum Screen {

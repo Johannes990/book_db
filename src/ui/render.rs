@@ -177,7 +177,10 @@ fn render_database_schema_screen(frame: &mut Frame, app: &mut App) {
         .expect("No DB option found")
         .get_db_name();
     let outer_block = Block::default()
-        .title(Line::from(format!("Currently viewing DATABASE: {}.db ", db_name)))
+        .title(Line::from(format!(
+            "Currently viewing DATABASE: {}.db ",
+            db_name
+        )))
         .title(Line::from(format!("{}", app.current_mode)).right_aligned())
         .style(db_page_style);
     let inner_area = outer_block.inner(chunks[0]);

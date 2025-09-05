@@ -53,10 +53,12 @@ fn splash_screen_handler(app: &mut App, key_event: KeyEvent) -> io::Result<()> {
         return Ok(());
     }
 
-    if let Some(event) =
-        app.key_bindings
-            .resolve_event(app.current_screen, app.current_popup, app.current_mode, key_event)
-    {
+    if let Some(event) = app.key_bindings.resolve_event(
+        app.current_screen,
+        app.current_popup,
+        app.current_mode,
+        key_event
+    ) {
         match event {
             AppInputEvent::OpenQuitAppPopUp => app.switch_to_popup(PopUp::Quit),
             AppInputEvent::OpenFileExplorerScreen => app.switch_to_screen(Screen::FileExplorer),
@@ -82,17 +84,19 @@ fn splash_screen_handler(app: &mut App, key_event: KeyEvent) -> io::Result<()> {
 
 fn file_explorer_screen_handler(app: &mut App, key_event: KeyEvent) -> io::Result<()> {
     if app.current_popup != PopUp::None {
-        return Ok(())
+        return Ok(());
     }
 
     if key_event.kind != KeyEventKind::Press {
-        return Ok(())
+        return Ok(());
     }
 
-    if let Some(event) =
-        app.key_bindings
-            .resolve_event(app.current_screen, app.current_popup, app.current_mode, key_event)
-    {
+    if let Some(event) = app.key_bindings.resolve_event(
+        app.current_screen,
+        app.current_popup,
+        app.current_mode,
+        key_event,
+    ) {
         match event {
             AppInputEvent::OpenQuitAppPopUp => app.switch_to_popup(PopUp::Quit),
             AppInputEvent::OpenSplashScreen => app.switch_to_screen(Screen::Splash),
@@ -147,22 +151,26 @@ fn file_explorer_screen_handler(app: &mut App, key_event: KeyEvent) -> io::Resul
 
 fn database_schema_screen_handler(app: &mut App, key_event: KeyEvent) -> io::Result<()> {
     if app.current_popup != PopUp::None {
-        return Ok(())
+        return Ok(());
     }
 
     if key_event.kind != KeyEventKind::Press {
-        return Ok(())
+        return Ok(());
     }
 
-    if !app.selected_db.is_some() {
-        app.current_error = Some(DBError::ConnectionCreationError("Cannot open selected database schema!".to_string()));
+    if app.selected_db.is_none() {
+        app.current_error = Some(DBError::ConnectionCreationError(
+            "Cannot open selected database schema!".to_string(),
+        ));
         app.switch_to_popup(PopUp::Error);
     }
 
-    if let Some(event) =
-        app.key_bindings
-            .resolve_event(app.current_screen, app.current_popup, app.current_mode, key_event)
-    {
+    if let Some(event) = app.key_bindings.resolve_event(
+        app.current_screen,
+        app.current_popup,
+        app.current_mode,
+        key_event,
+    ) {
         match event {
             AppInputEvent::OpenSplashScreen => app.switch_to_screen(Screen::Splash),
             AppInputEvent::OpenFileExplorerScreen => app.switch_to_screen(Screen::FileExplorer),
@@ -192,8 +200,7 @@ fn database_schema_screen_handler(app: &mut App, key_event: KeyEvent) -> io::Res
                 let db = &app.selected_db.as_mut().unwrap();
                 let tables = db.get_table_list().unwrap_or_default();
                 if let Some(selected_table) = &app.selected_db_table {
-                    let current_idx =
-                        tables.iter().position(|t| t == selected_table).unwrap_or(0);
+                    let current_idx = tables.iter().position(|t| t == selected_table).unwrap_or(0);
                     if current_idx < tables.len() - 1 {
                         app.select_table(tables[current_idx + 1].clone());
                     } else if !tables.is_empty() {
@@ -235,22 +242,26 @@ fn database_schema_screen_handler(app: &mut App, key_event: KeyEvent) -> io::Res
 
 fn database_table_screen_handler(app: &mut App, key_event: KeyEvent) -> io::Result<()> {
     if app.current_popup != PopUp::None {
-        return Ok(())
+        return Ok(());
     }
 
     if key_event.kind != KeyEventKind::Press {
-        return Ok(())
+        return Ok(());
     }
 
-    if !app.selected_db_table.is_some() {
-        app.current_error = Some(DBError::TableDoesNotExist("Table does not exist!".to_string()));
+    if app.selected_db_table.is_none() {
+        app.current_error = Some(DBError::TableDoesNotExist(
+            "Table does not exist!".to_string(),
+        ));
         app.switch_to_popup(PopUp::Error);
     }
 
-    if let Some(event) =
-        app.key_bindings
-            .resolve_event(app.current_screen, app.current_popup, app.current_mode, key_event)
-    {
+    if let Some(event) = app.key_bindings.resolve_event(
+        app.current_screen,
+        app.current_popup,
+        app.current_mode,
+        key_event,
+    ) {
         match event {
             AppInputEvent::OpenSplashScreen => app.switch_to_screen(Screen::Splash),
             AppInputEvent::OpenFileExplorerScreen => app.switch_to_screen(Screen::FileExplorer),
@@ -294,10 +305,12 @@ fn options_screen_handler(app: &mut App, key_event: KeyEvent) -> io::Result<()> 
     let mut changed: bool = false;
     log("options screen");
 
-    if let Some(event) =
-        app.key_bindings
-            .resolve_event(app.current_screen, app.current_popup, app.current_mode, key_event)
-    {
+    if let Some(event) = app.key_bindings.resolve_event(
+        app.current_screen,
+        app.current_popup,
+        app.current_mode,
+        key_event,
+    ) {
         match event {
             AppInputEvent::OpenSplashScreen => app.switch_to_screen(Screen::Splash),
             AppInputEvent::OpenFileExplorerScreen => app.switch_to_screen(Screen::FileExplorer),
@@ -334,7 +347,7 @@ fn options_screen_handler(app: &mut App, key_event: KeyEvent) -> io::Result<()> 
                     );
                     changed = true;
                 }
-            }
+            },
             _ => {}
         }
     }
@@ -418,10 +431,12 @@ fn no_db_loaded_popup_handler(app: &mut App, key_event: KeyEvent) -> io::Result<
         return Ok(());
     }
 
-    if let Some(event) =
-        app.key_bindings
-            .resolve_event(app.current_screen, app.current_popup, app.current_mode, key_event)
-    {
+    if let Some(event) = app.key_bindings.resolve_event(
+        app.current_screen,
+        app.current_popup,
+        app.current_mode,
+        key_event,
+    ) {
         match event {
             AppInputEvent::OpenQuitAppPopUp => app.switch_to_popup(PopUp::Quit),
             AppInputEvent::ClosePopUp => app.switch_to_popup(PopUp::None),
@@ -435,19 +450,23 @@ fn no_db_loaded_popup_handler(app: &mut App, key_event: KeyEvent) -> io::Result<
 
 fn insert_row_popup_handler(app: &mut App, key_event: KeyEvent) -> io::Result<()> {
     if key_event.kind != KeyEventKind::Press {
-        return Ok(())
+        return Ok(());
     }
 
     match app.current_mode{
         Mode::Browse => {
-            if let Some(event) =
-                app.key_bindings
-                    .resolve_event(app.current_screen, app.current_popup, app.current_mode, key_event)
-            {
+            if let Some(event) = app.key_bindings.resolve_event(
+                app.current_screen,
+                app.current_popup,
+                app.current_mode,
+                key_event,
+            ) {
                 match event {
                     AppInputEvent::ClosePopUp => app.switch_to_popup(PopUp::None),
                     AppInputEvent::SwitchToEdit => app.switch_mode(Mode::Edit),
-                    AppInputEvent::MoveUpPrimary => app.row_insert_form.as_mut().unwrap().previous(),
+                    AppInputEvent::MoveUpPrimary => {
+                        app.row_insert_form.as_mut().unwrap().previous()
+                    }
                     AppInputEvent::MoveDownPrimary => app.row_insert_form.as_mut().unwrap().next(),
                     AppInputEvent::ExecuteAction => {
                         let db = app.selected_db.as_mut().unwrap();
@@ -458,25 +477,18 @@ fn insert_row_popup_handler(app: &mut App, key_event: KeyEvent) -> io::Result<()
                         let mut values_str = Vec::new();
 
                         // Pair form items with their column info
-                        for (item, col_info) in
-                            form.fields.iter().zip(&app.selected_table_columns)
+                        for (item, col_info) in form.fields.iter().zip(&app.selected_table_columns)
                         {
                             columns.push(col_info.name.clone());
                             values.push(&item.text_value as &dyn ToSql);
                             values_str.push(&item.text_value);
                         }
 
-                        match db.insert_rows_statement(
-                            table_name.clone(),
-                            columns,
-                            values,
-                        ) {
+                        match db.insert_rows_statement(table_name.clone() ,columns, values) {
                             Ok(_) => {
                                 let table_list = app.table_list_view.as_mut().unwrap();
-                                if let Some(table_info) = table_list
-                                    .items
-                                    .iter_mut()
-                                    .find(|t| t.name == *table_name)
+                                if let Some(table_info) =
+                                    table_list.items.iter_mut().find(|t| t.name == *table_name)
                                 {
                                     table_info.increment_row_count();
                                 }
@@ -515,19 +527,23 @@ fn insert_row_popup_handler(app: &mut App, key_event: KeyEvent) -> io::Result<()
 #[allow(unused_variables)]
 fn delete_row_popup_handler(app: &mut App, key_event: KeyEvent) -> io::Result<()> {
     if key_event.kind != KeyEventKind::Press {
-        return Ok(())
+        return Ok(());
     }
 
     match app.current_mode {
         Mode::Browse => {
-            if let Some(event) =
-                app.key_bindings
-                    .resolve_event(app.current_screen, app.current_popup, app.current_mode, key_event)
-            {
+            if let Some(event) = app.key_bindings.resolve_event(
+                app.current_screen,
+                app.current_popup,
+                app.current_mode,
+                key_event,
+            ) {
                 match event {
                     AppInputEvent::ClosePopUp => app.switch_to_popup(PopUp::None),
                     AppInputEvent::SwitchToEdit => app.switch_mode(Mode::Edit),
-                    AppInputEvent::MoveUpPrimary => app.row_delete_form.as_mut().unwrap().previous(),
+                    AppInputEvent::MoveUpPrimary => {
+                        app.row_delete_form.as_mut().unwrap().previous()
+                    }
                     AppInputEvent::MoveDownPrimary => app.row_delete_form.as_mut().unwrap().next(),
                     AppInputEvent::ExecuteAction => {
                         let db = app.selected_db.as_mut().unwrap();
@@ -540,10 +556,8 @@ fn delete_row_popup_handler(app: &mut App, key_event: KeyEvent) -> io::Result<()
                             Ok(affected) => {
                                 if affected > 0 {
                                     let table_list = app.table_list_view.as_mut().unwrap();
-                                    if let Some(table_info) = table_list
-                                        .items
-                                        .iter_mut()
-                                        .find(|t| t.name == *table_name)
+                                    if let Some(table_info) =
+                                        table_list.items.iter_mut().find(|t| t.name == *table_name)
                                     {
                                         table_info.decrement_row_count();
                                     }
@@ -590,10 +604,12 @@ fn insert_table_popup_handler(app: &mut App, key_event: KeyEvent) -> io::Result<
 
     match app.current_mode {
         Mode::Browse => {
-            if let Some(event) =
-                app.key_bindings
-                    .resolve_event(app.current_screen, app.current_popup, app.current_mode, key_event)
-            {
+            if let Some(event) = app.key_bindings.resolve_event(
+                app.current_screen,
+                app.current_popup,
+                app.current_mode,
+                key_event,
+            ) {
                 match event {
                     AppInputEvent::ClosePopUp => app.switch_to_popup(PopUp::None),
                     AppInputEvent::SwitchToEdit => app.switch_mode(Mode::Edit),
@@ -645,10 +661,12 @@ fn delete_table_popup_handler(app: &mut App, key_event: KeyEvent) -> io::Result<
 
     match app.current_mode {
         Mode::Browse => {
-            if let Some(event) =
-                app.key_bindings
-                    .resolve_event(app.current_screen, app.current_popup, app.current_mode, key_event)
-            {
+            if let Some(event) = app.key_bindings.resolve_event(
+                app.current_screen,
+                app.current_popup,
+                app.current_mode,
+                key_event,
+            ) {
                 match event {
                     AppInputEvent::ClosePopUp => app.switch_to_popup(PopUp::None),
                     AppInputEvent::SwitchToEdit => app.switch_mode(Mode::Edit),
@@ -694,19 +712,18 @@ fn delete_table_popup_handler(app: &mut App, key_event: KeyEvent) -> io::Result<
 
 fn error_popup_handler(app: &mut App, key_event: KeyEvent) -> io::Result<()> {
     if key_event.kind != KeyEventKind::Press {
-        return Ok(())
+        return Ok(());
     }
 
-    if let Some(event) =
-        app.key_bindings
-            .resolve_event(app.current_screen, app.current_popup, app.current_mode, key_event)
-    {
-        match event {
-            AppInputEvent::ClosePopUp => {
-                app.current_error = None;
-                app.switch_to_popup(PopUp::None);
-            }
-            _ => {}
+    if let Some(event) = app.key_bindings.resolve_event(
+        app.current_screen,
+        app.current_popup,
+        app.current_mode,
+        key_event,
+    ) {
+        if event == AppInputEvent::ClosePopUp {
+            app.current_error = None;
+            app.switch_to_popup(PopUp::None);
         }
     }
 

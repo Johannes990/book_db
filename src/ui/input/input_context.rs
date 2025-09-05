@@ -24,7 +24,11 @@ pub fn get_input_contexts(screen: Screen, popup: PopUp, mode: Mode) -> Vec<Input
             InputContext::Global,
         ]
     } else {
-        vec![InputContext::Mode(mode), InputContext::Screen(screen), InputContext::Global]
+        vec![
+            InputContext::Mode(mode),
+            InputContext::Screen(screen),
+            InputContext::Global,
+        ]
     }
 }
 

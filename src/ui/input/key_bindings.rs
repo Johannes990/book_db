@@ -38,7 +38,7 @@ pub enum AppInputEvent {
     FileExplorerSelect,      // select folder or file to load
     FileExplorerBack,        // go up to parent folder in file explorer
     SwitchToEdit,            // switch to app edit mode, allowing text editing in text fields
-    SwitchToBrowse,          // switch to app browse mode, allowing use of commands via simple keystrokes
+    SwitchToBrowse, // switch to app browse mode, allowing use of commands via simple keystrokes
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
@@ -319,7 +319,7 @@ impl KeyBindings {
                 KeyModifiers::SHIFT,
                 InputContext::Mode(Mode::Edit),
                 AppInputEvent::SwitchToBrowse,
-            )
+            ),
         ]
     }
 }
