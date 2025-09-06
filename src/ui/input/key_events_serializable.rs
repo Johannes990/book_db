@@ -80,3 +80,31 @@ impl From<KeyModifierSerializable> for KeyModifiers {
         }
     }
 }
+
+impl KeyModifierSerializable {
+    pub fn to_string(&self) -> String {
+        match self {
+            KeyModifierSerializable::None => "".into(),
+            KeyModifierSerializable::Control => "CONTROL".into(),
+            KeyModifierSerializable::Alt => "ALT".into(),
+            KeyModifierSerializable::Shift => "SHIFT".into(),
+        }
+    }
+}
+
+impl KeyCodeSerializable {
+    pub fn to_string(&self) -> String {
+        match self {
+            KeyCodeSerializable::Char(c) => c.to_string(),
+            KeyCodeSerializable::Enter => "ENTER".into(),
+            KeyCodeSerializable::Esc => "ESC".into(),
+            KeyCodeSerializable::Tab => "TAB".into(),
+            KeyCodeSerializable::Up => "UP".into(),
+            KeyCodeSerializable::Down => "DOWN".into(),
+            KeyCodeSerializable::Left => "LEFT".into(),
+            KeyCodeSerializable::Right => "RIGHT".into(),
+            KeyCodeSerializable::Backspace => "BACKSPACE".into(),
+            KeyCodeSerializable::BackTab => "TAB".into(),
+        }
+    }
+}

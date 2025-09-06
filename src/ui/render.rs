@@ -1,10 +1,7 @@
 use crate::{
-    app::{App, PopUp, Screen},
-    column::column_info::ColumnInfo,
-    options::{SelectedOption, SelectedScheme},
-    row::row_info::RowInfo,
-    ui::colors::app_colors::ColorScheme,
-    widgets::selectable_line::SelectableLine,
+    app::{App, PopUp, Screen}, column::column_info::ColumnInfo, log::log, options::{SelectedOption, SelectedScheme}, row::row_info::RowInfo, ui::{
+        colors::app_colors::ColorScheme, input::key_bindings::AppInputEvent
+    }, widgets::selectable_line::SelectableLine
 };
 use ratatui::{
     layout::{Constraint, Direction, Flex, Layout},
@@ -68,20 +65,43 @@ fn render_splash_screen(frame: &mut Frame, app: &App) {
 
     frame.render_widget(main_page_paragraph, chunks[0]);
 
+    let events = [
+        AppInputEvent::OpenFileExplorerScreen,
+        AppInputEvent::OpenDBSchemaScreen,
+        AppInputEvent::OpenDBTableScreen,
+        AppInputEvent::OpenCreateNewFileScreen,
+        AppInputEvent::OpenOptionsScreen,
+        AppInputEvent::OpenQuitAppPopUp,
+    ];
+
+    let info_bits = app.key_bindings.get_info_bits_from_events(&events, &app.language);
+    let info_refs: Vec<&str> = info_bits.iter().map(|s| s.as_str()).collect();
+
+    log(format!("info bits: {:?}", info_bits).as_str());
+    log(format!("info refs: {:?}", info_refs).as_str());
+/* 
+    let file_exp_binding = &app
+        .key_bindings
+        .by_app_event
+        .get(&AppInputEvent::OpenFileExplorerScreen)
+        .unwrap()
+        .1
+        .to_string();
+
     let info_bits = vec![
         "Commands:",
-        "f",
-        " - open file explorer",
+        file_exp_binding,
+        &app.language.open_file_explorer_screen,
         "d",
-        " - open loaded database",
+        &app.language.open_db_schema_screen,
         "n",
-        " - create new database file",
+        &app.language.open_create_new_file_screen,
         "o",
-        " - open options",
+        &app.language.open_options_screen,
         "ESC / q",
-        " - quit app",
-    ];
-    render_info_paragraph(&info_bits, frame, app, chunks[1]);
+        &app.language.open_quit_app_popup,
+    ];*/
+    render_info_paragraph(&info_refs, frame, app, chunks[1]);
 }
 
 fn render_file_explorer_screen(frame: &mut Frame, app: &mut App) {
@@ -1007,9 +1027,7 @@ fn format_info_text<'a>(text_bits: &'a [&str], app: &App) -> Text<'a> {
     let mut info_text = Text::default();
 
     for (i, bit) in text_bits.iter().enumerate() {
-        if i == 0 {
-            info_text = Text::from(Span::styled::<&str, Style>(bit, general_text_style));
-        } else if i % 2 != 0 {
+        if i % 2 == 0 {
             info_text.push_line(Span::styled::<&str, Style>(bit, alt_text_style_1));
         } else {
             info_text.push_span(Span::styled::<&str, Style>(bit, general_text_style));

@@ -1,13 +1,26 @@
 use crate::{
-    column::{column_info::ColumnInfo, column_list::ColumnListView},
-    db::{DBError, DB},
+    column::{
+        column_info::ColumnInfo,
+        column_list::ColumnListView,
+    },
+    db::{
+        DBError,
+        DB,
+    },
     file_explorer::file_explorer_table::FileExplorerTable,
     handle_key_events,
+    lang::language::AppLanguage,
     options::Options,
     row::row_list::RowListView,
-    table::{table_info::TableInfo, table_list::TableListView},
+    table::{
+        table_info::TableInfo,
+        table_list::TableListView
+    },
     ui::{
-        colors::{app_colors::ColorScheme, static_colors::StaticColors},
+        colors::{
+            app_colors::ColorScheme,
+            static_colors::StaticColors
+        },
         input::key_bindings::KeyBindings,
         render,
     },
@@ -69,6 +82,7 @@ pub struct App {
     pub should_quit: bool,
     pub options: Options,
     pub key_bindings: KeyBindings,
+    pub language: AppLanguage,
 }
 
 impl App {
@@ -86,6 +100,13 @@ impl App {
         )?;
 
         let key_bindings = KeyBindings::load_or_default(&qualifier, &organization, &application)?;
+
+        let language = AppLanguage::load_from_file(
+            &qualifier,
+            &organization,
+            &application,
+            &options.selected_language
+        )?;
 
         Ok(Self {
             qualifier,
@@ -110,6 +131,7 @@ impl App {
             should_quit: false,
             options,
             key_bindings,
+            language,
         })
     }
 

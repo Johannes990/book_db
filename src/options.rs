@@ -4,11 +4,10 @@ use std::{fs, io};
 use strum::{EnumIter, IntoEnumIterator};
 
 use crate::{
-    ui::colors::{
+    lang::language::SupportedLanguage, ui::colors::{
         app_colors::{AppColors, ColorScheme},
         static_colors::StaticColors,
-    },
-    widgets::generic_list_view::GenericListView,
+    }, widgets::generic_list_view::GenericListView
 };
 
 #[derive(EnumIter, Clone, Copy, PartialEq, Serialize, Deserialize)]
@@ -37,6 +36,8 @@ pub struct Options {
     pub selected_color_scheme: SelectedScheme,
     pub available_options: Vec<SelectedOption>,
     pub selected_option: SelectedOption,
+    pub available_languages: Vec<SupportedLanguage>,
+    pub selected_language: SupportedLanguage,
     pub display_col_metainfo_in_table_view: bool,
     pub display_col_metainfo_in_insert_view: bool,
 }
@@ -49,11 +50,14 @@ impl Options {
                 .collect::<Vec<_>>(),
         );
         let available_options = SelectedOption::iter().collect();
+        let available_languages = SupportedLanguage::iter().collect();
         Self {
             available_color_schemes,
             selected_color_scheme: SelectedScheme::Static(default_color_scheme),
             available_options,
             selected_option: SelectedOption::TableMetainfoToggle,
+            available_languages,
+            selected_language: SupportedLanguage::English,
             display_col_metainfo_in_table_view: true,
             display_col_metainfo_in_insert_view: true,
         }

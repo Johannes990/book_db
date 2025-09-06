@@ -2,6 +2,7 @@ mod app;
 mod column;
 mod db;
 mod file_explorer;
+mod lang;
 mod log;
 mod options;
 mod row;

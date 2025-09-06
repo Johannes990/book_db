@@ -6,12 +6,10 @@ use serde::{Deserialize, Serialize};
 use strum::EnumIter;
 
 use crate::{
-    app::{Mode, PopUp, Screen},
-    log::log,
-    ui::input::{
+    app::{Mode, PopUp, Screen}, lang::language::AppLanguage, log::log, ui::input::{
         input_context::{context_event, get_input_contexts, InputContext},
         key_events_serializable::{KeyCodeSerializable, KeyModifierSerializable},
-    },
+    }
 };
 
 #[derive(Debug, Clone, Copy, EnumIter, PartialEq, Eq, Hash, Serialize, Deserialize)]
@@ -49,6 +47,18 @@ pub struct KeyBinding {
     pub context: InputContext,
 }
 
+impl KeyBinding {
+    pub fn to_string(&self) -> String {
+        let mut parts = vec![];
+        if self.key_modifier != KeyModifierSerializable::None {
+            parts.push(self.key_modifier.to_string());
+        }
+        parts.push(self.key_code.to_string());
+
+        parts.join(" + ")
+    }
+}
+
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]
 pub struct KeyBindingEntry {
     pub context: InputContext,
@@ -65,7 +75,9 @@ pub struct KeyBindingsSerializable {
 pub struct KeyBindings {
     pub config: KeyBindingsSerializable,
     #[serde(skip)]
-    pub by_event_input: HashMap<(InputContext, KeyBinding), AppInputEvent>,
+    pub by_key_binding: HashMap<(InputContext, KeyBinding), AppInputEvent>,
+    #[serde(skip)]
+    pub by_app_event: HashMap<AppInputEvent, (InputContext, KeyBinding)>,
 }
 
 impl KeyBindings {
@@ -73,7 +85,8 @@ impl KeyBindings {
         let defaults: Vec<((InputContext, AppInputEvent), KeyBinding)> =
             Self::get_default_bindings();
         let mut bindings = Vec::new();
-        let mut by_event_input = HashMap::new();
+        let mut by_key_binding = HashMap::new();
+        let mut by_app_event = HashMap::new();
 
         for ((context, event), binding) in defaults {
             bindings.push(KeyBindingEntry {
@@ -81,12 +94,14 @@ impl KeyBindings {
                 event,
                 binding,
             });
-            by_event_input.insert((context, binding), event);
+            by_key_binding.insert((context, binding), event);
+            by_app_event.insert(event, (context, binding));
         }
 
         Self {
             config: KeyBindingsSerializable { bindings },
-            by_event_input,
+            by_key_binding,
+            by_app_event,
         }
     }
 
@@ -105,15 +120,22 @@ impl KeyBindings {
             let config: KeyBindingsSerializable = toml::from_str(&data)
                 .map_err(|err| io::Error::new(io::ErrorKind::InvalidData, err))?;
 
-            let by_event_input = config
+            let by_key_binding = config
                 .bindings
                 .iter()
                 .map(|entry| ((entry.context, entry.binding), entry.event))
                 .collect();
 
+            let by_app_event = config
+                .bindings
+                .iter()
+                .map(|entry| (entry.event, (entry.context, entry.binding)))
+                .collect();
+
             Ok(Self {
                 config,
-                by_event_input,
+                by_key_binding,
+                by_app_event,
             })
         } else {
             Ok(Self::default())
@@ -170,7 +192,7 @@ impl KeyBindings {
         for context in contexts {
             let binding_with_context = KeyBinding { context, ..binding };
 
-            if let Some(event) = self.by_event_input.get(&(context, binding_with_context)) {
+            if let Some(event) = self.by_key_binding.get(&(context, binding_with_context)) {
                 log(&format!("Found event {:?} in context {:?}", event, context));
                 return Some(*event);
             }
@@ -178,6 +200,52 @@ impl KeyBindings {
 
         log("No matching event found in any context");
         None
+    }
+
+    pub fn get_info_bits_from_events(
+        &self,
+        events: &[AppInputEvent],
+        language: &AppLanguage,
+    ) -> Vec<String> {
+        let mut info_bits = Vec::new();
+        for event in events {
+            let key_str = self
+                .by_app_event
+                .get(event)
+                .map(|(_context, binding)| binding.to_string())
+                .unwrap_or_else(|| "?".to_string());
+
+            let desc = match event {
+                AppInputEvent::OpenSplashScreen => &language.open_splash_screen,
+                AppInputEvent::OpenFileExplorerScreen => &language.open_file_explorer_screen,
+                AppInputEvent::OpenDBSchemaScreen => &language.open_db_schema_screen,
+                AppInputEvent::OpenDBTableScreen => &language.open_db_table_screen,
+                AppInputEvent::OpenCreateNewFileScreen => &language.open_create_new_file_screen,
+                AppInputEvent::OpenOptionsScreen => &language.open_options_screen,
+                AppInputEvent::OpenInsertRowPopUp => &language.open_insert_row_popup,
+                AppInputEvent::OpenDeleteRowPopUp => &language.open_delete_row_popup,
+                AppInputEvent::OpenInsertTablePopUp => &language.open_insert_table_popup,
+                AppInputEvent::OpenDeleteTablePopUp => &language.open_delete_table_popup,
+                AppInputEvent::ClosePopUp => &language.close_popup,
+                AppInputEvent::OpenQuitAppPopUp => &language.open_quit_app_popup,
+                AppInputEvent::QuitAppConfirm => &language.quit_app_confirm,
+                AppInputEvent::MoveUpPrimary => &language.move_up_primary,
+                AppInputEvent::MoveDownPrimary => &language.move_down_primary,
+                AppInputEvent::MoveUpSecondary => &language.move_up_secondary,
+                AppInputEvent::MoveDownSecondary => &language.move_down_secondary,
+                AppInputEvent::ExecuteAction => &language.execute_action,
+                AppInputEvent::ToggleOption => &language.toggle_option,
+                AppInputEvent::FileExplorerSelect => &language.file_explorer_select,
+                AppInputEvent::FileExplorerBack => &language.file_explorer_back,
+                AppInputEvent::SwitchToEdit => &language.switch_to_edit,
+                AppInputEvent::SwitchToBrowse => &language.switch_to_browse,
+            };
+
+            info_bits.push(key_str);
+            info_bits.push(desc.to_string());
+        }
+
+        info_bits
     }
 
     fn get_default_bindings() -> Vec<((InputContext, AppInputEvent), KeyBinding)> {
