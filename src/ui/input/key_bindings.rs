@@ -1,3 +1,4 @@
+use core::fmt;
 use std::{collections::HashMap, fs, io};
 
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
@@ -45,6 +46,12 @@ pub struct KeyBinding {
     pub key_modifier: KeyModifierSerializable,
     // might use a set of InpuContexts later on if we need to check several
     pub context: InputContext,
+}
+
+impl fmt::Display for KeyBinding {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{} + {}", self.key_code.to_string(), self.key_modifier.to_string())
+    }
 }
 
 impl KeyBinding {

@@ -1,3 +1,5 @@
+use std::fmt;
+
 use crossterm::event::{KeyCode, KeyModifiers};
 use serde::{Deserialize, Serialize};
 
@@ -81,30 +83,30 @@ impl From<KeyModifierSerializable> for KeyModifiers {
     }
 }
 
-impl KeyModifierSerializable {
-    pub fn to_string(&self) -> String {
+impl fmt::Display for KeyModifierSerializable {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            KeyModifierSerializable::None => "".into(),
-            KeyModifierSerializable::Control => "CONTROL".into(),
-            KeyModifierSerializable::Alt => "ALT".into(),
-            KeyModifierSerializable::Shift => "SHIFT".into(),
+            KeyModifierSerializable::None => write!(f, ""),
+            KeyModifierSerializable::Control => write!(f, "CONTROL"),
+            KeyModifierSerializable::Alt => write!(f, "ALT"),
+            KeyModifierSerializable::Shift => write!(f, "SHIFT"),
         }
     }
 }
 
-impl KeyCodeSerializable {
-    pub fn to_string(&self) -> String {
+impl fmt::Display for KeyCodeSerializable {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            KeyCodeSerializable::Char(c) => c.to_string(),
-            KeyCodeSerializable::Enter => "ENTER".into(),
-            KeyCodeSerializable::Esc => "ESC".into(),
-            KeyCodeSerializable::Tab => "TAB".into(),
-            KeyCodeSerializable::Up => "UP".into(),
-            KeyCodeSerializable::Down => "DOWN".into(),
-            KeyCodeSerializable::Left => "LEFT".into(),
-            KeyCodeSerializable::Right => "RIGHT".into(),
-            KeyCodeSerializable::Backspace => "BACKSPACE".into(),
-            KeyCodeSerializable::BackTab => "TAB".into(),
+            KeyCodeSerializable::Char(c) => write!(f, "{}", c),
+            KeyCodeSerializable::Enter => write!(f, "ENTER"),
+            KeyCodeSerializable::Esc => write!(f, "ESC"),
+            KeyCodeSerializable::Tab => write!(f, "TAB"),
+            KeyCodeSerializable::Up => write!(f, "UP"),
+            KeyCodeSerializable::Down => write!(f, "DOWN"),
+            KeyCodeSerializable::Left => write!(f, "LEFT"),
+            KeyCodeSerializable::Right => write!(f, "RIGHT"),
+            KeyCodeSerializable::Backspace => write!(f, "BACKSPACE"),
+            KeyCodeSerializable::BackTab => write!(f, "TAB"),
         }
     }
 }
