@@ -50,19 +50,11 @@ pub struct KeyBinding {
 
 impl fmt::Display for KeyBinding {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{} + {}", self.key_code.to_string(), self.key_modifier.to_string())
-    }
-}
-
-impl KeyBinding {
-    pub fn to_string(&self) -> String {
-        let mut parts = vec![];
         if self.key_modifier != KeyModifierSerializable::None {
-            parts.push(self.key_modifier.to_string());
+            write!(f, "{} + {}", self.key_code, self.key_modifier)
+        } else {
+            write!(f, "{}", self.key_code)
         }
-        parts.push(self.key_code.to_string());
-
-        parts.join(" + ")
     }
 }
 
