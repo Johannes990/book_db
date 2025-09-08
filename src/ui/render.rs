@@ -9,7 +9,7 @@ use crate::{
 use ratatui::{
     layout::{Constraint, Direction, Flex, Layout},
     prelude::{Alignment, Margin, Rect},
-    style::{Color, Modifier, Style},
+    style::{Modifier, Style},
     text::{Line, Span, Text},
     widgets::{
         Block, Borders, Cell, Clear, HighlightSpacing, Paragraph, Row, Scrollbar,
