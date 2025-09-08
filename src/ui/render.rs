@@ -170,13 +170,21 @@ fn render_file_explorer_screen(frame: &mut Frame, app: &mut App) {
         &mut app.file_explorer_table.scroll_state,
     );
 
-    let info_bits = vec![
-        "Commands:",
-        "↑ / ↓",
-        " - navigate",
-        "ESC / q",
-        " - return to splash screen",
+    let events = [
+        AppInputEvent::OpenQuitAppPopUp,
+        AppInputEvent::OpenSplashScreen,
+        AppInputEvent::OpenDBSchemaScreen,
+        AppInputEvent::OpenCreateNewFileScreen,
+        AppInputEvent::OpenOptionsScreen,
+        AppInputEvent::MoveUpPrimary,
+        AppInputEvent::MoveDownPrimary,
+        AppInputEvent::FileExplorerSelect,
     ];
+
+    let info_bits = app
+        .key_bindings
+        .get_info_bits_from_events(&events, &app.language);
+
     render_info_paragraph(&info_bits, frame, app, chunks[1]);
 }
 
@@ -199,24 +207,28 @@ fn render_database_schema_screen(frame: &mut Frame, app: &mut App) {
         get_chunks_from_percentages(inner_area, Direction::Horizontal, vec![50, 50]);
 
     frame.render_widget(outer_block, chunks[0]);
-
     render_table_list(frame, app, table_column_chunks[0]);
-
     render_column_list(frame, app, table_column_chunks[1]);
 
-    let info_bits = vec![
-        "Commands:",
-        "↑ / ↓",
-        " - navigate",
-        "Enter",
-        " - select table",
-        "n",
-        " - create new table",
-        "d",
-        " - delete table",
-        "ESC / q",
-        " - return to splash screen",
+    let events = [
+        AppInputEvent::OpenSplashScreen,
+        AppInputEvent::OpenFileExplorerScreen,
+        AppInputEvent::OpenCreateNewFileScreen,
+        AppInputEvent::OpenOptionsScreen,
+        AppInputEvent::OpenQuitAppPopUp,
+        AppInputEvent::MoveUpPrimary,
+        AppInputEvent::MoveDownPrimary,
+        AppInputEvent::MoveUpSecondary,
+        AppInputEvent::MoveDownSecondary,
+        AppInputEvent::OpenInsertTablePopUp,
+        AppInputEvent::OpenDeleteTablePopUp,
+        AppInputEvent::OpenDBTableScreen,
     ];
+
+    let info_bits = app
+        .key_bindings
+        .get_info_bits_from_events(&events, &app.language);
+
     render_info_paragraph(&info_bits, frame, app, chunks[1]);
 }
 
@@ -237,13 +249,21 @@ fn render_new_database_screen(frame: &mut Frame, app: &mut App) {
         form.render_widget_and_cursor(frame, chunks[0]);
     }
 
-    let info_bits = vec![
-        "Commands:",
-        "CTRL + s",
-        " - create new database",
-        "ESC / q",
-        " - return to splash screen",
+    let events = [
+        AppInputEvent::OpenSplashScreen,
+        AppInputEvent::OpenFileExplorerScreen,
+        AppInputEvent::OpenDBSchemaScreen,
+        AppInputEvent::OpenDBTableScreen,
+        AppInputEvent::OpenOptionsScreen,
+        AppInputEvent::OpenQuitAppPopUp,
+        AppInputEvent::SwitchToEdit,
+        AppInputEvent::ExecuteAction,
     ];
+
+    let info_bits = app
+        .key_bindings
+        .get_info_bits_from_events(&events, &app.language);
+
     render_info_paragraph(&info_bits, frame, app, chunks[1]);
 }
 
@@ -338,15 +358,23 @@ fn render_database_table_screen(frame: &mut Frame, app: &mut App) {
         &mut unwrapped_row_list.scroll_bar_state,
     );
 
-    let info_bits = vec![
-        "Commands:",
-        "i",
-        " - create new entry",
-        "d",
-        " - delete entry",
-        "ESC / b",
-        " - return to database view",
+    let events = [
+        AppInputEvent::OpenSplashScreen,
+        AppInputEvent::OpenFileExplorerScreen,
+        AppInputEvent::OpenDBSchemaScreen,
+        AppInputEvent::OpenCreateNewFileScreen,
+        AppInputEvent::OpenOptionsScreen,
+        AppInputEvent::OpenQuitAppPopUp,
+        AppInputEvent::MoveUpPrimary,
+        AppInputEvent::MoveDownPrimary,
+        AppInputEvent::OpenInsertRowPopUp,
+        AppInputEvent::OpenDeleteRowPopUp,
     ];
+
+    let info_bits = app
+        .key_bindings
+        .get_info_bits_from_events(&events, &app.language);
+
     render_info_paragraph(&info_bits, frame, app, chunks[1]);
 }
 
@@ -461,15 +489,24 @@ fn render_options_screen(frame: &mut Frame, app: &mut App) {
     frame.render_widget(table_metainfo_toggle_button, table_metainfo_toggle_area);
     frame.render_widget(insert_metainfo_toggle_button, insert_metainfo_toggle_area);
 
-    let info_bits = vec![
-        "Commands: ",
-        "← / →",
-        " - switch between color schemes",
-        "↑ / ↓",
-        " - switch between options",
-        "ESC / q",
-        " - return to splash screen",
+    let events = [
+        AppInputEvent::OpenSplashScreen,
+        AppInputEvent::OpenFileExplorerScreen,
+        AppInputEvent::OpenDBSchemaScreen,
+        AppInputEvent::OpenDBTableScreen,
+        AppInputEvent::OpenCreateNewFileScreen,
+        AppInputEvent::OpenQuitAppPopUp,
+        AppInputEvent::MoveUpPrimary,
+        AppInputEvent::MoveDownPrimary,
+        AppInputEvent::MoveUpSecondary,
+        AppInputEvent::MoveDownSecondary,
+        AppInputEvent::ToggleOption,
     ];
+
+    let info_bits = app
+        .key_bindings
+        .get_info_bits_from_events(&events, &app.language);
+
     render_info_paragraph(&info_bits, frame, app, vertical_chunks[2]);
 }
 
@@ -478,18 +515,18 @@ fn render_quit_popup(frame: &mut Frame, app: &App) {
     let quit_popup_style = Style::default()
         .bg(app.warning_color())
         .fg(app.text_color());
-    let info_bits = vec![
-        "",
-        "y",
-        " - quit app",
-        "ESC / n",
-        " - return to splash screen",
-    ];
+
+    let events = [AppInputEvent::QuitAppConfirm, AppInputEvent::ClosePopUp];
+
+    let info_bits = app
+        .key_bindings
+        .get_info_bits_from_events(&events, &app.language);
+
     render_titled_paragraph(
         frame,
         app,
         &info_bits,
-        "Are you sure you want to quit",
+        "Are you sure you want to quit?",
         quit_popup_style,
         area,
     );
@@ -500,13 +537,17 @@ fn render_no_db_loaded_popup(frame: &mut Frame, app: &mut App) {
     let popup_style = Style::default()
         .bg(app.background_alt_color())
         .fg(app.text_color());
-    let info_bits = vec![
-        "",
-        "CTRL + f",
-        " - open file explorer",
-        "ESC",
-        " - return to splash screen",
+
+    let events = [
+        AppInputEvent::OpenFileExplorerScreen,
+        AppInputEvent::ClosePopUp,
+        AppInputEvent::OpenQuitAppPopUp,
     ];
+
+    let info_bits = app
+        .key_bindings
+        .get_info_bits_from_events(&events, &app.language);
+
     render_titled_paragraph(
         frame,
         app,
@@ -594,13 +635,17 @@ fn render_insert_row_popup(frame: &mut Frame, app: &mut App) {
         }
     }
 
-    let info_bits = vec![
-        "Commands:",
-        "CTRL + s",
-        " - save entry",
-        "ESC / ALT + q",
-        " - return to database table view",
+    let events = [
+        AppInputEvent::ClosePopUp,
+        AppInputEvent::SwitchToEdit,
+        AppInputEvent::MoveUpPrimary,
+        AppInputEvent::MoveDownPrimary,
+        AppInputEvent::ExecuteAction,
     ];
+
+    let info_bits = app
+        .key_bindings
+        .get_info_bits_from_events(&events, &app.language);
 
     render_info_paragraph(&info_bits, frame, app, chunks[1]);
 }
@@ -630,13 +675,16 @@ fn render_insert_table_popup(frame: &mut Frame, app: &mut App) {
         form.render_widget_and_cursor(frame, chunks[0]);
     }
 
-    let info_bits = vec![
-        "Commands:",
-        "Enter",
-        " - execute sql",
-        "ESC",
-        " - return to database schema view",
+    let events = [
+        AppInputEvent::ClosePopUp,
+        AppInputEvent::SwitchToEdit,
+        AppInputEvent::ExecuteAction,
     ];
+
+    let info_bits = app
+        .key_bindings
+        .get_info_bits_from_events(&events, &app.language);
+
     render_info_paragraph(&info_bits, frame, app, chunks[1]);
 }
 
@@ -658,13 +706,15 @@ fn render_drop_table_popup(frame: &mut Frame, app: &mut App) {
         form.render_widget_and_cursor(frame, chunks[0]);
     }
 
-    let info_bits = vec![
-        "Commands:",
-        "Enter",
-        " - drop table with given name",
-        "ESC",
-        " - return to database schema view",
+    let events = [
+        AppInputEvent::ClosePopUp,
+        AppInputEvent::SwitchToEdit,
+        AppInputEvent::ExecuteAction,
     ];
+
+    let info_bits = app
+        .key_bindings
+        .get_info_bits_from_events(&events, &app.language);
 
     render_info_paragraph(&info_bits, frame, app, chunks[1]);
 }
@@ -694,13 +744,18 @@ fn render_delete_row_popup(frame: &mut Frame, app: &mut App) {
         form.render_widget_and_cursor(frame, chunks[0]);
     }
 
-    let info_bits = vec![
-        "Commands:",
-        "Enter",
-        " - delete entry with given ID",
-        "ESC",
-        " - return to database table view",
+    let events = [
+        AppInputEvent::ClosePopUp,
+        AppInputEvent::SwitchToEdit,
+        AppInputEvent::MoveUpPrimary,
+        AppInputEvent::MoveDownPrimary,
+        AppInputEvent::ExecuteAction,
     ];
+
+    let info_bits = app
+        .key_bindings
+        .get_info_bits_from_events(&events, &app.language);
+
     render_info_paragraph(&info_bits, frame, app, chunks[1]);
 }
 
@@ -711,16 +766,31 @@ fn render_error_popup(frame: &mut Frame, app: &mut App) {
         let error_block = Block::default()
             .borders(Borders::ALL)
             .title("Error")
-            .border_style(Style::default().fg(Color::Red))
+            .border_style(Style::default().fg(app.border_color()))
             .style(style);
-        let error_message = format!("Error: {}", error);
+        let error_message = format!("{}", error);
         let mut error_text = Text::from(error_message);
-        error_text.push_line(Span::raw("Press ESC to close this popup"));
+
+        error_text.push_line(Span::raw(""));
+
+        let events = [AppInputEvent::ClosePopUp];
+
+        let info_bits = app
+            .key_bindings
+            .get_info_bits_from_events(&events, &app.language);
+
+        let info_text = format_info_text(&info_bits, app);
+
+        for bit in info_text {
+            error_text.lines.push(bit);
+        }
+
         let paragraph = Paragraph::new(error_text)
             .block(error_block)
             .alignment(Alignment::Center)
             .wrap(Wrap { trim: true });
 
+        frame.render_widget(Clear, area);
         frame.render_widget(paragraph, area);
     }
 }
@@ -1030,9 +1100,8 @@ fn render_titled_paragraph<'a, S>(
     title: &str,
     style: Style,
     area: Rect,
-)
-where
-    S: AsRef<str>
+) where
+    S: AsRef<str>,
 {
     let titled_paragraph_block = Block::default()
         .style(style)
@@ -1047,14 +1116,9 @@ where
     frame.render_widget(titled_paragraph, area);
 }
 
-fn render_info_paragraph<'a, S>(
-    info_bits: &[S],
-    frame: &mut Frame,
-    app: &App,
-    area: Rect
-)
+fn render_info_paragraph<'a, S>(info_bits: &[S], frame: &mut Frame, app: &App, area: Rect)
 where
-    S: AsRef<str>
+    S: AsRef<str>,
 {
     let info_style = Style::default()
         .fg(app.border_color())
@@ -1076,9 +1140,13 @@ where
         let s = bit.as_ref();
 
         if i % 2 == 0 {
-            info_text.push_line(Span::styled::<&str, Style>(s, alt_text_style_1));
+            info_text.push_span(Span::styled::<&str, Style>(s, alt_text_style_1));
+            info_text.push_span(Span::styled(" - ", general_text_style));
         } else {
             info_text.push_span(Span::styled::<&str, Style>(s, general_text_style));
+            if i < text_bits.len() - 1 {
+                info_text.push_span(Span::styled(", ", general_text_style));
+            }
         }
     }
 
