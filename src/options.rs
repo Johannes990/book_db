@@ -7,6 +7,7 @@ use crate::{
     lang::language::SupportedLanguage,
     ui::colors::{
         app_colors::{AppColors, ColorScheme},
+        dynamic_colors::DynamicColors,
         static_colors::StaticColors,
     },
     widgets::generic_list_view::GenericListView,
@@ -22,12 +23,14 @@ pub enum SelectedOption {
 #[serde(untagged)]
 pub enum SelectedScheme {
     Static(StaticColors),
+    Dynamic(DynamicColors),
 }
 
 impl ColorScheme for SelectedScheme {
     fn colors(&self) -> AppColors {
         match self {
             SelectedScheme::Static(s) => s.colors(),
+            SelectedScheme::Dynamic(d) => d.colors(),
         }
     }
 }
@@ -46,11 +49,10 @@ pub struct Options {
 
 impl Options {
     pub fn new(default_color_scheme: StaticColors) -> Self {
-        let available_color_schemes = GenericListView::new(
-            StaticColors::iter()
-                .map(SelectedScheme::Static)
-                .collect::<Vec<_>>(),
-        );
+        let mut schemes = Vec::new();
+        schemes.extend(StaticColors::iter().map(SelectedScheme::Static));
+        schemes.extend(DynamicColors::iter().map(SelectedScheme::Dynamic));
+        let available_color_schemes = GenericListView::new(schemes);
         let available_options = SelectedOption::iter().collect();
         let available_languages = SupportedLanguage::iter().collect();
         Self {

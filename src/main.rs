@@ -43,7 +43,7 @@ fn main() -> io::Result<()> {
 
     let backend = CrosstermBackend::new(io::stdout());
     let mut terminal = setup_terminal(backend)?;
-    let default_color_scheme = StaticColors::Autumn;
+    let default_color_scheme = StaticColors::SaturatedSummer;
     let mut app = setup_app(
         &terminal,
         qualifier,

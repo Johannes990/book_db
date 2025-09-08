@@ -5,7 +5,7 @@ use crate::ui::colors::app_colors::{rgb, AppColors, ColorScheme};
 
 #[derive(Clone, Copy, EnumIter, Debug, PartialEq, Serialize, Deserialize)]
 pub enum StaticColors {
-    Autumn,
+    SaturatedSummer,
     CoolLilac,
     CoolBlue,
     SeaFoam,
@@ -17,7 +17,7 @@ pub enum StaticColors {
 impl ColorScheme for StaticColors {
     fn colors(&self) -> AppColors {
         match self {
-            StaticColors::Autumn => AppColors {
+            StaticColors::SaturatedSummer => AppColors {
                 text: rgb(64, 35, 33),
                 text_alt: rgb(189, 62, 34),
                 text_highlight: rgb(64, 35, 33),
