@@ -1093,7 +1093,7 @@ fn compute_col_widths(
         .collect()
 }
 
-fn render_titled_paragraph<'a, S>(
+fn render_titled_paragraph<S>(
     frame: &mut Frame,
     app: &App,
     info_bits: &[S],
@@ -1116,7 +1116,7 @@ fn render_titled_paragraph<'a, S>(
     frame.render_widget(titled_paragraph, area);
 }
 
-fn render_info_paragraph<'a, S>(info_bits: &[S], frame: &mut Frame, app: &App, area: Rect)
+fn render_info_paragraph<S>(info_bits: &[S], frame: &mut Frame, app: &App, area: Rect)
 where
     S: AsRef<str>,
 {
