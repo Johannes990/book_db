@@ -17,8 +17,8 @@ const ACCENT_SATURATION_WEIGHT: f32 = 1.2;
 #[derive(Clone, Copy, Debug, Deserialize, EnumIter, PartialEq, Serialize)]
 pub enum DynamicColors {
     AshOrange,
-    RedAndBlue,
-    Vampire,
+    FleshyPink,
+    VintageWine,
     CloudCover,
 }
 
@@ -35,7 +35,7 @@ impl ColorScheme for DynamicColors {
 
                 color_algorithm(pr, pg, pb, sr, sg, sb)
             }
-            DynamicColors::RedAndBlue => {
+            DynamicColors::FleshyPink => {
                 let pr = 247;
                 let pg = 10;
                 let pb = 33;
@@ -45,7 +45,7 @@ impl ColorScheme for DynamicColors {
 
                 color_algorithm(pr, pg, pb, sr, sg, sb)
             }
-            DynamicColors::Vampire => {
+            DynamicColors::VintageWine => {
                 let pr = 35;
                 let pg = 0;
                 let pb = 20;

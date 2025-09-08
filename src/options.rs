@@ -85,8 +85,11 @@ impl Options {
 
             options.available_color_schemes.rebuild();
 
-            options.available_color_schemes =
-                GenericListView::new(StaticColors::iter().map(SelectedScheme::Static).collect());
+            let mut schemes = Vec::new();
+            schemes.extend(StaticColors::iter().map(SelectedScheme::Static));
+            schemes.extend(DynamicColors::iter().map(SelectedScheme::Dynamic));
+
+            options.available_color_schemes = GenericListView::new(schemes);
 
             if !options
                 .available_color_schemes
