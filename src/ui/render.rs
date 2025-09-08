@@ -1,7 +1,6 @@
 use crate::{
     app::{App, PopUp, Screen},
     column::column_info::ColumnInfo,
-    log::log,
     options::{SelectedOption, SelectedScheme},
     row::row_info::RowInfo,
     ui::{colors::app_colors::ColorScheme, input::key_bindings::AppInputEvent},
@@ -81,33 +80,8 @@ fn render_splash_screen(frame: &mut Frame, app: &App) {
     let info_bits = app
         .key_bindings
         .get_info_bits_from_events(&events, &app.language);
-    let info_refs: Vec<&str> = info_bits.iter().map(|s| s.as_str()).collect();
 
-    log(format!("info bits: {:?}", info_bits).as_str());
-    log(format!("info refs: {:?}", info_refs).as_str());
-    /*
-    let file_exp_binding = &app
-        .key_bindings
-        .by_app_event
-        .get(&AppInputEvent::OpenFileExplorerScreen)
-        .unwrap()
-        .1
-        .to_string();
-
-    let info_bits = vec![
-        "Commands:",
-        file_exp_binding,
-        &app.language.open_file_explorer_screen,
-        "d",
-        &app.language.open_db_schema_screen,
-        "n",
-        &app.language.open_create_new_file_screen,
-        "o",
-        &app.language.open_options_screen,
-        "ESC / q",
-        &app.language.open_quit_app_popup,
-    ];*/
-    render_info_paragraph(&info_refs, frame, app, chunks[1]);
+    render_info_paragraph(&info_bits, frame, app, chunks[1]);
 }
 
 fn render_file_explorer_screen(frame: &mut Frame, app: &mut App) {
@@ -1026,23 +1000,6 @@ fn get_chunks_from_percentages(
         .split(area)
 }
 
-fn format_info_text<'a>(text_bits: &'a [&str], app: &App) -> Text<'a> {
-    let general_text_style = Style::default().fg(app.text_color());
-    let alt_text_style_1 = Style::default().fg(app.text_alt_color());
-
-    let mut info_text = Text::default();
-
-    for (i, bit) in text_bits.iter().enumerate() {
-        if i % 2 == 0 {
-            info_text.push_line(Span::styled::<&str, Style>(bit, alt_text_style_1));
-        } else {
-            info_text.push_span(Span::styled::<&str, Style>(bit, general_text_style));
-        }
-    }
-
-    info_text
-}
-
 fn compute_col_widths(
     cols: &[ColumnInfo],
     rows: &[RowInfo],
@@ -1066,14 +1023,17 @@ fn compute_col_widths(
         .collect()
 }
 
-fn render_titled_paragraph(
+fn render_titled_paragraph<'a, S>(
     frame: &mut Frame,
     app: &App,
-    info_bits: &[&str],
+    info_bits: &[S],
     title: &str,
     style: Style,
     area: Rect,
-) {
+)
+where
+    S: AsRef<str>
+{
     let titled_paragraph_block = Block::default()
         .style(style)
         .title(title)
@@ -1087,12 +1047,42 @@ fn render_titled_paragraph(
     frame.render_widget(titled_paragraph, area);
 }
 
-fn render_info_paragraph(info_bits: &[&str], frame: &mut Frame, app: &App, area: Rect) {
+fn render_info_paragraph<'a, S>(
+    info_bits: &[S],
+    frame: &mut Frame,
+    app: &App,
+    area: Rect
+)
+where
+    S: AsRef<str>
+{
     let info_style = Style::default()
         .fg(app.border_color())
         .bg(app.background_alt_color());
 
     render_titled_paragraph(frame, app, info_bits, "Info", info_style, area);
+}
+
+fn format_info_text<'a, S>(text_bits: &'a [S], app: &App) -> Text<'a>
+where
+    S: AsRef<str>,
+{
+    let general_text_style = Style::default().fg(app.text_color());
+    let alt_text_style_1 = Style::default().fg(app.text_alt_color());
+
+    let mut info_text = Text::default();
+
+    for (i, bit) in text_bits.iter().enumerate() {
+        let s = bit.as_ref();
+
+        if i % 2 == 0 {
+            info_text.push_line(Span::styled::<&str, Style>(s, alt_text_style_1));
+        } else {
+            info_text.push_span(Span::styled::<&str, Style>(s, general_text_style));
+        }
+    }
+
+    info_text
 }
 
 fn line_width(line: &Line) -> usize {

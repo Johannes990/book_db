@@ -210,6 +210,7 @@ impl KeyBindings {
         language: &AppLanguage,
     ) -> Vec<String> {
         let mut info_bits = Vec::new();
+
         for event in events {
             let key_str = self
                 .by_app_event
@@ -244,7 +245,7 @@ impl KeyBindings {
             };
 
             info_bits.push(key_str);
-            info_bits.push(desc.to_string());
+            info_bits.push(desc.clone());
         }
 
         info_bits
