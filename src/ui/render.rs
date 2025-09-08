@@ -1,7 +1,11 @@
 use crate::{
-    app::{App, PopUp, Screen}, column::column_info::ColumnInfo, log::log, options::{SelectedOption, SelectedScheme}, row::row_info::RowInfo, ui::{
-        colors::app_colors::ColorScheme, input::key_bindings::AppInputEvent
-    }, widgets::selectable_line::SelectableLine
+    app::{App, PopUp, Screen},
+    column::column_info::ColumnInfo,
+    log::log,
+    options::{SelectedOption, SelectedScheme},
+    row::row_info::RowInfo,
+    ui::{colors::app_colors::ColorScheme, input::key_bindings::AppInputEvent},
+    widgets::selectable_line::SelectableLine,
 };
 use ratatui::{
     layout::{Constraint, Direction, Flex, Layout},
@@ -74,12 +78,14 @@ fn render_splash_screen(frame: &mut Frame, app: &App) {
         AppInputEvent::OpenQuitAppPopUp,
     ];
 
-    let info_bits = app.key_bindings.get_info_bits_from_events(&events, &app.language);
+    let info_bits = app
+        .key_bindings
+        .get_info_bits_from_events(&events, &app.language);
     let info_refs: Vec<&str> = info_bits.iter().map(|s| s.as_str()).collect();
 
     log(format!("info bits: {:?}", info_bits).as_str());
     log(format!("info refs: {:?}", info_refs).as_str());
-/* 
+    /*
     let file_exp_binding = &app
         .key_bindings
         .by_app_event

@@ -1,26 +1,14 @@
 use crate::{
-    column::{
-        column_info::ColumnInfo,
-        column_list::ColumnListView,
-    },
-    db::{
-        DBError,
-        DB,
-    },
+    column::{column_info::ColumnInfo, column_list::ColumnListView},
+    db::{DBError, DB},
     file_explorer::file_explorer_table::FileExplorerTable,
     handle_key_events,
     lang::language::AppLanguage,
     options::Options,
     row::row_list::RowListView,
-    table::{
-        table_info::TableInfo,
-        table_list::TableListView
-    },
+    table::{table_info::TableInfo, table_list::TableListView},
     ui::{
-        colors::{
-            app_colors::ColorScheme,
-            static_colors::StaticColors
-        },
+        colors::{app_colors::ColorScheme, static_colors::StaticColors},
         input::key_bindings::KeyBindings,
         render,
     },
@@ -105,7 +93,7 @@ impl App {
             &qualifier,
             &organization,
             &application,
-            &options.selected_language
+            &options.selected_language,
         )?;
 
         Ok(Self {

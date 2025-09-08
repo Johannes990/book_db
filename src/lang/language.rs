@@ -53,13 +53,12 @@ impl AppLanguage {
         qualifier_str: &str,
         organization_str: &str,
         application_str: &str,
-        selected_lang: &SupportedLanguage
+        selected_lang: &SupportedLanguage,
     ) -> io::Result<Self> {
         let lang_dir = copy_lang_files(qualifier_str, organization_str, application_str)?;
         let file_path = lang_dir.join(selected_lang.file_path());
         let data = fs::read_to_string(file_path)?;
-        toml::from_str(&data)
-            .map_err(|err| io::Error::new(io::ErrorKind::InvalidData, err))
+        toml::from_str(&data).map_err(|err| io::Error::new(io::ErrorKind::InvalidData, err))
     }
 }
 

@@ -7,10 +7,13 @@ use serde::{Deserialize, Serialize};
 use strum::EnumIter;
 
 use crate::{
-    app::{Mode, PopUp, Screen}, lang::language::AppLanguage, log::log, ui::input::{
+    app::{Mode, PopUp, Screen},
+    lang::language::AppLanguage,
+    log::log,
+    ui::input::{
         input_context::{context_event, get_input_contexts, InputContext},
         key_events_serializable::{KeyCodeSerializable, KeyModifierSerializable},
-    }
+    },
 };
 
 #[derive(Debug, Clone, Copy, EnumIter, PartialEq, Eq, Hash, Serialize, Deserialize)]

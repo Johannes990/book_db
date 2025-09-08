@@ -4,10 +4,12 @@ use std::{fs, io};
 use strum::{EnumIter, IntoEnumIterator};
 
 use crate::{
-    lang::language::SupportedLanguage, ui::colors::{
+    lang::language::SupportedLanguage,
+    ui::colors::{
         app_colors::{AppColors, ColorScheme},
         static_colors::StaticColors,
-    }, widgets::generic_list_view::GenericListView
+    },
+    widgets::generic_list_view::GenericListView,
 };
 
 #[derive(EnumIter, Clone, Copy, PartialEq, Serialize, Deserialize)]
