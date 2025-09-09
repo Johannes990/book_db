@@ -17,6 +17,7 @@ use crate::{
 pub enum SelectedOption {
     TableMetainfoToggle,
     InsertMetainfoToggle,
+    RenderInfoSection,
 }
 
 #[derive(Clone, Copy, Debug, Deserialize, Serialize, PartialEq)]
@@ -45,6 +46,8 @@ pub struct Options {
     pub selected_language: SupportedLanguage,
     pub display_col_metainfo_in_table_view: bool,
     pub display_col_metainfo_in_insert_view: bool,
+    pub render_info_section: bool,
+    pub info_section_height: u16,
 }
 
 impl Options {
@@ -64,6 +67,8 @@ impl Options {
             selected_language: SupportedLanguage::English,
             display_col_metainfo_in_table_view: true,
             display_col_metainfo_in_insert_view: true,
+            render_info_section: true,
+            info_section_height: 4,
         }
     }
 
@@ -145,6 +150,10 @@ impl Options {
 
     pub fn set_display_col_metainfo_in_insert_view(&mut self, value: bool) {
         self.display_col_metainfo_in_insert_view = value;
+    }
+
+    pub fn set_render_info_section(&mut self, value: bool) {
+        self.render_info_section = value;
     }
 
     pub fn previous_option(&mut self) {

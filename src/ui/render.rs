@@ -1,7 +1,7 @@
 use crate::{
     app::{App, PopUp, Screen},
     column::column_info::ColumnInfo,
-    options::{SelectedOption, SelectedScheme},
+    options::SelectedScheme,
     row::row_info::RowInfo,
     ui::{colors::app_colors::ColorScheme, input::key_bindings::AppInputEvent},
     widgets::selectable_line::SelectableLine,
@@ -48,7 +48,7 @@ where
 }
 
 fn render_splash_screen(frame: &mut Frame, app: &App) {
-    let chunks = get_chunks_from_percentages(frame.area(), Direction::Vertical, vec![75, 25]);
+    let (main_chunk, info_chunk) = split_with_optional_info_chunk(frame.area(), app);
     let main_page_style = Style::default()
         .bg(app.background_color())
         .fg(app.text_color());
@@ -74,26 +74,28 @@ fn render_splash_screen(frame: &mut Frame, app: &App) {
     ];
     let main_page_paragraph = Paragraph::new(main_page_content).style(main_page_style);
 
-    frame.render_widget(main_page_paragraph, chunks[0]);
+    frame.render_widget(main_page_paragraph, main_chunk);
 
-    let events = [
-        AppInputEvent::OpenFileExplorerScreen,
-        AppInputEvent::OpenDBSchemaScreen,
-        AppInputEvent::OpenDBTableScreen,
-        AppInputEvent::OpenCreateNewFileScreen,
-        AppInputEvent::OpenOptionsScreen,
-        AppInputEvent::OpenQuitAppPopUp,
-    ];
+    if let Some(info_chunk) = info_chunk {
+        let events = [
+            AppInputEvent::OpenFileExplorerScreen,
+            AppInputEvent::OpenDBSchemaScreen,
+            AppInputEvent::OpenDBTableScreen,
+            AppInputEvent::OpenCreateNewFileScreen,
+            AppInputEvent::OpenOptionsScreen,
+            AppInputEvent::OpenQuitAppPopUp,
+        ];
 
-    let info_bits = app
-        .key_bindings
-        .get_info_bits_from_events(&events, &app.language);
+        let info_bits = app
+            .key_bindings
+            .get_info_bits_from_events(&events, &app.language);
 
-    render_info_paragraph(&info_bits, frame, app, chunks[1]);
+        render_info_paragraph(&info_bits, frame, app, info_chunk);
+    }
 }
 
 fn render_file_explorer_screen(frame: &mut Frame, app: &mut App) {
-    let chunks = get_chunks_from_percentages(frame.area(), Direction::Vertical, vec![75, 25]);
+    let (main_chunk, info_chunk) = split_with_optional_info_chunk(frame.area(), app);
     let scrollbar_style = Style::default().fg(app.border_color());
     let fexp_page_style = Style::default()
         .bg(app.background_color())
@@ -121,7 +123,7 @@ fn render_file_explorer_screen(frame: &mut Frame, app: &mut App) {
         .borders(Borders::NONE)
         .style(fexp_page_style);
 
-    frame.render_widget(file_explorer_block, chunks[0]);
+    frame.render_widget(file_explorer_block, main_chunk);
 
     let header_file_folder_string = &app.language.screen_file_explorer_file_folder_header;
     let header_size_string = &app.language.screen_file_explorer_size_header;
@@ -167,10 +169,10 @@ fn render_file_explorer_screen(frame: &mut Frame, app: &mut App) {
         .fg(app.border_color());
     let border_block = Block::new().borders(Borders::ALL).style(border_block_style);
     let table_chunk_area_without_top_row = Rect {
-        x: chunks[0].x,
-        y: chunks[0].y + 1,
-        height: chunks[0].height - 1,
-        width: chunks[0].width,
+        x: main_chunk.x,
+        y: main_chunk.y + 1,
+        height: main_chunk.height - 1,
+        width: main_chunk.width,
     };
 
     let (table_area, scrollbar_area) =
@@ -195,29 +197,31 @@ fn render_file_explorer_screen(frame: &mut Frame, app: &mut App) {
         &mut app.file_explorer_table.scroll_state,
     );
 
-    let events = [
-        AppInputEvent::OpenQuitAppPopUp,
-        AppInputEvent::OpenSplashScreen,
-        AppInputEvent::OpenDBSchemaScreen,
-        AppInputEvent::OpenCreateNewFileScreen,
-        AppInputEvent::OpenOptionsScreen,
-        AppInputEvent::MoveUpPrimary,
-        AppInputEvent::MoveDownPrimary,
-        AppInputEvent::FileExplorerSelect,
-    ];
+    if let Some(info_chunk) = info_chunk {
+        let events = [
+            AppInputEvent::OpenQuitAppPopUp,
+            AppInputEvent::OpenSplashScreen,
+            AppInputEvent::OpenDBSchemaScreen,
+            AppInputEvent::OpenCreateNewFileScreen,
+            AppInputEvent::OpenOptionsScreen,
+            AppInputEvent::MoveUpPrimary,
+            AppInputEvent::MoveDownPrimary,
+            AppInputEvent::FileExplorerSelect,
+        ];
 
-    let info_bits = app
-        .key_bindings
-        .get_info_bits_from_events(&events, &app.language);
+        let info_bits = app
+            .key_bindings
+            .get_info_bits_from_events(&events, &app.language);
 
-    render_info_paragraph(&info_bits, frame, app, chunks[1]);
+        render_info_paragraph(&info_bits, frame, app, info_chunk);
+    }
 }
 
 fn render_database_schema_screen(frame: &mut Frame, app: &mut App) {
     let db_page_style = Style::default()
         .bg(app.background_color())
         .fg(app.text_color());
-    let chunks = get_chunks_from_percentages(frame.area(), Direction::Vertical, vec![75, 25]);
+    let (main_chunk, info_chunk) = split_with_optional_info_chunk(frame.area(), app);
     let no_db_found_string = &app.language.screen_db_schema_no_db_found;
     let db_name = app
         .selected_db
@@ -236,41 +240,43 @@ fn render_database_schema_screen(frame: &mut Frame, app: &mut App) {
             .right_aligned(),
         )
         .style(db_page_style);
-    let inner_area = outer_block.inner(chunks[0]);
+    let inner_area = outer_block.inner(main_chunk);
     let table_column_chunks =
         get_chunks_from_percentages(inner_area, Direction::Horizontal, vec![50, 50]);
 
-    frame.render_widget(outer_block, chunks[0]);
+    frame.render_widget(outer_block, main_chunk);
     render_table_list(frame, app, table_column_chunks[0]);
     render_column_list(frame, app, table_column_chunks[1]);
 
-    let events = [
-        AppInputEvent::OpenSplashScreen,
-        AppInputEvent::OpenFileExplorerScreen,
-        AppInputEvent::OpenCreateNewFileScreen,
-        AppInputEvent::OpenOptionsScreen,
-        AppInputEvent::OpenQuitAppPopUp,
-        AppInputEvent::MoveUpPrimary,
-        AppInputEvent::MoveDownPrimary,
-        AppInputEvent::MoveUpSecondary,
-        AppInputEvent::MoveDownSecondary,
-        AppInputEvent::OpenInsertTablePopUp,
-        AppInputEvent::OpenDeleteTablePopUp,
-        AppInputEvent::OpenDBTableScreen,
-    ];
+    if let Some(info_chunk) = info_chunk {
+        let events = [
+            AppInputEvent::OpenSplashScreen,
+            AppInputEvent::OpenFileExplorerScreen,
+            AppInputEvent::OpenCreateNewFileScreen,
+            AppInputEvent::OpenOptionsScreen,
+            AppInputEvent::OpenQuitAppPopUp,
+            AppInputEvent::MoveUpPrimary,
+            AppInputEvent::MoveDownPrimary,
+            AppInputEvent::MoveUpSecondary,
+            AppInputEvent::MoveDownSecondary,
+            AppInputEvent::OpenInsertTablePopUp,
+            AppInputEvent::OpenDeleteTablePopUp,
+            AppInputEvent::OpenDBTableScreen,
+        ];
 
-    let info_bits = app
-        .key_bindings
-        .get_info_bits_from_events(&events, &app.language);
+        let info_bits = app
+            .key_bindings
+            .get_info_bits_from_events(&events, &app.language);
 
-    render_info_paragraph(&info_bits, frame, app, chunks[1]);
+        render_info_paragraph(&info_bits, frame, app, info_chunk);
+    }
 }
 
 fn render_new_database_screen(frame: &mut Frame, app: &mut App) {
     let page_style = Style::default()
         .bg(app.background_color())
         .fg(app.text_color());
-    let chunks = get_chunks_from_percentages(frame.area(), Direction::Vertical, vec![75, 25]);
+    let (main_chunk, info_chunk) = split_with_optional_info_chunk(frame.area(), app);
     let insert_text_area_on_style = Style::default()
         .bg(app.background_highlight_color())
         .fg(app.text_highlight_color());
@@ -280,28 +286,31 @@ fn render_new_database_screen(frame: &mut Frame, app: &mut App) {
     }
 
     if let Some(form) = &app.create_db_form {
-        form.render_widget_and_cursor(frame, chunks[0]);
+        form.render_widget_and_cursor(frame, main_chunk);
     }
 
-    let events = [
-        AppInputEvent::OpenSplashScreen,
-        AppInputEvent::OpenFileExplorerScreen,
-        AppInputEvent::OpenDBSchemaScreen,
-        AppInputEvent::OpenDBTableScreen,
-        AppInputEvent::OpenOptionsScreen,
-        AppInputEvent::OpenQuitAppPopUp,
-        AppInputEvent::SwitchToEdit,
-        AppInputEvent::ExecuteAction,
-    ];
+    if let Some(info_chunk) = info_chunk {
+        let events = [
+            AppInputEvent::OpenSplashScreen,
+            AppInputEvent::OpenFileExplorerScreen,
+            AppInputEvent::OpenDBSchemaScreen,
+            AppInputEvent::OpenDBTableScreen,
+            AppInputEvent::OpenOptionsScreen,
+            AppInputEvent::OpenQuitAppPopUp,
+            AppInputEvent::SwitchToEdit,
+            AppInputEvent::ExecuteAction,
+        ];
 
-    let info_bits = app
-        .key_bindings
-        .get_info_bits_from_events(&events, &app.language);
+        let info_bits = app
+            .key_bindings
+            .get_info_bits_from_events(&events, &app.language);
 
-    render_info_paragraph(&info_bits, frame, app, chunks[1]);
+        render_info_paragraph(&info_bits, frame, app, info_chunk);
+    }
 }
 
 fn render_database_table_screen(frame: &mut Frame, app: &mut App) {
+    let (main_chunk, info_chunk) = split_with_optional_info_chunk(frame.area(), app);
     let db_page_style = Style::default()
         .bg(app.background_color())
         .fg(app.text_color());
@@ -312,7 +321,6 @@ fn render_database_table_screen(frame: &mut Frame, app: &mut App) {
         .fg(app.text_alt_color())
         .add_modifier(Modifier::ITALIC);
     let scrollbar_style = Style::default().fg(app.border_color());
-    let chunks = get_chunks_from_percentages(frame.area(), Direction::Vertical, vec![75, 25]);
     let empty_table_string = &app.language.screen_db_table_table_placeholder;
     let table_name = app.selected_db_table.as_ref().expect(empty_table_string);
     let current_table_string = &app.language.screen_db_table_current_table;
@@ -327,9 +335,9 @@ fn render_database_table_screen(frame: &mut Frame, app: &mut App) {
             .right_aligned(),
         )
         .style(db_page_style);
-    let inner_area = outer_block.inner(chunks[0]);
+    let inner_area = outer_block.inner(main_chunk);
 
-    frame.render_widget(outer_block, chunks[0]);
+    frame.render_widget(outer_block, main_chunk);
 
     let language_strings = App::get_strings_for_col_info(&app.language);
     let header_cells: Vec<Cell> = app
@@ -405,24 +413,26 @@ fn render_database_table_screen(frame: &mut Frame, app: &mut App) {
         &mut unwrapped_row_list.scroll_bar_state,
     );
 
-    let events = [
-        AppInputEvent::OpenSplashScreen,
-        AppInputEvent::OpenFileExplorerScreen,
-        AppInputEvent::OpenDBSchemaScreen,
-        AppInputEvent::OpenCreateNewFileScreen,
-        AppInputEvent::OpenOptionsScreen,
-        AppInputEvent::OpenQuitAppPopUp,
-        AppInputEvent::MoveUpPrimary,
-        AppInputEvent::MoveDownPrimary,
-        AppInputEvent::OpenInsertRowPopUp,
-        AppInputEvent::OpenDeleteRowPopUp,
-    ];
+    if let Some(info_chunk) = info_chunk {
+        let events = [
+            AppInputEvent::OpenSplashScreen,
+            AppInputEvent::OpenFileExplorerScreen,
+            AppInputEvent::OpenDBSchemaScreen,
+            AppInputEvent::OpenCreateNewFileScreen,
+            AppInputEvent::OpenOptionsScreen,
+            AppInputEvent::OpenQuitAppPopUp,
+            AppInputEvent::MoveUpPrimary,
+            AppInputEvent::MoveDownPrimary,
+            AppInputEvent::OpenInsertRowPopUp,
+            AppInputEvent::OpenDeleteRowPopUp,
+        ];
 
-    let info_bits = app
-        .key_bindings
-        .get_info_bits_from_events(&events, &app.language);
+        let info_bits = app
+            .key_bindings
+            .get_info_bits_from_events(&events, &app.language);
 
-    render_info_paragraph(&info_bits, frame, app, chunks[1]);
+        render_info_paragraph(&info_bits, frame, app, info_chunk);
+    }
 }
 
 fn render_options_screen(frame: &mut Frame, app: &mut App) {
@@ -437,8 +447,12 @@ fn render_options_screen(frame: &mut Frame, app: &mut App) {
 
     frame.render_widget(options_block, frame.area());
 
-    let vertical_chunks =
-        get_chunks_from_percentages(frame.area(), Direction::Vertical, vec![50, 25, 25]);
+    let limits = if app.options.render_info_section {
+        vec![6, app.options.info_section_height]
+    } else {
+        vec![6]
+    };
+    let vertical_chunks = get_chunks_from_fixed_limits(frame.area(), Direction::Vertical, limits);
     let horizontal_chunks =
         get_chunks_from_percentages(vertical_chunks[1], Direction::Horizontal, vec![50, 50]);
     let color_schemes_string = &app.language.screen_options_color_schemes;
@@ -502,64 +516,56 @@ fn render_options_screen(frame: &mut Frame, app: &mut App) {
         border_block_style,
     );
 
-    let table_metainfo_string = &app.language.screen_options_metadata_in_table;
-    let table_metainfo_toggle_button = SelectableLine::default(
-        format!("{}: ", table_metainfo_string).as_str(),
-        app.options.display_col_metainfo_in_table_view,
-        matches!(
-            app.options.selected_option,
-            SelectedOption::TableMetainfoToggle
-        ),
-        general_page_style,
-        selected_style,
-    );
-    let table_metainfo_toggle_area = Rect {
-        x: vertical_chunks[0].x + 1,
-        y: vertical_chunks[0].y + 1,
-        width: 50,
-        height: 1,
-    };
-
-    let insert_metainfo_string = &app.language.screen_options_metadata_in_insert;
-    let insert_metainfo_toggle_button = SelectableLine::default(
-        format!("{}: ", insert_metainfo_string).as_str(),
-        app.options.display_col_metainfo_in_insert_view,
-        matches!(
-            app.options.selected_option,
-            SelectedOption::InsertMetainfoToggle
-        ),
-        general_page_style,
-        selected_style,
-    );
-    let insert_metainfo_toggle_area = Rect {
-        x: vertical_chunks[0].x + 1,
-        y: vertical_chunks[0].y + 2,
-        width: 50,
-        height: 1,
-    };
-
-    frame.render_widget(table_metainfo_toggle_button, table_metainfo_toggle_area);
-    frame.render_widget(insert_metainfo_toggle_button, insert_metainfo_toggle_area);
-
-    let events = [
-        AppInputEvent::OpenSplashScreen,
-        AppInputEvent::OpenFileExplorerScreen,
-        AppInputEvent::OpenDBSchemaScreen,
-        AppInputEvent::OpenDBTableScreen,
-        AppInputEvent::OpenCreateNewFileScreen,
-        AppInputEvent::OpenQuitAppPopUp,
-        AppInputEvent::MoveUpPrimary,
-        AppInputEvent::MoveDownPrimary,
-        AppInputEvent::MoveUpSecondary,
-        AppInputEvent::MoveDownSecondary,
-        AppInputEvent::ToggleOption,
+    let selectable_options_strings = [
+        &app.language.screen_options_metadata_in_table,
+        &app.language.screen_options_metadata_in_insert,
+        &app.language.screen_options_render_info,
     ];
 
-    let info_bits = app
-        .key_bindings
-        .get_info_bits_from_events(&events, &app.language);
+    let selectable_options_values = [
+        &app.options.display_col_metainfo_in_table_view,
+        &app.options.display_col_metainfo_in_insert_view,
+        &app.options.render_info_section,
+    ];
 
-    render_info_paragraph(&info_bits, frame, app, vertical_chunks[2]);
+    for (i, option) in app.options.available_options.iter().enumerate() {
+        let option_widget = SelectableLine::default(
+            format!("{}: ", selectable_options_strings[i]).as_str(),
+            *selectable_options_values[i],
+            app.options.selected_option == *option,
+            general_page_style,
+            selected_style,
+        );
+        let option_widget_area = Rect {
+            x: vertical_chunks[0].x + 1,
+            y: vertical_chunks[0].y + 1 + i as u16,
+            width: 50,
+            height: 1,
+        };
+        frame.render_widget(option_widget, option_widget_area);
+    }
+
+    if app.options.render_info_section {
+        let events = [
+            AppInputEvent::OpenSplashScreen,
+            AppInputEvent::OpenFileExplorerScreen,
+            AppInputEvent::OpenDBSchemaScreen,
+            AppInputEvent::OpenDBTableScreen,
+            AppInputEvent::OpenCreateNewFileScreen,
+            AppInputEvent::OpenQuitAppPopUp,
+            AppInputEvent::MoveUpPrimary,
+            AppInputEvent::MoveDownPrimary,
+            AppInputEvent::MoveUpSecondary,
+            AppInputEvent::MoveDownSecondary,
+            AppInputEvent::ToggleOption,
+        ];
+
+        let info_bits = app
+            .key_bindings
+            .get_info_bits_from_events(&events, &app.language);
+
+        render_info_paragraph(&info_bits, frame, app, vertical_chunks[2]);
+    }
 }
 
 fn render_quit_popup(frame: &mut Frame, app: &App) {
@@ -578,7 +584,11 @@ fn render_quit_popup(frame: &mut Frame, app: &App) {
     render_titled_paragraph(
         frame,
         app,
-        &info_bits,
+        if app.options.render_info_section {
+            &info_bits
+        } else {
+            &[]
+        },
         quit_confirmation_string,
         quit_popup_style,
         area,
@@ -588,7 +598,7 @@ fn render_quit_popup(frame: &mut Frame, app: &App) {
 fn render_no_db_loaded_popup(frame: &mut Frame, app: &mut App) {
     let area = centered_rect(55, 30, frame.area());
     let popup_style = Style::default()
-        .bg(app.background_alt_color())
+        .bg(app.warning_color())
         .fg(app.text_color());
 
     let events = [
@@ -605,7 +615,11 @@ fn render_no_db_loaded_popup(frame: &mut Frame, app: &mut App) {
     render_titled_paragraph(
         frame,
         app,
-        &info_bits,
+        if app.options.render_info_section {
+            &info_bits
+        } else {
+            &[]
+        },
         no_db_loaded_string,
         popup_style,
         area,
@@ -614,7 +628,7 @@ fn render_no_db_loaded_popup(frame: &mut Frame, app: &mut App) {
 
 fn render_insert_row_popup(frame: &mut Frame, app: &mut App) {
     let area = centered_rect(55, 55, frame.area());
-    let chunks = get_chunks_from_percentages(area, Direction::Vertical, vec![70, 30]);
+    let (main_chunk, info_chunk) = split_with_optional_info_chunk(area, app);
     let insert_row_popup_style = Style::default()
         .bg(app.background_alt_color())
         .fg(app.text_color());
@@ -640,10 +654,10 @@ fn render_insert_row_popup(frame: &mut Frame, app: &mut App) {
             .borders(Borders::ALL)
             .style(insert_row_popup_style);
 
-        frame.render_widget(Clear, chunks[0]);
-        frame.render_widget(popup_block, chunks[0]);
+        frame.render_widget(Clear, main_chunk);
+        frame.render_widget(popup_block, main_chunk);
 
-        let text_area = chunks[0].inner(Margin {
+        let text_area = main_chunk.inner(Margin {
             horizontal: 1,
             vertical: 1,
         });
@@ -692,24 +706,26 @@ fn render_insert_row_popup(frame: &mut Frame, app: &mut App) {
         }
     }
 
-    let events = [
-        AppInputEvent::ClosePopUp,
-        AppInputEvent::SwitchToEdit,
-        AppInputEvent::MoveUpPrimary,
-        AppInputEvent::MoveDownPrimary,
-        AppInputEvent::ExecuteAction,
-    ];
+    if let Some(info_chunk) = info_chunk {
+        let events = [
+            AppInputEvent::ClosePopUp,
+            AppInputEvent::SwitchToEdit,
+            AppInputEvent::MoveUpPrimary,
+            AppInputEvent::MoveDownPrimary,
+            AppInputEvent::ExecuteAction,
+        ];
 
-    let info_bits = app
-        .key_bindings
-        .get_info_bits_from_events(&events, &app.language);
+        let info_bits = app
+            .key_bindings
+            .get_info_bits_from_events(&events, &app.language);
 
-    render_info_paragraph(&info_bits, frame, app, chunks[1]);
+        render_info_paragraph(&info_bits, frame, app, info_chunk);
+    }
 }
 
 fn render_insert_table_popup(frame: &mut Frame, app: &mut App) {
     let area = centered_rect(55, 40, frame.area());
-    let chunks = get_chunks_from_percentages(area, Direction::Vertical, vec![70, 30]);
+    let (main_chunk, info_chunk) = split_with_optional_info_chunk(area, app);
     let insert_table_popup_style = Style::default()
         .bg(app.background_alt_color())
         .fg(app.text_color());
@@ -729,25 +745,27 @@ fn render_insert_table_popup(frame: &mut Frame, app: &mut App) {
     }
 
     if let Some(form) = &app.table_insert_form {
-        form.render_widget_and_cursor(frame, chunks[0]);
+        form.render_widget_and_cursor(frame, main_chunk);
     }
 
-    let events = [
-        AppInputEvent::ClosePopUp,
-        AppInputEvent::SwitchToEdit,
-        AppInputEvent::ExecuteAction,
-    ];
+    if let Some(info_chunk) = info_chunk {
+        let events = [
+            AppInputEvent::ClosePopUp,
+            AppInputEvent::SwitchToEdit,
+            AppInputEvent::ExecuteAction,
+        ];
 
-    let info_bits = app
-        .key_bindings
-        .get_info_bits_from_events(&events, &app.language);
+        let info_bits = app
+            .key_bindings
+            .get_info_bits_from_events(&events, &app.language);
 
-    render_info_paragraph(&info_bits, frame, app, chunks[1]);
+        render_info_paragraph(&info_bits, frame, app, info_chunk);
+    }
 }
 
 fn render_drop_table_popup(frame: &mut Frame, app: &mut App) {
     let area = centered_rect(55, 30, frame.area());
-    let chunks = get_chunks_from_percentages(area, Direction::Vertical, vec![40, 60]);
+    let (main_chunk, info_chunk) = split_with_optional_info_chunk(area, app);
     let drop_table_popup_style = Style::default()
         .bg(app.background_alt_color())
         .fg(app.text_color());
@@ -760,26 +778,27 @@ fn render_drop_table_popup(frame: &mut Frame, app: &mut App) {
     }
 
     if let Some(form) = &app.table_delete_form {
-        form.render_widget_and_cursor(frame, chunks[0]);
+        form.render_widget_and_cursor(frame, main_chunk);
     }
 
-    let events = [
-        AppInputEvent::ClosePopUp,
-        AppInputEvent::SwitchToEdit,
-        AppInputEvent::ExecuteAction,
-    ];
+    if let Some(info_chunk) = info_chunk {
+        let events = [
+            AppInputEvent::ClosePopUp,
+            AppInputEvent::SwitchToEdit,
+            AppInputEvent::ExecuteAction,
+        ];
 
-    let info_bits = app
-        .key_bindings
-        .get_info_bits_from_events(&events, &app.language);
+        let info_bits = app
+            .key_bindings
+            .get_info_bits_from_events(&events, &app.language);
 
-    render_info_paragraph(&info_bits, frame, app, chunks[1]);
+        render_info_paragraph(&info_bits, frame, app, info_chunk);
+    }
 }
 
 fn render_delete_row_popup(frame: &mut Frame, app: &mut App) {
     let area = centered_rect(55, 30, frame.area());
-    let chunks = get_chunks_from_percentages(area, Direction::Vertical, vec![70, 30]);
-
+    let (main_chunk, info_chunk) = split_with_optional_info_chunk(area, app);
     let delete_row_popup_style = Style::default()
         .bg(app.background_alt_color())
         .fg(app.text_color());
@@ -798,22 +817,24 @@ fn render_delete_row_popup(frame: &mut Frame, app: &mut App) {
     }
 
     if let Some(form) = &app.row_delete_form {
-        form.render_widget_and_cursor(frame, chunks[0]);
+        form.render_widget_and_cursor(frame, main_chunk);
     }
 
-    let events = [
-        AppInputEvent::ClosePopUp,
-        AppInputEvent::SwitchToEdit,
-        AppInputEvent::MoveUpPrimary,
-        AppInputEvent::MoveDownPrimary,
-        AppInputEvent::ExecuteAction,
-    ];
+    if let Some(info_chunk) = info_chunk {
+        let events = [
+            AppInputEvent::ClosePopUp,
+            AppInputEvent::SwitchToEdit,
+            AppInputEvent::MoveUpPrimary,
+            AppInputEvent::MoveDownPrimary,
+            AppInputEvent::ExecuteAction,
+        ];
 
-    let info_bits = app
-        .key_bindings
-        .get_info_bits_from_events(&events, &app.language);
+        let info_bits = app
+            .key_bindings
+            .get_info_bits_from_events(&events, &app.language);
 
-    render_info_paragraph(&info_bits, frame, app, chunks[1]);
+        render_info_paragraph(&info_bits, frame, app, info_chunk);
+    }
 }
 
 fn render_error_popup(frame: &mut Frame, app: &mut App) {
@@ -1160,6 +1181,30 @@ fn get_chunks_from_percentages(
         .direction(direction)
         .constraints(constraints)
         .split(area)
+}
+
+fn get_chunks_from_fixed_limits(area: Rect, direction: Direction, limits: Vec<u16>) -> Rc<[Rect]> {
+    let mut constraints: Vec<Constraint> = limits
+        .iter()
+        .map(|value| Constraint::Length(*value))
+        .collect();
+    constraints.insert(0, Constraint::Min(0));
+
+    Layout::default()
+        .direction(direction)
+        .constraints(constraints)
+        .split(area)
+}
+
+fn split_with_optional_info_chunk(area: Rect, app: &App) -> (Rect, Option<Rect>) {
+    let show_info = app.options.render_info_section;
+    let limits = if show_info {
+        vec![app.options.info_section_height]
+    } else {
+        vec![]
+    };
+    let chunks = get_chunks_from_fixed_limits(area, Direction::Vertical, limits);
+    (chunks[0], if show_info { Some(chunks[1]) } else { None })
 }
 
 fn compute_col_widths(

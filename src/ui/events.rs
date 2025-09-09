@@ -343,6 +343,11 @@ fn options_screen_handler(app: &mut App, key_event: KeyEvent) -> io::Result<()> 
                     );
                     changed = true;
                 }
+                SelectedOption::RenderInfoSection => {
+                    app.options
+                        .set_render_info_section(!app.options.render_info_section);
+                    changed = true;
+                }
             },
             _ => {}
         }
