@@ -447,10 +447,11 @@ fn render_options_screen(frame: &mut Frame, app: &mut App) {
 
     frame.render_widget(options_block, frame.area());
 
+    let color_shcheme_preview_rows = 8;
     let limits = if app.options.render_info_section {
-        vec![6, app.options.info_section_height]
+        vec![color_shcheme_preview_rows, app.options.info_section_height]
     } else {
-        vec![6]
+        vec![color_shcheme_preview_rows]
     };
     let vertical_chunks = get_chunks_from_fixed_limits(frame.area(), Direction::Vertical, limits);
     let horizontal_chunks =
@@ -724,7 +725,7 @@ fn render_insert_row_popup(frame: &mut Frame, app: &mut App) {
 }
 
 fn render_insert_table_popup(frame: &mut Frame, app: &mut App) {
-    let area = centered_rect(55, 40, frame.area());
+    let area = centered_rect(55, 55, frame.area());
     let (main_chunk, info_chunk) = split_with_optional_info_chunk(area, app);
     let insert_table_popup_style = Style::default()
         .bg(app.background_alt_color())
@@ -764,7 +765,7 @@ fn render_insert_table_popup(frame: &mut Frame, app: &mut App) {
 }
 
 fn render_drop_table_popup(frame: &mut Frame, app: &mut App) {
-    let area = centered_rect(55, 30, frame.area());
+    let area = centered_rect(55, 55, frame.area());
     let (main_chunk, info_chunk) = split_with_optional_info_chunk(area, app);
     let drop_table_popup_style = Style::default()
         .bg(app.background_alt_color())
@@ -797,7 +798,7 @@ fn render_drop_table_popup(frame: &mut Frame, app: &mut App) {
 }
 
 fn render_delete_row_popup(frame: &mut Frame, app: &mut App) {
-    let area = centered_rect(55, 30, frame.area());
+    let area = centered_rect(55, 55, frame.area());
     let (main_chunk, info_chunk) = split_with_optional_info_chunk(area, app);
     let delete_row_popup_style = Style::default()
         .bg(app.background_alt_color())
@@ -1188,7 +1189,7 @@ fn get_chunks_from_fixed_limits(area: Rect, direction: Direction, limits: Vec<u1
         .iter()
         .map(|value| Constraint::Length(*value))
         .collect();
-    constraints.insert(0, Constraint::Min(0));
+    constraints.insert(0, Constraint::Fill(1));
 
     Layout::default()
         .direction(direction)

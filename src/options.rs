@@ -68,7 +68,7 @@ impl Options {
             display_col_metainfo_in_table_view: true,
             display_col_metainfo_in_insert_view: true,
             render_info_section: true,
-            info_section_height: 4,
+            info_section_height: 5,
         }
     }
 
