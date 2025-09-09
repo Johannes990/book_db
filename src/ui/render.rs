@@ -331,12 +331,15 @@ fn render_database_table_screen(frame: &mut Frame, app: &mut App) {
 
     frame.render_widget(outer_block, chunks[0]);
 
+    let language_strings = App::get_strings_for_col_info(&app.language);
     let header_cells: Vec<Cell> = app
         .selected_table_columns
         .iter()
         .map(|col| {
+            let display_metainfo = &app.options.display_col_metainfo_in_table_view;
             let line = col.get_line_from_col_info(
-                &app.options.display_col_metainfo_in_table_view,
+                language_strings,
+                *display_metainfo,
                 col_name_style,
                 metadata_style,
             );
@@ -363,14 +366,14 @@ fn render_database_table_screen(frame: &mut Frame, app: &mut App) {
         })
         .collect();
 
-    let table_title = table_name.to_string();
+    let table_name = table_name.to_string();
     let border_block_style = Style::default()
         .bg(app.background_color())
         .fg(app.border_color());
     let border_block = Block::new()
         .borders(Borders::ALL)
         .style(border_block_style)
-        .title(table_title);
+        .title(table_name);
     let unwrapped_row_list = app.row_list_view.as_mut().unwrap();
     let min = 5;
     let max = 40;
@@ -379,6 +382,7 @@ fn render_database_table_screen(frame: &mut Frame, app: &mut App) {
         &unwrapped_row_list.items,
         min,
         max,
+        language_strings,
         &app.options.display_col_metainfo_in_table_view,
     );
 
@@ -623,8 +627,9 @@ fn render_insert_row_popup(frame: &mut Frame, app: &mut App) {
     let insert_text_area_off_style = Style::default()
         .bg(app.background_alt_color())
         .fg(app.text_color());
+    let language_strings = App::get_strings_for_col_info(&app.language);
 
-    if let Some(form) = &mut app.row_insert_form {
+    if let Some(form) = app.row_insert_form.as_mut() {
         form.set_styles(
             insert_text_area_on_style,
             insert_text_area_off_style,
@@ -646,9 +651,11 @@ fn render_insert_row_popup(frame: &mut Frame, app: &mut App) {
         for (i, col_info) in app.selected_table_columns.iter().enumerate() {
             let x = text_area.x;
             let y = text_area.y + i as u16;
+            let display_metainfo = &app.options.display_col_metainfo_in_insert_view;
 
             let mut label_line = col_info.get_line_from_col_info(
-                &app.options.display_col_metainfo_in_insert_view,
+                language_strings,
+                *display_metainfo,
                 insert_row_popup_style,
                 metadata_style,
             );
@@ -1160,12 +1167,13 @@ fn compute_col_widths(
     rows: &[RowInfo],
     min: usize,
     max: usize,
+    language_strings: (&str, &str, &str, &str, &str),
     display_metainfo: &bool,
 ) -> Vec<Constraint> {
     cols.iter()
         .enumerate()
         .map(|(i, col)| {
-            let header_len = col.col_name_length(display_metainfo);
+            let header_len = col.col_name_length(language_strings, *display_metainfo);
             let max_data_len = rows
                 .iter()
                 .map(|row| row.values.get(i).map_or(0, |val| val.len()))

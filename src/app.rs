@@ -96,6 +96,15 @@ impl App {
             &options.selected_language,
         )?;
 
+        let file_explorer_strings = (
+            language.invalid_utf_8.clone(),
+            language.not_available.clone(),
+            language.screen_file_explorer_dir.clone(),
+            language.bytes.clone(),
+            language.app_datetime_format.clone(),
+            language.screen_file_explorer_dir_read_error.clone(),
+        );
+
         Ok(Self {
             qualifier,
             organization,
@@ -107,7 +116,7 @@ impl App {
             selected_db: None,
             selected_db_table: None,
             selected_table_columns: Vec::new(),
-            file_explorer_table: FileExplorerTable::new(),
+            file_explorer_table: FileExplorerTable::new(file_explorer_strings),
             table_list_view: None,
             column_list_view: None,
             row_list_view: None,
@@ -374,5 +383,15 @@ impl App {
                 }
             }
         }
+    }
+
+    pub fn get_strings_for_col_info(language: &AppLanguage) -> (&str, &str, &str, &str, &str) {
+        (
+            &language.sql_pk_constraint,
+            &language.sql_unique_constraint,
+            &language.sql_not_null_constraint,
+            &language.sql_fk_constraint,
+            &language.column_list_unknown_fk_ref,
+        )
     }
 }

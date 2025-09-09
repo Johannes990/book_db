@@ -17,27 +17,40 @@ pub struct ColumnInfo {
 impl ColumnInfo {
     pub fn get_line_from_col_info(
         &self,
-        display_metainfo: &bool,
+        language_strings: (&str, &str, &str, &str, &str),
+        display_metainfo: bool,
         col_name_style: Style,
         metadata_style: Style,
     ) -> Line<'static> {
         let mut col_info = vec![Span::styled(self.name.clone(), col_name_style)];
 
-        if *display_metainfo {
+        if display_metainfo {
             col_info.push(Span::raw(" "));
             if self.is_pk {
-                col_info.push(Span::styled("[PK]", metadata_style));
+                col_info.push(Span::styled(
+                    format!("[{}]", language_strings.0),
+                    metadata_style,
+                ));
             }
             if self.is_unique {
-                col_info.push(Span::styled("[UNIQUE]", metadata_style));
+                col_info.push(Span::styled(
+                    format!("[{}]", language_strings.1),
+                    metadata_style,
+                ));
             }
             if self.is_not_null {
-                col_info.push(Span::styled("[NOT NULL]", metadata_style));
+                col_info.push(Span::styled(
+                    format!("[{}]", language_strings.2),
+                    metadata_style,
+                ));
             }
             if self.is_fk {
-                let ref_table = self.references_table.as_deref().unwrap_or("Unknown");
+                let ref_table = self
+                    .references_table
+                    .as_deref()
+                    .unwrap_or(language_strings.4);
                 col_info.push(Span::styled(
-                    format!("[FK -> {}]", ref_table),
+                    format!("[{} -> {}]", language_strings.3, ref_table),
                     metadata_style,
                 ));
             }
@@ -48,23 +61,31 @@ impl ColumnInfo {
         Line::from(col_info)
     }
 
-    pub fn col_name_length(&self, display_metainfo: &bool) -> usize {
+    pub fn col_name_length(
+        &self,
+        language_strings: (&str, &str, &str, &str, &str),
+        display_metainfo: bool,
+    ) -> usize {
         let mut length = self.name.len();
 
-        if *display_metainfo {
+        if display_metainfo {
+            let angle_brackets_len = 2;
             length += 1;
             if self.is_pk {
-                length += "[PK]".len();
+                length += angle_brackets_len + language_strings.0.len();
             }
             if self.is_unique {
-                length += "[UNIQUE]".len();
+                length += angle_brackets_len + language_strings.1.len();
             }
             if self.is_not_null {
-                length += "[NOT NULL]".len();
+                length += angle_brackets_len + language_strings.2.len();
             }
             if self.is_fk {
-                let ref_table = self.references_table.as_deref().unwrap_or("Unknown");
-                length += format!("[FK -> {}]", ref_table).len();
+                let ref_table = self
+                    .references_table
+                    .as_deref()
+                    .unwrap_or(language_strings.4);
+                length += format!("[{} -> {}]", language_strings.3, ref_table).len();
             }
         }
 

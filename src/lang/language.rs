@@ -56,6 +56,8 @@ pub struct AppLanguage {
     pub screen_file_explorer_file_folder_header: String,
     pub screen_file_explorer_size_header: String,
     pub screen_file_explorer_date_created_header: String,
+    pub screen_file_explorer_dir: String,
+    pub screen_file_explorer_dir_read_error: String,
     pub screen_db_schema_no_db_found: String,
     pub screen_db_schema_current_db: String,
     pub screen_db_table_current_table: String,
@@ -83,10 +85,16 @@ pub struct AppLanguage {
     pub info_block_title: String,
 
     pub mode_current_mode: String,
+
     pub sql_pk_constraint: String,
     pub sql_unique_constraint: String,
     pub sql_not_null_constraint: String,
     pub sql_fk_constraint: String,
+
+    pub invalid_utf_8: String,
+    pub not_available: String,
+    pub bytes: String,
+    pub app_datetime_format: String,
 }
 
 impl AppLanguage {
