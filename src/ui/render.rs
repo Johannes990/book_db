@@ -52,17 +52,25 @@ fn render_splash_screen(frame: &mut Frame, app: &App) {
     let main_page_style = Style::default()
         .bg(app.background_color())
         .fg(app.text_color());
+    let loaded_db_name_default = &app.language.screen_splash_db_placeholder;
     let loaded_db_name = app
         .selected_db
         .as_ref()
         .map(|db| format!("{}.{}", db.db_name, db.db_extension))
-        .unwrap_or("None".to_string());
-    let selected_table_name = app.selected_db_table.as_ref().map_or("None", |name| name);
+        .unwrap_or(loaded_db_name_default.to_string());
+    let selected_table_name_default = &app.language.screen_splash_table_placeholder;
+    let selected_table_name = app
+        .selected_db_table
+        .as_ref()
+        .map_or(selected_table_name_default, |name| name);
+    let app_name = &app.language.screen_splash_application_name;
+    let loaded_db_string = &app.language.screen_splash_loaded_db;
+    let loaded_table_string = &app.language.screen_splash_loaded_table;
     let main_page_content = vec![
-        Line::from(" Database terminal app v0.1.0"),
+        Line::from(format!(" {}", app_name)),
         Line::from(""),
-        Line::from(format!(" Loaded Database: {}", loaded_db_name)),
-        Line::from(format!(" Loaded Table: {}", selected_table_name)),
+        Line::from(format!(" {}: {}", loaded_db_string, loaded_db_name)),
+        Line::from(format!(" {}: {}", loaded_table_string, selected_table_name)),
     ];
     let main_page_paragraph = Paragraph::new(main_page_content).style(main_page_style);
 
@@ -90,27 +98,44 @@ fn render_file_explorer_screen(frame: &mut Frame, app: &mut App) {
     let fexp_page_style = Style::default()
         .bg(app.background_color())
         .fg(app.text_color());
+    let file_explorer_title = &app.language.screen_file_explorer_title;
+    let file_explorer_currently_in_string = &app.language.screen_file_explorer_current_location;
+    let current_app_mode_string = &app.language.mode_current_mode;
     let file_explorer_block = Block::default()
-        .title(" Explorer")
+        .title(format!(" {}", file_explorer_title))
         .title(
             Line::from(format!(
-                "Currently in: {} ",
+                "{}: {} ",
+                file_explorer_currently_in_string,
                 app.file_explorer_table.current_path.display()
             ))
             .centered(),
         )
-        .title(Line::from(format!("Mode: {} ", app.current_mode)).right_aligned())
+        .title(
+            Line::from(format!(
+                "{}: {} ",
+                current_app_mode_string, app.current_mode
+            ))
+            .right_aligned(),
+        )
         .borders(Borders::NONE)
         .style(fexp_page_style);
 
     frame.render_widget(file_explorer_block, chunks[0]);
 
-    let header = ["File/Folder", "Size", "Date created"]
-        .into_iter()
-        .map(Cell::from)
-        .collect::<Row>()
-        .style(fexp_page_style)
-        .height(1);
+    let header_file_folder_string = &app.language.screen_file_explorer_file_folder_header;
+    let header_size_string = &app.language.screen_file_explorer_size_header;
+    let header_date_created_string = &app.language.screen_file_explorer_date_created_header;
+    let header = [
+        header_file_folder_string.as_str(),
+        header_size_string.as_str(),
+        header_date_created_string.as_str(),
+    ]
+    .into_iter()
+    .map(Cell::from)
+    .collect::<Row>()
+    .style(fexp_page_style)
+    .height(1);
     let rows: Vec<Row> = app
         .file_explorer_table
         .items
@@ -193,14 +218,23 @@ fn render_database_schema_screen(frame: &mut Frame, app: &mut App) {
         .bg(app.background_color())
         .fg(app.text_color());
     let chunks = get_chunks_from_percentages(frame.area(), Direction::Vertical, vec![75, 25]);
+    let no_db_found_string = &app.language.screen_db_schema_no_db_found;
     let db_name = app
         .selected_db
         .as_ref()
-        .expect("No DataBase found")
+        .expect(no_db_found_string)
         .get_db_name();
+    let current_db_string = &app.language.screen_db_schema_current_db;
+    let current_app_mode_string = &app.language.mode_current_mode;
     let outer_block = Block::default()
-        .title(Line::from(format!("Current Database: {} ", db_name)).left_aligned())
-        .title(Line::from(format!("Mode: {} ", app.current_mode)).right_aligned())
+        .title(Line::from(format!("{}: {} ", current_db_string, db_name)).left_aligned())
+        .title(
+            Line::from(format!(
+                "{}: {} ",
+                current_app_mode_string, app.current_mode
+            ))
+            .right_aligned(),
+        )
         .style(db_page_style);
     let inner_area = outer_block.inner(chunks[0]);
     let table_column_chunks =
@@ -279,10 +313,19 @@ fn render_database_table_screen(frame: &mut Frame, app: &mut App) {
         .add_modifier(Modifier::ITALIC);
     let scrollbar_style = Style::default().fg(app.border_color());
     let chunks = get_chunks_from_percentages(frame.area(), Direction::Vertical, vec![75, 25]);
-    let table_name = app.selected_db_table.as_ref().expect("unknown");
+    let empty_table_string = &app.language.screen_db_table_table_placeholder;
+    let table_name = app.selected_db_table.as_ref().expect(empty_table_string);
+    let current_table_string = &app.language.screen_db_table_current_table;
+    let current_app_mode_string = &app.language.mode_current_mode;
     let outer_block = Block::default()
-        .title(Line::from(format!(" Current Table: {} ", table_name)).left_aligned())
-        .title(Line::from(format!("Mode: {} ", app.current_mode)).right_aligned())
+        .title(Line::from(format!(" {}: {} ", current_table_string, table_name)).left_aligned())
+        .title(
+            Line::from(format!(
+                "{}: {} ",
+                current_app_mode_string, app.current_mode
+            ))
+            .right_aligned(),
+        )
         .style(db_page_style);
     let inner_area = outer_block.inner(chunks[0]);
 
@@ -383,8 +426,9 @@ fn render_options_screen(frame: &mut Frame, app: &mut App) {
         .fg(app.text_color())
         .bg(app.background_color());
     let selected_style = Style::default().fg(app.error_color());
+    let options_title = &app.language.screen_options_title;
     let options_block = Block::default()
-        .title("Options View")
+        .title(format!("{}", options_title))
         .style(general_page_style);
 
     frame.render_widget(options_block, frame.area());
@@ -393,7 +437,8 @@ fn render_options_screen(frame: &mut Frame, app: &mut App) {
         get_chunks_from_percentages(frame.area(), Direction::Vertical, vec![50, 25, 25]);
     let horizontal_chunks =
         get_chunks_from_percentages(vertical_chunks[1], Direction::Horizontal, vec![50, 50]);
-    let header = Row::new(vec![Cell::from("Color Schemes")]);
+    let color_schemes_string = &app.language.screen_options_color_schemes;
+    let header = Row::new(vec![Cell::from(format!("{}", color_schemes_string))]);
     let constraints = vec![Constraint::Min(5)];
     let border_block_style = Style::default()
         .bg(app.background_color())
@@ -453,8 +498,9 @@ fn render_options_screen(frame: &mut Frame, app: &mut App) {
         border_block_style,
     );
 
+    let table_metainfo_string = &app.language.screen_options_metadata_in_table;
     let table_metainfo_toggle_button = SelectableLine::default(
-        "Display column metadata in table view: ",
+        format!("{}: ", table_metainfo_string).as_str(),
         app.options.display_col_metainfo_in_table_view,
         matches!(
             app.options.selected_option,
@@ -469,8 +515,10 @@ fn render_options_screen(frame: &mut Frame, app: &mut App) {
         width: 50,
         height: 1,
     };
+
+    let insert_metainfo_string = &app.language.screen_options_metadata_in_insert;
     let insert_metainfo_toggle_button = SelectableLine::default(
-        "Display column metadata in insert view: ",
+        format!("{}: ", insert_metainfo_string).as_str(),
         app.options.display_col_metainfo_in_insert_view,
         matches!(
             app.options.selected_option,
@@ -521,12 +569,13 @@ fn render_quit_popup(frame: &mut Frame, app: &App) {
     let info_bits = app
         .key_bindings
         .get_info_bits_from_events(&events, &app.language);
+    let quit_confirmation_string = &app.language.popup_quit_confirmation;
 
     render_titled_paragraph(
         frame,
         app,
         &info_bits,
-        "Are you sure you want to quit?",
+        quit_confirmation_string,
         quit_popup_style,
         area,
     );
@@ -547,12 +596,13 @@ fn render_no_db_loaded_popup(frame: &mut Frame, app: &mut App) {
     let info_bits = app
         .key_bindings
         .get_info_bits_from_events(&events, &app.language);
+    let no_db_loaded_string = &app.language.popup_no_db_loaded;
 
     render_titled_paragraph(
         frame,
         app,
         &info_bits,
-        "No database file loaded",
+        no_db_loaded_string,
         popup_style,
         area,
     );
@@ -763,9 +813,10 @@ fn render_error_popup(frame: &mut Frame, app: &mut App) {
     if let Some(error) = &app.current_error {
         let area = centered_rect(40, 30, frame.area());
         let style = Style::default().bg(app.error_color()).fg(app.text_color());
+        let error_title = &app.language.popup_error_title;
         let error_block = Block::default()
             .borders(Borders::ALL)
-            .title("Error")
+            .title(format!("{}", error_title))
             .border_style(Style::default().fg(app.border_color()))
             .style(style);
         let error_message = format!("{}", error);
@@ -796,17 +847,24 @@ fn render_error_popup(frame: &mut Frame, app: &mut App) {
 }
 
 fn render_table_list(frame: &mut Frame, app: &mut App, area: Rect) {
+    let table_title = &app.language.table_list_title;
+
     if app.table_list_view.is_some() {
         let scrollbar_style = Style::default().fg(app.border_color());
         let row_style = Style::default()
             .bg(app.background_color())
             .fg(app.text_color());
+        let header_name_string = &app.language.table_list_name_header;
+        let header_rows_string = &app.language.table_list_rows_header;
+        let header_type_string = &app.language.table_list_type_header;
         let header = Row::new(vec![
-            Cell::new("Name"),
-            Cell::new("Rows"),
-            Cell::new("Type"),
+            Cell::new(format!("{}", header_name_string)),
+            Cell::new(format!("{}", header_rows_string)),
+            Cell::new(format!("{}", header_type_string)),
         ])
         .style(row_style);
+        let view_element_string = &app.language.table_list_view_element;
+        let table_element_string = &app.language.table_list_table_element;
         let rows: Vec<Row> = app
             .table_list_view
             .as_ref()
@@ -817,7 +875,11 @@ fn render_table_list(frame: &mut Frame, app: &mut App, area: Rect) {
                 Row::new(vec![
                     Cell::from(Text::from(table.name.clone())),
                     Cell::from(Text::from(table.row_count.to_string())),
-                    Cell::from(Text::from(if table.is_view { "View" } else { "Table" })),
+                    Cell::from(Text::from(if table.is_view {
+                        format!("{}", view_element_string)
+                    } else {
+                        format!("{}", table_element_string)
+                    })),
                 ])
                 .style(row_style)
             })
@@ -829,14 +891,13 @@ fn render_table_list(frame: &mut Frame, app: &mut App, area: Rect) {
             Constraint::Length(7), // type (table, view)
         ];
 
-        let table_title = "Tables";
         let border_block_style = Style::default()
             .bg(app.background_color())
             .fg(app.border_color());
         let border_block = Block::new()
             .borders(Borders::ALL)
             .style(border_block_style)
-            .title(table_title);
+            .title(format!("{}", table_title));
         let highlight_style = Style::default()
             .bg(app.background_highlight_color())
             .fg(app.text_highlight_color());
@@ -864,8 +925,11 @@ fn render_table_list(frame: &mut Frame, app: &mut App, area: Rect) {
         let style = Style::default()
             .bg(app.background_color())
             .fg(app.text_color());
-        let empty_block = Block::default().title("Tables").borders(Borders::ALL);
-        let paragraph = Paragraph::new("Empty Schema")
+        let empty_block = Block::default()
+            .title(format!("{}", table_title))
+            .borders(Borders::ALL);
+        let table_list_empty_string = &app.language.table_list_emtpy_placeholder;
+        let paragraph = Paragraph::new(table_list_empty_string.to_string())
             .block(empty_block)
             .style(style);
 
@@ -875,14 +939,22 @@ fn render_table_list(frame: &mut Frame, app: &mut App, area: Rect) {
 }
 
 fn render_column_list(frame: &mut Frame, app: &mut App, area: Rect) {
+    let column_list_title = &app.language.column_list_title;
+
     if app.column_list_view.is_some() {
         let scrollbar_style = Style::default().fg(app.border_color());
-
-        let header = ["Name", "Type", "Constraints"]
-            .into_iter()
-            .map(Cell::from)
-            .collect::<Row>()
-            .style(Style::default().fg(app.text_color()));
+        let header_name_string = &app.language.column_list_name_header;
+        let header_type_string = &app.language.column_list_type_header;
+        let header_constraints_string = &app.language.column_list_constraints_header;
+        let header = [
+            format!("{}", header_name_string),
+            format!("{}", header_type_string),
+            format!("{}", header_constraints_string),
+        ]
+        .into_iter()
+        .map(Cell::from)
+        .collect::<Row>()
+        .style(Style::default().fg(app.text_color()));
 
         let rows: Vec<Row> = app
             .column_list_view
@@ -893,17 +965,26 @@ fn render_column_list(frame: &mut Frame, app: &mut App, area: Rect) {
             .map(|col| {
                 let mut col_constraint_text = "".to_string();
                 if col.is_pk {
-                    col_constraint_text.push_str("[PK]");
+                    let pk_string = &app.language.sql_pk_constraint;
+                    col_constraint_text.push_str(format!("[{}]", pk_string).as_str());
                 }
                 if col.is_unique {
-                    col_constraint_text.push_str("[UNIQUE]");
+                    let unique_string = &app.language.sql_unique_constraint;
+                    col_constraint_text.push_str(format!("[{}]", unique_string).as_str());
                 }
                 if col.is_not_null {
-                    col_constraint_text.push_str("[NOT NULL]");
+                    let not_null_string = &app.language.sql_not_null_constraint;
+                    col_constraint_text.push_str(format!("[{}]", not_null_string).as_str());
                 }
                 if col.is_fk {
-                    let ref_table = col.references_table.as_deref().unwrap_or("Unknown");
-                    col_constraint_text.push_str(&format!("[FK -> {}]", ref_table).to_string());
+                    let unknown_ref_table_string = &app.language.column_list_unknown_fk_ref;
+                    let fk_string = &app.language.sql_fk_constraint;
+                    let ref_table = col
+                        .references_table
+                        .as_deref()
+                        .unwrap_or(unknown_ref_table_string);
+                    col_constraint_text
+                        .push_str(&format!("[{} -> {}]", fk_string, ref_table).to_string());
                 }
 
                 Row::new(vec![
@@ -923,14 +1004,13 @@ fn render_column_list(frame: &mut Frame, app: &mut App, area: Rect) {
         let highlight_style = Style::default()
             .bg(app.background_highlight_color())
             .fg(app.text_highlight_color());
-        let table_title = "Columns";
         let border_block_style = Style::default()
             .bg(app.background_color())
             .fg(app.border_color());
         let border_block = Block::new()
             .borders(Borders::ALL)
             .style(border_block_style)
-            .title(table_title);
+            .title(format!("{}", column_list_title));
         let unwrapped_column_list: &mut crate::column::column_list::ColumnListView =
             app.column_list_view.as_mut().unwrap();
 
@@ -956,8 +1036,13 @@ fn render_column_list(frame: &mut Frame, app: &mut App, area: Rect) {
         let style = Style::default()
             .bg(app.background_color())
             .fg(app.text_color());
-        let empty_block = Block::default().title("Columns").borders(Borders::ALL);
-        let paragraph = Paragraph::new("No columns").block(empty_block).style(style);
+        let empty_block = Block::default()
+            .title(format!("{}", column_list_title))
+            .borders(Borders::ALL);
+        let column_list_emtpy_string = &app.language.column_list_emtpy_placeholder;
+        let paragraph = Paragraph::new(format!("{}", column_list_emtpy_string))
+            .block(empty_block)
+            .style(style);
 
         frame.render_widget(Clear, area);
         frame.render_widget(paragraph, area);
@@ -1123,8 +1208,9 @@ where
     let info_style = Style::default()
         .fg(app.border_color())
         .bg(app.background_alt_color());
+    let info_title = &app.language.info_block_title;
 
-    render_titled_paragraph(frame, app, info_bits, "Info", info_style, area);
+    render_titled_paragraph(frame, app, info_bits, info_title, info_style, area);
 }
 
 fn format_info_text<'a, S>(text_bits: &'a [S], app: &App) -> Text<'a>
