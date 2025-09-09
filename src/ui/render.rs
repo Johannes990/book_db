@@ -432,7 +432,7 @@ fn render_options_screen(frame: &mut Frame, app: &mut App) {
     let selected_style = Style::default().fg(app.error_color());
     let options_title = &app.language.screen_options_title;
     let options_block = Block::default()
-        .title(format!("{}", options_title))
+        .title(options_title.to_string())
         .style(general_page_style);
 
     frame.render_widget(options_block, frame.area());
@@ -442,7 +442,7 @@ fn render_options_screen(frame: &mut Frame, app: &mut App) {
     let horizontal_chunks =
         get_chunks_from_percentages(vertical_chunks[1], Direction::Horizontal, vec![50, 50]);
     let color_schemes_string = &app.language.screen_options_color_schemes;
-    let header = Row::new(vec![Cell::from(format!("{}", color_schemes_string))]);
+    let header = Row::new(vec![Cell::from(color_schemes_string.to_string())]);
     let constraints = vec![Constraint::Min(5)];
     let border_block_style = Style::default()
         .bg(app.background_color())
@@ -823,7 +823,7 @@ fn render_error_popup(frame: &mut Frame, app: &mut App) {
         let error_title = &app.language.popup_error_title;
         let error_block = Block::default()
             .borders(Borders::ALL)
-            .title(format!("{}", error_title))
+            .title(error_title.to_string())
             .border_style(Style::default().fg(app.border_color()))
             .style(style);
         let error_message = format!("{}", error);
@@ -865,9 +865,9 @@ fn render_table_list(frame: &mut Frame, app: &mut App, area: Rect) {
         let header_rows_string = &app.language.table_list_rows_header;
         let header_type_string = &app.language.table_list_type_header;
         let header = Row::new(vec![
-            Cell::new(format!("{}", header_name_string)),
-            Cell::new(format!("{}", header_rows_string)),
-            Cell::new(format!("{}", header_type_string)),
+            Cell::new(header_name_string.to_string()),
+            Cell::new(header_rows_string.to_string()),
+            Cell::new(header_type_string.to_string()),
         ])
         .style(row_style);
         let view_element_string = &app.language.table_list_view_element;
@@ -883,9 +883,9 @@ fn render_table_list(frame: &mut Frame, app: &mut App, area: Rect) {
                     Cell::from(Text::from(table.name.clone())),
                     Cell::from(Text::from(table.row_count.to_string())),
                     Cell::from(Text::from(if table.is_view {
-                        format!("{}", view_element_string)
+                        view_element_string.to_string()
                     } else {
-                        format!("{}", table_element_string)
+                        table_element_string.to_string()
                     })),
                 ])
                 .style(row_style)
@@ -904,7 +904,7 @@ fn render_table_list(frame: &mut Frame, app: &mut App, area: Rect) {
         let border_block = Block::new()
             .borders(Borders::ALL)
             .style(border_block_style)
-            .title(format!("{}", table_title));
+            .title(table_title.to_string());
         let highlight_style = Style::default()
             .bg(app.background_highlight_color())
             .fg(app.text_highlight_color());
@@ -933,7 +933,7 @@ fn render_table_list(frame: &mut Frame, app: &mut App, area: Rect) {
             .bg(app.background_color())
             .fg(app.text_color());
         let empty_block = Block::default()
-            .title(format!("{}", table_title))
+            .title(table_title.to_string())
             .borders(Borders::ALL);
         let table_list_empty_string = &app.language.table_list_emtpy_placeholder;
         let paragraph = Paragraph::new(table_list_empty_string.to_string())
@@ -954,9 +954,9 @@ fn render_column_list(frame: &mut Frame, app: &mut App, area: Rect) {
         let header_type_string = &app.language.column_list_type_header;
         let header_constraints_string = &app.language.column_list_constraints_header;
         let header = [
-            format!("{}", header_name_string),
-            format!("{}", header_type_string),
-            format!("{}", header_constraints_string),
+            header_name_string.to_string(),
+            header_type_string.to_string(),
+            header_constraints_string.to_string(),
         ]
         .into_iter()
         .map(Cell::from)
@@ -1017,7 +1017,7 @@ fn render_column_list(frame: &mut Frame, app: &mut App, area: Rect) {
         let border_block = Block::new()
             .borders(Borders::ALL)
             .style(border_block_style)
-            .title(format!("{}", column_list_title));
+            .title(column_list_title.to_string());
         let unwrapped_column_list: &mut crate::column::column_list::ColumnListView =
             app.column_list_view.as_mut().unwrap();
 
@@ -1044,10 +1044,10 @@ fn render_column_list(frame: &mut Frame, app: &mut App, area: Rect) {
             .bg(app.background_color())
             .fg(app.text_color());
         let empty_block = Block::default()
-            .title(format!("{}", column_list_title))
+            .title(column_list_title.to_string())
             .borders(Borders::ALL);
         let column_list_emtpy_string = &app.language.column_list_emtpy_placeholder;
-        let paragraph = Paragraph::new(format!("{}", column_list_emtpy_string))
+        let paragraph = Paragraph::new(column_list_emtpy_string.to_string())
             .block(empty_block)
             .style(style);
 

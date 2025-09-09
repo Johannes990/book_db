@@ -157,7 +157,7 @@ fn get_data_from_path(
                 let date_created = match metadata.created() {
                     Ok(system_time) => {
                         let datetime: DateTime<Utc> = system_time.into();
-                        datetime.format(&datetime_format_string).to_string()
+                        datetime.format(datetime_format_string).to_string()
                     }
                     Err(_) => not_available_string.to_string(),
                 };
