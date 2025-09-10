@@ -1,7 +1,6 @@
 use crate::{
     app::{App, PopUp, Screen},
     column::column_info::ColumnInfo,
-    log::log,
     options::{OptionKind, SelectedScheme},
     row::row_info::RowInfo,
     ui::{colors::app_colors::ColorScheme, input::key_bindings::AppInputEvent},
@@ -543,7 +542,6 @@ fn render_options_screen(frame: &mut Frame, app: &mut App) {
                 format!("{}{}: {}", prefix, selectable_options_strings[i], postfix)
             }
             OptionKind::TextInput(ref text) => {
-                log(format!("field content is OptionKind::TextInput({})", text).as_str());
                 let prefix = if field.selected {
                     format!("{} ", highlight_marker_symbol)
                 } else {
@@ -553,6 +551,7 @@ fn render_options_screen(frame: &mut Frame, app: &mut App) {
             }
         };
         let block = Block::default().borders(Borders::NONE);
+        let width = content.len() as u16;
         let label = Line::from(content);
         let paragraph = Paragraph::new(label)
             .style(if field.selected {
@@ -564,7 +563,7 @@ fn render_options_screen(frame: &mut Frame, app: &mut App) {
         let option_widget_area = Rect {
             x: vertical_chunks[0].x + 1,
             y: vertical_chunks[0].y + 1 + i as u16,
-            width: 55,
+            width,
             height: 1,
         };
         frame.render_widget(paragraph, option_widget_area);
