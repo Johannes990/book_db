@@ -67,6 +67,7 @@ pub struct AppLanguage {
     pub screen_options_metadata_in_table: String,
     pub screen_options_metadata_in_insert: String,
     pub screen_options_render_info: String,
+    pub screen_options_info_block_height: String,
     pub popup_quit_confirmation: String,
     pub popup_no_db_loaded: String,
     pub popup_error_title: String,
@@ -86,6 +87,10 @@ pub struct AppLanguage {
     pub info_block_title: String,
 
     pub mode_current_mode: String,
+
+    pub widget_selectable_field_highlight_marker: String,
+    pub widget_selectable_field_on_value: String,
+    pub widget_selectable_field_off_value: String,
 
     pub sql_pk_constraint: String,
     pub sql_unique_constraint: String,

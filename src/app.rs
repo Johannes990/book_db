@@ -4,6 +4,7 @@ use crate::{
     file_explorer::file_explorer_table::FileExplorerTable,
     handle_key_events,
     lang::language::AppLanguage,
+    log,
     options::Options,
     row::row_list::RowListView,
     table::{table_info::TableInfo, table_list::TableListView},
@@ -16,7 +17,7 @@ use crate::{
 };
 use ratatui::{style::Color, Terminal};
 use serde::{Deserialize, Serialize};
-use std::{collections::HashSet, ffi::OsString, io, path::PathBuf};
+use std::{collections::HashSet, ffi::OsString, io, path::PathBuf, time::Instant};
 use strum::Display;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
@@ -80,12 +81,14 @@ impl App {
         application: String,
         default_color_scheme: StaticColors,
     ) -> io::Result<Self> {
-        let options = Options::load_or_default(
+        let mut options = Options::load_or_default(
             &qualifier,
             &organization,
             &application,
             default_color_scheme,
         )?;
+
+        options.build_fields();
 
         let key_bindings = KeyBindings::load_or_default(&qualifier, &organization, &application)?;
 
@@ -137,7 +140,10 @@ impl App {
         terminal: &mut Terminal<B>,
     ) -> io::Result<()> {
         loop {
+            let start = Instant::now();
             render::render(terminal, self)?;
+            let render_duration = start.elapsed();
+            log::log(format!("duration of last render call: {:?}", render_duration).as_str());
 
             if handle_key_events(self)? {
                 break;

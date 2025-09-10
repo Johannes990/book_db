@@ -10,14 +10,20 @@ use crate::{
         dynamic_colors::DynamicColors,
         static_colors::StaticColors,
     },
-    widgets::generic_list_view::GenericListView,
+    widgets::{generic_list_view::GenericListView, selectable_field::SelectableField},
 };
+
+pub enum OptionKind {
+    Toggle(bool),
+    TextInput(String),
+}
 
 #[derive(EnumIter, Clone, Copy, PartialEq, Serialize, Deserialize)]
 pub enum SelectedOption {
     TableMetainfoToggle,
     InsertMetainfoToggle,
     RenderInfoSection,
+    InfoSectionHeight,
 }
 
 #[derive(Clone, Copy, Debug, Deserialize, Serialize, PartialEq)]
@@ -38,12 +44,20 @@ impl ColorScheme for SelectedScheme {
 
 #[derive(Serialize, Deserialize)]
 pub struct Options {
+    // colors
     pub available_color_schemes: GenericListView<SelectedScheme>,
     pub selected_color_scheme: SelectedScheme,
-    pub available_options: Vec<SelectedOption>,
+    // serialization for selected option
     pub selected_option: SelectedOption,
+    pub available_options: Vec<SelectedOption>,
+    // available options fields
+    #[serde(skip)]
+    pub fields: Vec<SelectableField>,
+    pub index: usize,
+    // language support
     pub available_languages: Vec<SupportedLanguage>,
     pub selected_language: SupportedLanguage,
+    // actual options values
     pub display_col_metainfo_in_table_view: bool,
     pub display_col_metainfo_in_insert_view: bool,
     pub render_info_section: bool,
@@ -52,23 +66,30 @@ pub struct Options {
 
 impl Options {
     pub fn new(default_color_scheme: StaticColors) -> Self {
+        let display_col_metainfo_in_table_view = true;
+        let display_col_metainfo_in_insert_view = true;
+        let render_info_section = true;
+        let info_section_height = 5;
         let mut schemes = Vec::new();
         schemes.extend(StaticColors::iter().map(SelectedScheme::Static));
         schemes.extend(DynamicColors::iter().map(SelectedScheme::Dynamic));
         let available_color_schemes = GenericListView::new(schemes);
         let available_options = SelectedOption::iter().collect();
         let available_languages = SupportedLanguage::iter().collect();
+
         Self {
             available_color_schemes,
             selected_color_scheme: SelectedScheme::Static(default_color_scheme),
-            available_options,
             selected_option: SelectedOption::TableMetainfoToggle,
+            available_options,
+            fields: Vec::new(),
+            index: 0,
             available_languages,
             selected_language: SupportedLanguage::English,
-            display_col_metainfo_in_table_view: true,
-            display_col_metainfo_in_insert_view: true,
-            render_info_section: true,
-            info_section_height: 5,
+            display_col_metainfo_in_table_view,
+            display_col_metainfo_in_insert_view,
+            render_info_section,
+            info_section_height,
         }
     }
 
@@ -126,6 +147,57 @@ impl Options {
         Ok(())
     }
 
+    pub fn build_fields(&mut self) {
+        self.fields = vec![
+            SelectableField {
+                kind: OptionKind::Toggle(self.display_col_metainfo_in_table_view),
+                selected: self.selected_option == SelectedOption::TableMetainfoToggle,
+            },
+            SelectableField {
+                kind: OptionKind::Toggle(self.display_col_metainfo_in_insert_view),
+                selected: self.selected_option == SelectedOption::InsertMetainfoToggle,
+            },
+            SelectableField {
+                kind: OptionKind::Toggle(self.render_info_section),
+                selected: self.selected_option == SelectedOption::RenderInfoSection,
+            },
+            SelectableField {
+                kind: OptionKind::TextInput(self.info_section_height.to_string()),
+                selected: self.selected_option == SelectedOption::InfoSectionHeight,
+            },
+        ]
+    }
+
+    pub fn sync_from_fields(&mut self) {
+        for (i, field) in self.fields.iter().enumerate() {
+            match i {
+                0 => {
+                    if let OptionKind::Toggle(v) = field.kind {
+                        self.display_col_metainfo_in_table_view = v;
+                    }
+                }
+                1 => {
+                    if let OptionKind::Toggle(v) = field.kind {
+                        self.display_col_metainfo_in_insert_view = v;
+                    }
+                }
+                2 => {
+                    if let OptionKind::Toggle(v) = field.kind {
+                        self.render_info_section = v;
+                    }
+                }
+                3 => {
+                    if let OptionKind::TextInput(ref s) = field.kind {
+                        if let Ok(num) = s.parse::<u16>() {
+                            self.info_section_height = num;
+                        }
+                    }
+                }
+                _ => {}
+            }
+        }
+    }
+
     fn select_color_scheme(&mut self, color_scheme: SelectedScheme) {
         if self.available_color_schemes.items.contains(&color_scheme) {
             self.selected_color_scheme = color_scheme;
@@ -144,47 +216,23 @@ impl Options {
         self.select_color_scheme(self.available_color_schemes.items[index]);
     }
 
-    pub fn set_display_col_metainfo_in_table_view(&mut self, value: bool) {
-        self.display_col_metainfo_in_table_view = value;
-    }
-
-    pub fn set_display_col_metainfo_in_insert_view(&mut self, value: bool) {
-        self.display_col_metainfo_in_insert_view = value;
-    }
-
-    pub fn set_render_info_section(&mut self, value: bool) {
-        self.render_info_section = value;
-    }
-
     pub fn previous_option(&mut self) {
-        if let Some(index) = self
-            .available_options
-            .iter()
-            .position(|&so| so == self.selected_option)
-        {
-            let prev_index = if index == 0 {
-                self.available_options.len() - 1
-            } else {
-                index - 1
-            };
-            self.select_option(self.available_options[prev_index]);
+        self.fields[self.index].selected = false;
+
+        if self.index == 0 {
+            self.index = self.available_options.len() - 1;
+        } else {
+            self.index -= 1;
         }
+
+        self.selected_option = self.available_options[self.index];
+        self.fields[self.index].selected = true;
     }
 
     pub fn next_option(&mut self) {
-        if let Some(index) = self
-            .available_options
-            .iter()
-            .position(|&so| so == self.selected_option)
-        {
-            let next_index = (index + 1) % self.available_options.len();
-            self.select_option(self.available_options[next_index]);
-        }
-    }
-
-    fn select_option(&mut self, option: SelectedOption) {
-        if self.available_options.contains(&option) {
-            self.selected_option = option;
-        }
+        self.fields[self.index].selected = false;
+        self.index = (self.index + 1) % self.available_options.len();
+        self.selected_option = self.available_options[self.index];
+        self.fields[self.index].selected = true;
     }
 }

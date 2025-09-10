@@ -42,6 +42,7 @@ screen_options_color_schemes = "Color schemes"
 screen_options_metadata_in_table = "Display column metadata in table view"
 screen_options_metadata_in_insert = "Display column metadata in insert view"
 screen_options_render_info = "Render info block on screens and popups"
+screen_options_info_block_height = "Enter height in the information block in lines"
 popup_quit_confirmation = "Are you sure you want to quit?"
 popup_no_db_loaded = "No Database file loaded"
 popup_error_title = "Error"
@@ -61,6 +62,10 @@ column_list_unknown_fk_ref = "Unknown"
 info_block_title = "Info"
 
 mode_current_mode = "Mode"
+
+widget_selectable_field_highlight_marker = "*"
+widget_selectable_field_on_value = "ON"
+widget_selectable_field_off_value = "OFF"
 
 sql_pk_constraint = "PK"
 sql_unique_constraint = "UNIQUE"

@@ -1,10 +1,10 @@
 use crate::{
     app::{App, PopUp, Screen},
     column::column_info::ColumnInfo,
-    options::SelectedScheme,
+    log::log,
+    options::{OptionKind, SelectedScheme},
     row::row_info::RowInfo,
     ui::{colors::app_colors::ColorScheme, input::key_bindings::AppInputEvent},
-    widgets::selectable_line::SelectableLine,
 };
 use ratatui::{
     layout::{Constraint, Direction, Flex, Layout},
@@ -447,11 +447,11 @@ fn render_options_screen(frame: &mut Frame, app: &mut App) {
 
     frame.render_widget(options_block, frame.area());
 
-    let color_shcheme_preview_rows = 8;
+    let color_scheme_preview_rows = 8;
     let limits = if app.options.render_info_section {
-        vec![color_shcheme_preview_rows, app.options.info_section_height]
+        vec![color_scheme_preview_rows, app.options.info_section_height]
     } else {
-        vec![color_shcheme_preview_rows]
+        vec![color_scheme_preview_rows]
     };
     let vertical_chunks = get_chunks_from_fixed_limits(frame.area(), Direction::Vertical, limits);
     let horizontal_chunks =
@@ -521,29 +521,53 @@ fn render_options_screen(frame: &mut Frame, app: &mut App) {
         &app.language.screen_options_metadata_in_table,
         &app.language.screen_options_metadata_in_insert,
         &app.language.screen_options_render_info,
+        &app.language.screen_options_info_block_height,
     ];
+    let highlight_marker_symbol = &app.language.widget_selectable_field_highlight_marker;
+    let option_on_string = &app.language.widget_selectable_field_on_value;
+    let option_off_string = &app.language.widget_selectable_field_off_value;
 
-    let selectable_options_values = [
-        &app.options.display_col_metainfo_in_table_view,
-        &app.options.display_col_metainfo_in_insert_view,
-        &app.options.render_info_section,
-    ];
-
-    for (i, option) in app.options.available_options.iter().enumerate() {
-        let option_widget = SelectableLine::default(
-            format!("{}: ", selectable_options_strings[i]).as_str(),
-            *selectable_options_values[i],
-            app.options.selected_option == *option,
-            general_page_style,
-            selected_style,
-        );
+    for (i, field) in app.options.fields.iter().enumerate() {
+        let content = match &field.kind {
+            OptionKind::Toggle(value) => {
+                let prefix = if field.selected {
+                    format!("{} ", highlight_marker_symbol)
+                } else {
+                    "  ".to_string()
+                };
+                let postfix = if *value {
+                    option_on_string
+                } else {
+                    option_off_string
+                };
+                format!("{}{}: {}", prefix, selectable_options_strings[i], postfix)
+            }
+            OptionKind::TextInput(ref text) => {
+                log(format!("field content is OptionKind::TextInput({})", text).as_str());
+                let prefix = if field.selected {
+                    format!("{} ", highlight_marker_symbol)
+                } else {
+                    "  ".to_string()
+                };
+                format!("{}{}: {}", prefix, selectable_options_strings[i], text)
+            }
+        };
+        let block = Block::default().borders(Borders::NONE);
+        let label = Line::from(content);
+        let paragraph = Paragraph::new(label)
+            .style(if field.selected {
+                selected_style
+            } else {
+                general_page_style
+            })
+            .block(block);
         let option_widget_area = Rect {
             x: vertical_chunks[0].x + 1,
             y: vertical_chunks[0].y + 1 + i as u16,
-            width: 50,
+            width: 55,
             height: 1,
         };
-        frame.render_widget(option_widget, option_widget_area);
+        frame.render_widget(paragraph, option_widget_area);
     }
 
     if app.options.render_info_section {
@@ -559,6 +583,7 @@ fn render_options_screen(frame: &mut Frame, app: &mut App) {
             AppInputEvent::MoveUpSecondary,
             AppInputEvent::MoveDownSecondary,
             AppInputEvent::ToggleOption,
+            AppInputEvent::SwitchToEdit,
         ];
 
         let info_bits = app

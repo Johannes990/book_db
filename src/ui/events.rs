@@ -2,7 +2,7 @@ use crate::{
     app::{App, Mode, PopUp, Screen},
     db::{DBError, DB},
     log::log,
-    options::SelectedOption,
+    options::{OptionKind, SelectedOption},
     ui::input::key_bindings::AppInputEvent,
 };
 use crossterm::event::{KeyEvent, KeyModifiers};
@@ -301,59 +301,90 @@ fn options_screen_handler(app: &mut App, key_event: KeyEvent) -> io::Result<()> 
     let mut changed: bool = false;
     log("options screen");
 
-    if let Some(event) = app.key_bindings.resolve_event(
-        app.current_screen,
-        app.current_popup,
-        app.current_mode,
-        key_event,
-    ) {
-        match event {
-            AppInputEvent::OpenSplashScreen => app.switch_to_screen(Screen::Splash),
-            AppInputEvent::OpenFileExplorerScreen => app.switch_to_screen(Screen::FileExplorer),
-            AppInputEvent::OpenDBSchemaScreen => app.switch_to_screen(Screen::DatabaseSchema),
-            AppInputEvent::OpenDBTableScreen => app.switch_to_screen(Screen::DataBaseTable),
-            AppInputEvent::OpenCreateNewFileScreen => app.switch_to_screen(Screen::CreateNewFile),
-            AppInputEvent::OpenQuitAppPopUp => app.switch_to_popup(PopUp::Quit),
-            AppInputEvent::MoveUpPrimary => {
-                app.options.previous_option();
-                changed = true;
-            }
-            AppInputEvent::MoveDownPrimary => {
-                app.options.next_option();
-                changed = true;
-            }
-            AppInputEvent::MoveUpSecondary => {
-                app.options.previous_color_scheme();
-                changed = true;
-            }
-            AppInputEvent::MoveDownSecondary => {
-                app.options.next_color_scheme();
-                changed = true;
-            }
-            AppInputEvent::ToggleOption => match app.options.selected_option {
-                SelectedOption::InsertMetainfoToggle => {
-                    app.options.set_display_col_metainfo_in_insert_view(
-                        !app.options.display_col_metainfo_in_insert_view,
-                    );
-                    changed = true;
+    match app.current_mode {
+        Mode::Browse => {
+            if let Some(event) = app.key_bindings.resolve_event(
+                app.current_screen,
+                app.current_popup,
+                app.current_mode,
+                key_event,
+            ) {
+                match event {
+                    AppInputEvent::OpenSplashScreen => app.switch_to_screen(Screen::Splash),
+                    AppInputEvent::OpenFileExplorerScreen => {
+                        app.switch_to_screen(Screen::FileExplorer)
+                    }
+                    AppInputEvent::OpenDBSchemaScreen => {
+                        app.switch_to_screen(Screen::DatabaseSchema)
+                    }
+                    AppInputEvent::OpenDBTableScreen => app.switch_to_screen(Screen::DataBaseTable),
+                    AppInputEvent::OpenCreateNewFileScreen => {
+                        app.switch_to_screen(Screen::CreateNewFile)
+                    }
+                    AppInputEvent::OpenQuitAppPopUp => app.switch_to_popup(PopUp::Quit),
+                    AppInputEvent::MoveUpPrimary => {
+                        app.options.previous_option();
+                        changed = true;
+                    }
+                    AppInputEvent::MoveDownPrimary => {
+                        app.options.next_option();
+                        changed = true;
+                    }
+                    AppInputEvent::MoveUpSecondary => {
+                        app.options.previous_color_scheme();
+                        changed = true;
+                    }
+                    AppInputEvent::MoveDownSecondary => {
+                        app.options.next_color_scheme();
+                        changed = true;
+                    }
+                    AppInputEvent::ToggleOption => {
+                        let index = app.options.index;
+                        app.options.fields[index].toggle();
+                        changed = true;
+                    }
+                    AppInputEvent::SwitchToEdit => app.switch_mode(Mode::Edit),
+                    _ => {}
                 }
-                SelectedOption::TableMetainfoToggle => {
-                    app.options.set_display_col_metainfo_in_table_view(
-                        !app.options.display_col_metainfo_in_table_view,
-                    );
-                    changed = true;
+            }
+        }
+        Mode::Edit => {
+            let active_field = &mut app.options.fields[app.options.index];
+            match &mut active_field.kind {
+                OptionKind::TextInput(_) => {
+                    match (key_event.code, key_event.modifiers) {
+                        (KeyCode::Char(c), KeyModifiers::NONE) => {
+                            active_field.enter_char(c);
+                            changed = true;
+                        }
+                        (KeyCode::Char(c), KeyModifiers::SHIFT) => {
+                            for upper in c.to_uppercase() {
+                                active_field.enter_char(upper);
+                            }
+                            changed = true;
+                        }
+                        (KeyCode::Backspace, KeyModifiers::NONE) => {
+                            active_field.pop_char();
+                            changed = true;
+                        }
+                        _ => {}
+                    }
+                    if let Some(value) = active_field.parse_value::<u16>() {
+                        if app.options.selected_option == SelectedOption::InfoSectionHeight {
+                            app.options.info_section_height = value;
+                        }
+                    }
                 }
-                SelectedOption::RenderInfoSection => {
-                    app.options
-                        .set_render_info_section(!app.options.render_info_section);
-                    changed = true;
-                }
-            },
-            _ => {}
+                OptionKind::Toggle(_) => {}
+            }
+            if key_event.code == KeyCode::BackTab && key_event.modifiers == KeyModifiers::SHIFT {
+                app.switch_mode(Mode::Browse);
+            }
         }
     }
 
     if changed {
+        app.options.sync_from_fields();
         app.options
             .save(&app.qualifier, &app.organization, &app.application)?;
     }
