@@ -5,8 +5,10 @@ mod file_explorer;
 mod lang;
 mod log;
 mod options;
+mod perf;
 mod row;
 mod table;
+mod threading;
 mod ui;
 mod widgets;
 
@@ -21,10 +23,12 @@ use ratatui::{
     Terminal,
 };
 use rusqlite::Result;
-use std::io;
+use std::{io, sync::mpsc::Receiver};
 use ui::events::handle_key_events;
 
-use crate::ui::colors::static_colors::StaticColors;
+use crate::{
+    perf::resources::Resources, threading::spawn_profiler, ui::colors::static_colors::StaticColors,
+};
 
 fn main() -> io::Result<()> {
     let qualifier = "".to_string();
@@ -41,6 +45,8 @@ fn main() -> io::Result<()> {
         )
     );
 
+    let profiler_rx = spawn_profiler();
+
     let backend = CrosstermBackend::new(io::stdout());
     let mut terminal = setup_terminal(backend)?;
     let default_color_scheme = StaticColors::SaturatedSummer;
@@ -50,6 +56,7 @@ fn main() -> io::Result<()> {
         organization,
         application,
         default_color_scheme,
+        profiler_rx,
     )?;
     let res = app.run(&mut terminal);
     handle_errors(res);
@@ -77,13 +84,16 @@ fn setup_app<B>(
     org_str: String,
     app_str: String,
     color_scheme: StaticColors,
+    profiler_rx: Receiver<Resources>,
 ) -> Result<App, io::Error>
 where
     B: Backend,
 {
     let _terminal_height = terminal.size()?.height;
     let _terminal_width = terminal.size()?.width;
-    let app = App::new(qual_str, org_str, app_str, color_scheme)?;
+    let mut app = App::new(qual_str, org_str, app_str, color_scheme)?;
+
+    app.set_profiler_rx(profiler_rx);
 
     Ok(app)
 }

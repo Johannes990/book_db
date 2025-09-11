@@ -299,7 +299,6 @@ fn options_screen_handler(app: &mut App, key_event: KeyEvent) -> io::Result<()> 
         return Ok(());
     }
     let mut changed: bool = false;
-    log("options screen");
 
     match app.current_mode {
         Mode::Browse => {

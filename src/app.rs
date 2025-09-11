@@ -4,8 +4,9 @@ use crate::{
     file_explorer::file_explorer_table::FileExplorerTable,
     handle_key_events,
     lang::language::AppLanguage,
-    log,
+    log::{self, log},
     options::Options,
+    perf::resources::Resources,
     row::row_list::RowListView,
     table::{table_info::TableInfo, table_list::TableListView},
     ui::{
@@ -17,7 +18,9 @@ use crate::{
 };
 use ratatui::{style::Color, Terminal};
 use serde::{Deserialize, Serialize};
-use std::{collections::HashSet, ffi::OsString, io, path::PathBuf, time::Instant};
+use std::{
+    collections::HashSet, ffi::OsString, io, path::PathBuf, sync::mpsc::Receiver, time::Instant,
+};
 use strum::Display;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
@@ -72,6 +75,7 @@ pub struct App {
     pub options: Options,
     pub key_bindings: KeyBindings,
     pub language: AppLanguage,
+    pub perf_profiler: Option<Receiver<Resources>>,
 }
 
 impl App {
@@ -132,7 +136,12 @@ impl App {
             options,
             key_bindings,
             language,
+            perf_profiler: None,
         })
+    }
+
+    pub fn set_profiler_rx(&mut self, rx: Receiver<Resources>) {
+        self.perf_profiler = Some(rx);
     }
 
     pub fn run<B: ratatui::backend::Backend>(
@@ -144,6 +153,12 @@ impl App {
             render::render(terminal, self)?;
             let render_duration = start.elapsed();
             log::log(format!("duration of last render call: {:?}", render_duration).as_str());
+
+            if let Some(rx) = &self.perf_profiler {
+                while let Ok(stats) = rx.try_recv() {
+                    log(format!("{}", stats).as_str());
+                }
+            }
 
             if handle_key_events(self)? {
                 break;
