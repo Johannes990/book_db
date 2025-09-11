@@ -56,13 +56,13 @@ impl fmt::Display for Resources {
         let format_cpu = |val: f32, divisor: f32| -> String {
             match self.cpu_relative_to {
                 CpuUsage::PerAll => format!(
-                    "{:.prec_cpu$} of {} threads",
+                    "{:.prec_cpu$}% of {} threads",
                     val / divisor,
                     self.thread_count,
                     prec_cpu = self.cpu_precision
                 ),
                 CpuUsage::PerThread => format!(
-                    "{:.prec_cpu$} of 1 thread",
+                    "{:.prec_cpu$}% of 1 thread",
                     val / divisor,
                     prec_cpu = self.cpu_precision
                 ),
