@@ -56,13 +56,13 @@ impl fmt::Display for Resources {
         let format_cpu = |val: f32, divisor: f32| -> String {
             match self.cpu_relative_to {
                 CpuUsage::PerAll => format!(
-                    "{:.prec_cpu$}% of {} threads",
+                    "CPU {:.prec_cpu$}% of {} threads",
                     val / divisor,
                     self.thread_count,
                     prec_cpu = self.cpu_precision
                 ),
                 CpuUsage::PerThread => format!(
-                    "{:.prec_cpu$}% of 1 thread",
+                    "CPU {:.prec_cpu$}% of 1 thread",
                     val / divisor,
                     prec_cpu = self.cpu_precision
                 ),
@@ -76,7 +76,7 @@ impl fmt::Display for Resources {
             match self.display_memory_as {
                 MemoryDivisor::B => format!("{} {}", val, memory_unit),
                 _ => format!(
-                    "{:.prec_mem$} {}",
+                    "Memory {:.prec_mem$} {}",
                     val as f32 / divisor,
                     memory_unit,
                     prec_mem = self.memory_precision
@@ -87,7 +87,7 @@ impl fmt::Display for Resources {
         if self.display_global {
             writeln!(
                 f,
-                "System usage: CPU {}, Memory {}",
+                "System usage: {}, {}",
                 format_cpu(self.global_used_cpu, cpu_divisor),
                 format_memory(self.global_used_memory, memory_divisor),
             )?;
@@ -96,7 +96,7 @@ impl fmt::Display for Resources {
         if self.display_process {
             writeln!(
                 f,
-                "Process usage: CPU {}, Memory: {}",
+                "Process usage: {}, {}",
                 format_cpu(self.process_used_cpu, cpu_divisor),
                 format_memory(self.process_used_memory, memory_divisor)
             )?;

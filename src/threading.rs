@@ -19,7 +19,7 @@ pub fn spawn_profiler() -> mpsc::Receiver<Resources> {
 
             if let Some(proc) = sys.process(Pid::from_u32(pid)) {
                 let overall_cpu = sys.cpus().iter().map(|c| c.cpu_usage()).sum::<f32>();
-                let overall_mem = sys.used_memory(); // used memory returns bytes
+                let overall_mem = sys.used_memory();
                 let proc_cpu = proc.cpu_usage();
                 let proc_mem = proc.memory();
 
