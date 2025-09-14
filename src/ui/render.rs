@@ -1598,12 +1598,9 @@ mod tests {
         };
 
         let limits = vec![];
-        let chunk = get_chunks_from_fixed_limits(base_rect, Direction::Vertical, limits)
-            .get(0)
-            .unwrap()
-            .clone();
+        let chunk = get_chunks_from_fixed_limits(base_rect, Direction::Vertical, limits);
 
-        assert_eq!(chunk, base_rect);
+        assert_eq!(chunk.first().unwrap().clone(), base_rect);
     }
 
     #[test]
@@ -1630,7 +1627,7 @@ mod tests {
             width: 33,
         };
 
-        assert_eq!(chunks.get(0).unwrap().clone(), correct_chunk_1);
+        assert_eq!(chunks.first().unwrap().clone(), correct_chunk_1);
         assert_eq!(chunks.get(1).unwrap().clone(), correct_chunk_2);
     }
 
@@ -1670,7 +1667,7 @@ mod tests {
             width: 50,
         };
 
-        assert_eq!(chunks.get(0).unwrap().clone(), correct_chunk_1);
+        assert_eq!(chunks.first().unwrap().clone(), correct_chunk_1);
         assert_eq!(chunks.get(1).unwrap().clone(), correct_chunk_2);
         assert_eq!(chunks.get(2).unwrap().clone(), correct_chunk_3);
         assert_eq!(chunks.get(3).unwrap().clone(), correct_chunk_4);
@@ -1686,12 +1683,9 @@ mod tests {
         };
 
         let limits = vec![];
-        let chunk = get_chunks_from_fixed_limits(base_rect, Direction::Horizontal, limits)
-            .get(0)
-            .unwrap()
-            .clone();
+        let chunk = get_chunks_from_fixed_limits(base_rect, Direction::Horizontal, limits);
 
-        assert_eq!(chunk, base_rect);
+        assert_eq!(chunk.first().unwrap().clone(), base_rect);
     }
 
     #[test]
@@ -1718,7 +1712,7 @@ mod tests {
             width: 10,
         };
 
-        assert_eq!(chunks.get(0).unwrap().clone(), correct_chunk_1);
+        assert_eq!(chunks.first().unwrap().clone(), correct_chunk_1);
         assert_eq!(chunks.get(1).unwrap().clone(), correct_chunk_2);
     }
 
@@ -1758,7 +1752,7 @@ mod tests {
             width: 10,
         };
 
-        assert_eq!(chunks.get(0).unwrap().clone(), correct_chunk_1);
+        assert_eq!(chunks.first().unwrap().clone(), correct_chunk_1);
         assert_eq!(chunks.get(1).unwrap().clone(), correct_chunk_2);
         assert_eq!(chunks.get(2).unwrap().clone(), correct_chunk_3);
         assert_eq!(chunks.get(3).unwrap().clone(), correct_chunk_4);
