@@ -521,6 +521,7 @@ fn render_options_screen(frame: &mut Frame, app: &mut App) {
         &app.language.screen_options_metadata_in_insert,
         &app.language.screen_options_render_info,
         &app.language.screen_options_info_block_height,
+        &app.language.screen_options_log_performance_info,
     ];
     let highlight_marker_symbol = &app.language.widget_selectable_field_highlight_marker;
     let option_on_string = &app.language.widget_selectable_field_on_value;

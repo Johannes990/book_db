@@ -151,12 +151,17 @@ impl App {
         loop {
             let start = Instant::now();
             render::render(terminal, self)?;
-            let render_duration = start.elapsed();
-            log::log(format!("duration of last render call: {:?}", render_duration).as_str());
+
+            if self.options.log_performance_metrics {
+                let render_duration = start.elapsed();
+                log::log(format!("duration of last render call: {:?}", render_duration).as_str());
+            }
 
             if let Some(rx) = &self.perf_profiler {
                 while let Ok(stats) = rx.try_recv() {
-                    log(format!("{}", stats).as_str());
+                    if self.options.log_performance_metrics {
+                        log(format!("{}", stats).as_str());
+                    }
                 }
             }
 

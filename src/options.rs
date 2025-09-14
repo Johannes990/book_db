@@ -24,6 +24,7 @@ pub enum SelectedOption {
     InsertMetainfoToggle,
     RenderInfoSection,
     InfoSectionHeight,
+    LogPerformanceMetrics,
 }
 
 #[derive(Clone, Copy, Debug, Deserialize, Serialize, PartialEq)]
@@ -62,14 +63,11 @@ pub struct Options {
     pub display_col_metainfo_in_insert_view: bool,
     pub render_info_section: bool,
     pub info_section_height: u16,
+    pub log_performance_metrics: bool,
 }
 
 impl Options {
     pub fn new(default_color_scheme: StaticColors) -> Self {
-        let display_col_metainfo_in_table_view = true;
-        let display_col_metainfo_in_insert_view = true;
-        let render_info_section = true;
-        let info_section_height = 5;
         let mut schemes = Vec::new();
         schemes.extend(StaticColors::iter().map(SelectedScheme::Static));
         schemes.extend(DynamicColors::iter().map(SelectedScheme::Dynamic));
@@ -86,10 +84,11 @@ impl Options {
             index: 0,
             available_languages,
             selected_language: SupportedLanguage::English,
-            display_col_metainfo_in_table_view,
-            display_col_metainfo_in_insert_view,
-            render_info_section,
-            info_section_height,
+            display_col_metainfo_in_table_view: true,
+            display_col_metainfo_in_insert_view: true,
+            render_info_section: true,
+            info_section_height: 5,
+            log_performance_metrics: false,
         }
     }
 
@@ -165,6 +164,10 @@ impl Options {
                 kind: OptionKind::TextInput(self.info_section_height.to_string()),
                 selected: self.selected_option == SelectedOption::InfoSectionHeight,
             },
+            SelectableField {
+                kind: OptionKind::Toggle(self.log_performance_metrics),
+                selected: self.selected_option == SelectedOption::LogPerformanceMetrics,
+            },
         ]
     }
 
@@ -191,6 +194,11 @@ impl Options {
                         if let Ok(num) = s.parse::<u16>() {
                             self.info_section_height = num;
                         }
+                    }
+                }
+                4 => {
+                    if let OptionKind::Toggle(v) = field.kind {
+                        self.log_performance_metrics = v;
                     }
                 }
                 _ => {}

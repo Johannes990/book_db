@@ -68,6 +68,7 @@ pub struct AppLanguage {
     pub screen_options_metadata_in_insert: String,
     pub screen_options_render_info: String,
     pub screen_options_info_block_height: String,
+    pub screen_options_log_performance_info: String,
     pub popup_quit_confirmation: String,
     pub popup_no_db_loaded: String,
     pub popup_error_title: String,
