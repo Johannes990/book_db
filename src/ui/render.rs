@@ -1338,3 +1338,428 @@ fn get_table_and_scrollbar_areas(area: Rect) -> (Rect, Rect) {
 
     (table_area, scrollbar_area)
 }
+
+#[cfg(test)]
+mod tests {
+    use ratatui::layout::{Direction, Rect};
+
+    use crate::ui::render::{get_chunks_from_fixed_limits, get_chunks_from_percentages};
+
+    use super::centered_rect;
+
+    #[test]
+    fn test_centered_rect_returns_ok_values() {
+        let base_area = Rect {
+            x: 10,
+            y: 10,
+            width: 20,
+            height: 20,
+        };
+
+        let test_rect = centered_rect(50, 50, base_area);
+
+        assert_eq!(test_rect.height, 10);
+        assert_eq!(test_rect.width, 10);
+        assert_eq!(test_rect.x, 15);
+        assert_eq!(test_rect.y, 15);
+    }
+
+    #[test]
+    fn test_centered_rect_returns_0_for_0_size_rect() {
+        let base_area = Rect {
+            x: 0,
+            y: 0,
+            height: 0,
+            width: 0,
+        };
+
+        let test_rect = centered_rect(50, 50, base_area);
+
+        assert_eq!(test_rect.height, 0);
+        assert_eq!(test_rect.width, 0);
+    }
+
+    #[test]
+    fn test_centered_rect_returns_correct_x_values() {
+        let base_area = Rect {
+            x: 17,
+            y: 0,
+            height: 100,
+            width: 100,
+        };
+
+        let percentages = [0, 25, 50, 75, 87, 93, 96];
+
+        for percentage in percentages {
+            let test_rect = centered_rect(percentage, 50, base_area);
+            let percent_mult = (100.0 - percentage as f32) / 100.0;
+            let half_base_width = base_area.width as f32 / 2.0;
+            let correct_x = base_area.x as f32 + (half_base_width * percent_mult).ceil();
+
+            assert_eq!(test_rect.x, correct_x as u16);
+        }
+    }
+
+    #[test]
+    fn test_centered_rect_returns_correct_y_values() {
+        let base_area = Rect {
+            x: 0,
+            y: 13,
+            width: 100,
+            height: 100,
+        };
+
+        let percentages = [0, 25, 50, 75, 87, 93, 96];
+
+        for percentage in percentages {
+            let test_rect = centered_rect(50, percentage, base_area);
+            let percent_mult = (100.0 - percentage as f32) / 100.0;
+            let half_base_height = base_area.height as f32 / 2.0;
+            let correct_y = base_area.y as f32 + (half_base_height * percent_mult).ceil();
+
+            assert_eq!(test_rect.y, correct_y as u16);
+        }
+    }
+
+    #[test]
+    fn test_centered_rect_returns_correct_height_values() {
+        let base_area = Rect {
+            x: 0,
+            y: 0,
+            width: 100,
+            height: 100,
+        };
+
+        let percentages = [0, 25, 50, 75, 87, 93, 96];
+
+        for percentage in percentages {
+            let test_rect = centered_rect(100, percentage, base_area);
+            let correct_height = ((percentage as f32 * base_area.height as f32) / 100.0).ceil();
+
+            assert_eq!(test_rect.height, correct_height as u16);
+        }
+    }
+
+    #[test]
+    fn test_centered_rect_returns_correct_width_values() {
+        let base_area = Rect {
+            x: 0,
+            y: 0,
+            height: 200,
+            width: 200,
+        };
+
+        let percentages = [0, 33, 50, 75, 67, 85, 90, 97];
+
+        for percentage in percentages {
+            let test_area = centered_rect(percentage, 100, base_area);
+            let correct_width = ((percentage as f32 * base_area.width as f32) / 100.0).ceil();
+
+            assert_eq!(test_area.width, correct_width as u16);
+        }
+    }
+
+    #[test]
+    fn test_get_chunks_from_percentages_vertical_2_chunks() {
+        let base_area = Rect {
+            x: 0,
+            y: 0,
+            height: 100,
+            width: 100,
+        };
+
+        let percentages = vec![50, 50];
+        // chopping in the vertical so height gets cut in half
+        let chunks = get_chunks_from_percentages(base_area, Direction::Vertical, percentages);
+        let correct_chunk_1 = Rect {
+            x: 0,
+            y: 0,
+            height: 50,
+            width: 100,
+        };
+        let correct_chunk_2 = Rect {
+            x: 0,
+            y: 50,
+            height: 50,
+            width: 100,
+        };
+
+        assert_eq!(chunks[0], correct_chunk_1);
+        assert_eq!(chunks[1], correct_chunk_2);
+    }
+
+    #[test]
+    fn test_get_chunks_from_percentages_vertical_3_chunks() {
+        let base_area = Rect {
+            x: 0,
+            y: 0,
+            height: 100,
+            width: 100,
+        };
+
+        let percentages = vec![33, 34, 33];
+        let chunks = get_chunks_from_percentages(base_area, Direction::Vertical, percentages);
+        let correct_chunk_1 = Rect {
+            x: 0,
+            y: 0,
+            height: 33,
+            width: 100,
+        };
+        let correct_chunk_2 = Rect {
+            x: 0,
+            y: 33,
+            height: 34,
+            width: 100,
+        };
+        let correct_chunk_3 = Rect {
+            x: 0,
+            y: 67,
+            height: 33,
+            width: 100,
+        };
+
+        assert_eq!(chunks[0], correct_chunk_1);
+        assert_eq!(chunks[1], correct_chunk_2);
+        assert_eq!(chunks[2], correct_chunk_3);
+    }
+
+    #[test]
+    fn test_get_chunks_from_percentages_horizontal_2_chunks() {
+        let base_area = Rect {
+            x: 0,
+            y: 0,
+            height: 100,
+            width: 100,
+        };
+
+        let percentages = vec![50, 50];
+        // chopping in the horizontal so width gets cut in half
+        let chunks = get_chunks_from_percentages(base_area, Direction::Horizontal, percentages);
+        let correct_chunk_1 = Rect {
+            x: 0,
+            y: 0,
+            height: 100,
+            width: 50,
+        };
+        let correct_chunk_2 = Rect {
+            x: 50,
+            y: 0,
+            height: 100,
+            width: 50,
+        };
+
+        assert_eq!(chunks[0], correct_chunk_1);
+        assert_eq!(chunks[1], correct_chunk_2);
+    }
+
+    #[test]
+    fn test_get_chunks_from_percentages_horizontal_3_chunks() {
+        let base_area = Rect {
+            x: 0,
+            y: 0,
+            height: 100,
+            width: 100,
+        };
+
+        let percentages = vec![33, 34, 33];
+        let chunks = get_chunks_from_percentages(base_area, Direction::Horizontal, percentages);
+        let correct_chunk_1 = Rect {
+            x: 0,
+            y: 0,
+            height: 100,
+            width: 33,
+        };
+        let correct_chunk_2 = Rect {
+            x: 33,
+            y: 0,
+            height: 100,
+            width: 34,
+        };
+        let correct_chunk_3 = Rect {
+            x: 67,
+            y: 0,
+            height: 100,
+            width: 33,
+        };
+
+        assert_eq!(chunks[0], correct_chunk_1);
+        assert_eq!(chunks[1], correct_chunk_2);
+        assert_eq!(chunks[2], correct_chunk_3);
+    }
+
+    #[test]
+    fn test_get_chunks_from_fixed_limits_vertical_0_limits() {
+        let base_rect = Rect {
+            x: 10,
+            y: 10,
+            height: 10,
+            width: 33,
+        };
+
+        let limits = vec![];
+        let chunk = get_chunks_from_fixed_limits(base_rect, Direction::Vertical, limits)
+            .get(0)
+            .unwrap()
+            .clone();
+
+        assert_eq!(chunk, base_rect);
+    }
+
+    #[test]
+    fn test_get_chunks_from_fixed_limits_vertical_1_limit() {
+        let base_rect = Rect {
+            x: 0,
+            y: 0,
+            height: 25,
+            width: 33,
+        };
+
+        let limits = vec![10];
+        let chunks = get_chunks_from_fixed_limits(base_rect, Direction::Vertical, limits);
+        let correct_chunk_1 = Rect {
+            x: 0,
+            y: 0,
+            height: 15,
+            width: 33,
+        };
+        let correct_chunk_2 = Rect {
+            x: 0,
+            y: 15,
+            height: 10,
+            width: 33,
+        };
+
+        assert_eq!(chunks.get(0).unwrap().clone(), correct_chunk_1);
+        assert_eq!(chunks.get(1).unwrap().clone(), correct_chunk_2);
+    }
+
+    #[test]
+    fn test_get_chunks_from_fixed_limits_vertical_several_limits() {
+        let base_rect = Rect {
+            x: 0,
+            y: 0,
+            height: 50,
+            width: 50,
+        };
+
+        let limits = vec![5, 5, 10];
+        let chunks = get_chunks_from_fixed_limits(base_rect, Direction::Vertical, limits);
+        let correct_chunk_1 = Rect {
+            x: 0,
+            y: 0,
+            height: 30,
+            width: 50,
+        };
+        let correct_chunk_2 = Rect {
+            x: 0,
+            y: 30,
+            height: 5,
+            width: 50,
+        };
+        let correct_chunk_3 = Rect {
+            x: 0,
+            y: 35,
+            height: 5,
+            width: 50,
+        };
+        let correct_chunk_4 = Rect {
+            x: 0,
+            y: 40,
+            height: 10,
+            width: 50,
+        };
+
+        assert_eq!(chunks.get(0).unwrap().clone(), correct_chunk_1);
+        assert_eq!(chunks.get(1).unwrap().clone(), correct_chunk_2);
+        assert_eq!(chunks.get(2).unwrap().clone(), correct_chunk_3);
+        assert_eq!(chunks.get(3).unwrap().clone(), correct_chunk_4);
+    }
+
+    #[test]
+    fn test_get_chunks_from_fixed_limits_horizontal_0_limits() {
+        let base_rect = Rect {
+            x: 10,
+            y: 10,
+            height: 10,
+            width: 33,
+        };
+
+        let limits = vec![];
+        let chunk = get_chunks_from_fixed_limits(base_rect, Direction::Horizontal, limits)
+            .get(0)
+            .unwrap()
+            .clone();
+
+        assert_eq!(chunk, base_rect);
+    }
+
+    #[test]
+    fn test_get_chunks_from_fixed_limits_horizontal_1_limit() {
+        let base_rect = Rect {
+            x: 0,
+            y: 0,
+            height: 25,
+            width: 33,
+        };
+
+        let limits = vec![10];
+        let chunks = get_chunks_from_fixed_limits(base_rect, Direction::Horizontal, limits);
+        let correct_chunk_1 = Rect {
+            x: 0,
+            y: 0,
+            height: 25,
+            width: 23,
+        };
+        let correct_chunk_2 = Rect {
+            x: 23,
+            y: 0,
+            height: 25,
+            width: 10,
+        };
+
+        assert_eq!(chunks.get(0).unwrap().clone(), correct_chunk_1);
+        assert_eq!(chunks.get(1).unwrap().clone(), correct_chunk_2);
+    }
+
+    #[test]
+    fn test_get_chunks_from_fixed_limits_horizontal_several_limits() {
+        let base_rect = Rect {
+            x: 0,
+            y: 0,
+            height: 50,
+            width: 50,
+        };
+
+        let limits = vec![15, 5, 10];
+        let chunks = get_chunks_from_fixed_limits(base_rect, Direction::Horizontal, limits);
+        let correct_chunk_1 = Rect {
+            x: 0,
+            y: 0,
+            height: 50,
+            width: 20,
+        };
+        let correct_chunk_2 = Rect {
+            x: 20,
+            y: 0,
+            height: 50,
+            width: 15,
+        };
+        let correct_chunk_3 = Rect {
+            x: 35,
+            y: 0,
+            height: 50,
+            width: 5,
+        };
+        let correct_chunk_4 = Rect {
+            x: 40,
+            y: 0,
+            height: 50,
+            width: 10,
+        };
+
+        assert_eq!(chunks.get(0).unwrap().clone(), correct_chunk_1);
+        assert_eq!(chunks.get(1).unwrap().clone(), correct_chunk_2);
+        assert_eq!(chunks.get(2).unwrap().clone(), correct_chunk_3);
+        assert_eq!(chunks.get(3).unwrap().clone(), correct_chunk_4);
+    }
+}
