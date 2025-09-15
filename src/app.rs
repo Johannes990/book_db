@@ -155,26 +155,23 @@ impl App {
 
             render::render(terminal, self)?;
 
-            if self.options.log_performance_metrics {
-                let render_duration = start.elapsed();
-                log(format!("duration of last render call: {:?}", render_duration).as_str());
-                self.statistics.push_render_time(render_duration);
-            }
+            let render_duration = start.elapsed();
+            self.statistics.push_render_time(render_duration);
 
             if let Some(rx) = &self.perf_profiler {
                 while let Ok(stats) = rx.try_recv() {
-                    if self.options.log_performance_metrics {
-                        log(format!("{}", stats).as_str());
-                        self.statistics.push_cpu_and_memory_values(
-                            stats.global_used_cpu,
-                            stats.global_used_memory,
-                            stats.process_used_cpu,
-                            stats.process_used_memory,
-                        );
-                    }
+                    log(format!("{}", stats).as_str());
+                    log(format!("avg frame render time: {:?}", render_duration).as_str());
+                    self.statistics.push_cpu_and_memory_values(
+                        stats.global_used_cpu,
+                        stats.global_used_memory,
+                        stats.process_used_cpu,
+                        stats.process_used_memory,
+                    );
                 }
             }
 
+            // handle_key_events poll duration controls the app update rate
             if handle_key_events(self)? {
                 break;
             }

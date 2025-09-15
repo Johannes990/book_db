@@ -8,24 +8,75 @@ pub struct StatisticsData {
     pub avg_render_call_duration: Duration,
 }
 
+struct SizedDeque<T> {
+    deque: VecDeque<T>,
+    max_size: usize,
+}
+
+impl<T> SizedDeque<T> {
+    fn new(max_size: usize) -> Self {
+        Self {
+            deque: VecDeque::new(),
+            max_size,
+        }
+    }
+
+    fn push(&mut self, val: T) {
+        if self.deque.len() == self.max_size {
+            self.deque.pop_front();
+        }
+        self.deque.push_back(val);
+    }
+
+    fn iter(&self) -> impl Iterator<Item = &T> {
+        self.deque.iter()
+    }
+
+    fn len(&self) -> usize {
+        self.deque.len()
+    }
+}
+
+trait Mean<T> {
+    fn mean(&self) -> Option<f32>;
+}
+
+impl Mean<f32> for SizedDeque<f32> {
+    fn mean(&self) -> Option<f32> {
+        if self.len() == 0 {
+            None
+        } else {
+            Some(self.iter().sum::<f32>() / self.len() as f32)
+        }
+    }
+}
+
+impl Mean<u64> for SizedDeque<u64> {
+    fn mean(&self) -> Option<f32> {
+        if self.len() == 0 {
+            None
+        } else {
+            Some(self.iter().sum::<u64>() as f32 / self.len() as f32)
+        }
+    }
+}
+
 pub struct StatisticsProfiling {
-    system_cpu_readings: VecDeque<f32>,
-    process_cpu_readings: VecDeque<f32>,
-    system_mem_readings: VecDeque<u64>,
-    process_mem_readings: VecDeque<u64>,
-    render_call_durations: VecDeque<Duration>,
-    buffer_size: usize,
+    system_cpu_readings: SizedDeque<f32>,
+    process_cpu_readings: SizedDeque<f32>,
+    system_mem_readings: SizedDeque<u64>,
+    process_mem_readings: SizedDeque<u64>,
+    render_call_durations: SizedDeque<Duration>,
 }
 
 impl StatisticsProfiling {
     pub fn new(buffer_size: usize) -> Self {
         Self {
-            system_cpu_readings: VecDeque::new(),
-            process_cpu_readings: VecDeque::new(),
-            system_mem_readings: VecDeque::new(),
-            process_mem_readings: VecDeque::new(),
-            render_call_durations: VecDeque::new(),
-            buffer_size,
+            system_cpu_readings: SizedDeque::new(buffer_size),
+            process_cpu_readings: SizedDeque::new(buffer_size),
+            system_mem_readings: SizedDeque::new(buffer_size),
+            process_mem_readings: SizedDeque::new(buffer_size),
+            render_call_durations: SizedDeque::new(buffer_size),
         }
     }
 
@@ -36,73 +87,27 @@ impl StatisticsProfiling {
         proc_cpu: f32,
         proc_mem: u64,
     ) {
-        self.system_cpu_readings.push_back(sys_cpu);
-
-        if self.system_cpu_readings.len() > self.buffer_size {
-            self.system_cpu_readings.pop_front();
-        }
-
-        self.system_mem_readings.push_back(sys_mem);
-
-        if self.system_mem_readings.len() > self.buffer_size {
-            self.system_mem_readings.pop_front();
-        }
-
-        self.process_cpu_readings.push_back(proc_cpu);
-
-        if self.process_cpu_readings.len() > self.buffer_size {
-            self.process_cpu_readings.pop_front();
-        }
-
-        self.process_mem_readings.push_back(proc_mem);
-
-        if self.process_mem_readings.len() > self.buffer_size {
-            self.process_mem_readings.pop_front();
-        }
+        self.system_cpu_readings.push(sys_cpu);
+        self.system_mem_readings.push(sys_mem);
+        self.process_cpu_readings.push(proc_cpu);
+        self.process_mem_readings.push(proc_mem);
     }
 
     pub fn push_render_time(&mut self, render_time: Duration) {
-        self.render_call_durations.push_back(render_time);
-
-        if self.render_call_durations.len() > self.buffer_size {
-            self.render_call_durations.pop_front();
-        }
+        self.render_call_durations.push(render_time);
     }
 
     pub fn get_statistics_data(&self) -> StatisticsData {
-        let sys_cpu_div = if self.system_cpu_readings.len() > 0 {
-            self.system_cpu_readings.len() as f32
+        let avg_system_cpu_usage = self.system_cpu_readings.mean().unwrap_or(0.0);
+        let avg_system_memory_usage = self.system_mem_readings.mean().unwrap_or(0.0);
+        let avg_process_cpu_usage = self.process_cpu_readings.mean().unwrap_or(0.0);
+        let avg_process_memory_usage = self.process_mem_readings.mean().unwrap_or(0.0);
+        let avg_render_call_duration = if self.render_call_durations.len() > 0 {
+            self.render_call_durations.iter().sum::<Duration>()
+                / self.render_call_durations.len() as u32
         } else {
-            1.0
+            Duration::ZERO
         };
-        let sys_mem_div = if self.system_mem_readings.len() > 0 {
-            self.system_mem_readings.len() as f32
-        } else {
-            1.0
-        };
-        let proc_cpu_div = if self.process_cpu_readings.len() > 0 {
-            self.process_cpu_readings.len() as f32
-        } else {
-            1.0
-        };
-        let proc_mem_div = if self.process_mem_readings.len() > 0 {
-            self.process_mem_readings.len() as f32
-        } else {
-            1.0
-        };
-        let render_call_div = if self.render_call_durations.len() > 0 {
-            self.render_call_durations.len()
-        } else {
-            1
-        };
-        let avg_system_cpu_usage = self.system_cpu_readings.iter().sum::<f32>() / sys_cpu_div;
-        let avg_system_memory_usage =
-            self.system_mem_readings.iter().sum::<u64>() as f32 / sys_mem_div;
-        let avg_process_cpu_usage = self.process_cpu_readings.iter().sum::<f32>() / proc_cpu_div;
-        let avg_process_memory_usage =
-            self.process_mem_readings.iter().sum::<u64>() as f32 / proc_mem_div;
-        let avg_render_call_duration = self.render_call_durations.iter().sum::<Duration>()
-            / render_call_div.try_into().unwrap();
 
         StatisticsData {
             avg_system_cpu_usage,
