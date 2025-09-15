@@ -27,7 +27,8 @@ use std::{io, sync::mpsc::Receiver};
 use ui::events::handle_key_events;
 
 use crate::{
-    perf::resources::Resources, threading::spawn_profiler, ui::colors::static_colors::StaticColors,
+    perf::resources::Resources, threading::spawn_profiler_thread,
+    ui::colors::static_colors::StaticColors,
 };
 
 fn main() -> io::Result<()> {
@@ -45,7 +46,7 @@ fn main() -> io::Result<()> {
         )
     );
 
-    let profiler_rx = spawn_profiler();
+    let profiler_rx = spawn_profiler_thread();
 
     let backend = CrosstermBackend::new(io::stdout());
     let mut terminal = setup_terminal(backend)?;

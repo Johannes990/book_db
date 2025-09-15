@@ -65,12 +65,36 @@ fn render_splash_screen(frame: &mut Frame, app: &App) {
     let app_name = &app.language.screen_splash_application_name;
     let loaded_db_string = &app.language.screen_splash_loaded_db;
     let loaded_table_string = &app.language.screen_splash_loaded_table;
-    let main_page_content = vec![
+
+    let mut main_page_content = vec![
         Line::from(format!(" {}", app_name)),
         Line::from(""),
         Line::from(format!(" {}: {}", loaded_db_string, loaded_db_name)),
         Line::from(format!(" {}: {}", loaded_table_string, selected_table_name)),
     ];
+
+    if app.options.log_performance_metrics {
+        let stats = app.statistics.get_statistics_data();
+        main_page_content.push(Line::from(format!(
+            " {}: {}%, {}: {}%",
+            app.language.screen_splash_avg_system_cpu_usage,
+            stats.avg_system_cpu_usage / 24.0,
+            app.language.screen_splash_avg_proc_cpu_usage,
+            stats.avg_process_cpu_usage / 24.0
+        )));
+        main_page_content.push(Line::from(format!(
+            " {}: {} MB, {}: {} MB",
+            app.language.screen_splash_avg_system_memory_usage,
+            stats.avg_system_memory_usage / 1048576.0,
+            app.language.screen_splash_avg_proc_memory_usage,
+            stats.avg_process_memory_usage / 1048576.0
+        )));
+        main_page_content.push(Line::from(format!(
+            " {}: {:?}",
+            app.language.screen_splash_avg_render_call_duration, stats.avg_render_call_duration
+        )));
+    }
+
     let main_page_paragraph = Paragraph::new(main_page_content).style(main_page_style);
 
     frame.render_widget(main_page_paragraph, main_chunk);

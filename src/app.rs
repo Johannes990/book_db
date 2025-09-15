@@ -4,9 +4,9 @@ use crate::{
     file_explorer::file_explorer_table::FileExplorerTable,
     handle_key_events,
     lang::language::AppLanguage,
-    log::{self, log},
+    log::log,
     options::Options,
-    perf::resources::Resources,
+    perf::{resources::Resources, statistics::StatisticsProfiling},
     row::row_list::RowListView,
     table::{table_info::TableInfo, table_list::TableListView},
     ui::{
@@ -76,6 +76,7 @@ pub struct App {
     pub key_bindings: KeyBindings,
     pub language: AppLanguage,
     pub perf_profiler: Option<Receiver<Resources>>,
+    pub statistics: StatisticsProfiling,
 }
 
 impl App {
@@ -137,6 +138,7 @@ impl App {
             key_bindings,
             language,
             perf_profiler: None,
+            statistics: StatisticsProfiling::new(10),
         })
     }
 
@@ -150,17 +152,25 @@ impl App {
     ) -> io::Result<()> {
         loop {
             let start = Instant::now();
+
             render::render(terminal, self)?;
 
             if self.options.log_performance_metrics {
                 let render_duration = start.elapsed();
-                log::log(format!("duration of last render call: {:?}", render_duration).as_str());
+                log(format!("duration of last render call: {:?}", render_duration).as_str());
+                self.statistics.push_render_time(render_duration);
             }
 
             if let Some(rx) = &self.perf_profiler {
                 while let Ok(stats) = rx.try_recv() {
                     if self.options.log_performance_metrics {
                         log(format!("{}", stats).as_str());
+                        self.statistics.push_cpu_and_memory_values(
+                            stats.global_used_cpu,
+                            stats.global_used_memory,
+                            stats.process_used_cpu,
+                            stats.process_used_memory,
+                        );
                     }
                 }
             }

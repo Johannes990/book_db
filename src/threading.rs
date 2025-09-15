@@ -3,7 +3,7 @@ use sysinfo::{Pid, ProcessesToUpdate, System};
 
 use crate::perf::resources::Resources;
 
-pub fn spawn_profiler() -> mpsc::Receiver<Resources> {
+pub fn spawn_profiler_thread() -> mpsc::Receiver<Resources> {
     let (tx, rx) = mpsc::channel();
     let pid = process::id();
 
