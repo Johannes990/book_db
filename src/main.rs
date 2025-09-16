@@ -10,6 +10,7 @@ mod row;
 mod table;
 mod threading;
 mod ui;
+mod utils;
 mod widgets;
 
 use app::App;
