@@ -66,15 +66,22 @@ impl FileExplorerTable {
         self.scroll_state = self.scroll_state.position(i * ITEM_HEIGHT);
     }
 
-    pub fn update_file_list(&mut self) {
-        let mut items = get_data_from_path(&self.current_path, &self.language_bits);
-
-        if self.current_path.parent().is_some() {
-            items.insert(
-                0,
-                FileExplorerData::new("..".to_string(), "".to_string(), "".to_string(), true),
-            );
+    pub fn parent_path(&mut self) {
+        if let Some(parent) = self.current_path.parent() {
+            self.current_path = parent.to_path_buf();
+            self.update_file_list();
+            self.update_scrollbar_state();
         }
+    }
+
+    pub fn open_dir(&mut self, new_path: PathBuf) {
+        self.current_path = new_path;
+        self.index = 0;
+        self.update_file_list();
+        self.update_scrollbar_state();
+    }
+
+    pub fn update_file_list(&mut self) {
         self.items = get_data_from_path(&self.current_path, &self.language_bits);
         self.state = TableState::new().with_selected(self.index);
     }
@@ -86,25 +93,22 @@ impl FileExplorerTable {
 }
 
 fn constraint_len_calculator(items: &[FileExplorerData]) -> (u16, u16, u16) {
-    let name_len = items
-        .iter()
-        .map(FileExplorerData::path_name)
-        .map(UnicodeWidthStr::width)
-        .max()
-        .unwrap_or(0);
-    let size_field_len = items
-        .iter()
-        .map(FileExplorerData::path_size)
-        .flat_map(str::lines)
-        .map(UnicodeWidthStr::width)
-        .max()
-        .unwrap_or(0);
-    let creation_timestamp_len = items
-        .iter()
-        .map(FileExplorerData::date_created)
-        .map(UnicodeWidthStr::width)
-        .max()
-        .unwrap_or(0);
+    let mut name_len = 0;
+    let mut size_field_len = 0;
+    let mut creation_timestamp_len = 0;
+
+    for item in items {
+        name_len = name_len.max(UnicodeWidthStr::width(item.path_name()));
+        size_field_len = size_field_len.max(
+            item.path_size()
+                .lines()
+                .map(UnicodeWidthStr::width)
+                .max()
+                .unwrap_or(0),
+        );
+        creation_timestamp_len =
+            creation_timestamp_len.max(UnicodeWidthStr::width(item.date_created()));
+    }
 
     #[allow(clippy::cast_possible_truncation)]
     (
@@ -129,37 +133,37 @@ fn get_data_from_path(
         Ok(entries) => entries
             .filter_map(|entry| entry.ok())
             .map(|entry| {
-                let path = entry.path();
-                let metadata = match fs::metadata(&path) {
-                    Ok(meta) => meta,
-                    Err(_) => {
-                        return FileExplorerData::new(
-                            entry
-                                .file_name()
-                                .into_string()
-                                .unwrap_or_else(|_| invalid_utf_8_string.into()),
-                            not_available_string.into(),
-                            not_available_string.into(),
-                            false,
-                        )
-                    }
-                };
-                let is_dir = metadata.is_dir();
                 let file_name = entry
                     .file_name()
                     .into_string()
-                    .unwrap_or_else(|_| invalid_utf_8_string.into());
+                    .unwrap_or_else(|_| invalid_utf_8_string.clone());
+
+                let metadata = match entry.metadata() {
+                    Ok(meta) => meta,
+                    Err(_) => {
+                        return FileExplorerData::new(
+                            file_name,
+                            not_available_string.clone(),
+                            not_available_string.clone(),
+                            false,
+                        );
+                    }
+                };
+
+                let is_dir = metadata.is_dir();
+
                 let file_size = if is_dir {
                     format!("<{}>", dir_string)
                 } else {
                     format!("{} {}", metadata.len(), bytes_string)
                 };
+
                 let date_created = match metadata.created() {
                     Ok(system_time) => {
                         let datetime: DateTime<Utc> = system_time.into();
                         datetime.format(datetime_format_string).to_string()
                     }
-                    Err(_) => not_available_string.to_string(),
+                    Err(_) => not_available_string.clone(),
                 };
 
                 FileExplorerData::new(file_name, file_size, date_created, is_dir)
@@ -167,8 +171,8 @@ fn get_data_from_path(
             .collect(),
         Err(_) => vec![FileExplorerData::new(
             format!("<{}>", dir_reading_error),
-            not_available_string.into(),
-            not_available_string.into(),
+            not_available_string.clone(),
+            not_available_string.clone(),
             false,
         )],
     };
@@ -176,7 +180,7 @@ fn get_data_from_path(
     if path.parent().is_some() {
         entries.insert(
             0,
-            FileExplorerData::new("..".to_string(), "".to_string(), "".to_string(), true),
+            FileExplorerData::new("..".into(), "".into(), "".into(), true),
         );
     }
 

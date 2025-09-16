@@ -115,30 +115,19 @@ fn file_explorer_screen_handler(app: &mut App, key_event: KeyEvent) -> io::Resul
             AppInputEvent::MoveDownPrimary => app.file_explorer_table.next(),
             AppInputEvent::FileExplorerSelect => {
                 if app.file_explorer_table.index == 0 {
-                    if let Some(parent) = app.file_explorer_table.current_path.parent() {
-                        app.file_explorer_table.current_path = parent.to_path_buf();
-                        app.file_explorer_table.update_file_list();
-                        app.file_explorer_table.update_scrollbar_state();
-                    }
-                } else {
-                    let data_row = &app.file_explorer_table.items[app.file_explorer_table.index];
-                    let selected_file = data_row.path_name();
-                    let is_dir = data_row.is_dir();
-                    let new_path = app.file_explorer_table.current_path.join(selected_file);
+                    app.file_explorer_table.parent_path();
+                    return Ok(());
+                }
 
-                    if *is_dir && new_path.is_dir() {
-                        app.file_explorer_table.current_path = new_path;
-                        app.file_explorer_table.index = 0;
-                        app.file_explorer_table.update_file_list();
-                        app.file_explorer_table.update_scrollbar_state();
-                    } else {
-                        // handle file opening...
-                        if let Err(_e) = app.open_db_file(new_path) {
-                            app.switch_to_screen(Screen::Splash);
-                        } else {
-                            app.switch_to_screen(Screen::DatabaseSchema);
-                        }
-                    }
+                let data_row = &app.file_explorer_table.items[app.file_explorer_table.index];
+                let selected_file = data_row.path_name();
+                let is_dir = data_row.is_dir();
+                let new_path = app.file_explorer_table.current_path.join(selected_file);
+
+                if *is_dir && new_path.is_dir() {
+                    app.file_explorer_table.open_dir(new_path);
+                } else {
+                    app.open_file(new_path);
                 }
             }
             _ => {}

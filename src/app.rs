@@ -298,6 +298,17 @@ impl App {
         }
     }
 
+    pub fn open_file(&mut self, path: PathBuf) {
+        if let Err(_) = self.open_db_file(path) {
+            self.switch_to_popup(PopUp::Error);
+            self.current_error = Some(DBError::ConnectionCreationError(
+                "Cant open that file".to_string(),
+            ))
+        } else {
+            self.switch_to_screen(Screen::DatabaseSchema);
+        }
+    }
+
     pub fn create_row_insert_form(&mut self, table_cols: Vec<String>) {
         let title_text = format!(
             "Enter new entry into table {}",
