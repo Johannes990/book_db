@@ -299,7 +299,7 @@ impl App {
     }
 
     pub fn open_file(&mut self, path: PathBuf) {
-        if let Err(_) = self.open_db_file(path) {
+        if self.open_db_file(path).is_err() {
             self.switch_to_popup(PopUp::Error);
             self.current_error = Some(DBError::ConnectionCreationError(
                 "Cant open that file".to_string(),

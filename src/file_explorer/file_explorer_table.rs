@@ -1,9 +1,16 @@
-use crate::file_explorer::file_explorer_data::FileExplorerData;
+use crate::{
+    file_explorer::file_explorer_data::FileExplorerData,
+    log::log,
+    threading::{spawn_lookup_thread, spawn_tree_builder},
+};
 use chrono::{DateTime, Utc};
 use ratatui::widgets::{ScrollbarState, TableState};
 use std::{
+    collections::VecDeque,
     fs::{self},
     path::PathBuf,
+    sync::Arc,
+    time::Instant,
 };
 use unicode_width::UnicodeWidthStr;
 
@@ -87,8 +94,8 @@ impl FileExplorerTable {
     }
 
     pub fn update_scrollbar_state(&mut self) {
-        let path_data = get_data_from_path(&self.current_path, &self.language_bits);
-        self.scroll_state = ScrollbarState::new((path_data.len() - 1) * ITEM_HEIGHT);
+        let item_count = self.items.len();
+        self.scroll_state = ScrollbarState::new((item_count - 1) * ITEM_HEIGHT);
     }
 }
 
@@ -128,6 +135,7 @@ fn get_data_from_path(
     let bytes_string = &language_bits.3;
     let datetime_format_string = &language_bits.4;
     let dir_reading_error = &language_bits.5;
+    let mut paths_to_search_from: VecDeque<Arc<str>> = VecDeque::new();
 
     let mut entries = match fs::read_dir(path) {
         Ok(entries) => entries
@@ -137,6 +145,8 @@ fn get_data_from_path(
                     .file_name()
                     .into_string()
                     .unwrap_or_else(|_| invalid_utf_8_string.clone());
+
+                paths_to_search_from.push_front(file_name.clone().into());
 
                 let metadata = match entry.metadata() {
                     Ok(meta) => meta,
@@ -183,6 +193,21 @@ fn get_data_from_path(
             FileExplorerData::new("..".into(), "".into(), "".into(), true),
         );
     }
+
+    let start = Instant::now();
+    let tree_rx = spawn_tree_builder(paths_to_search_from);
+    let tree = tree_rx.recv().unwrap();
+
+    let q = spawn_lookup_thread(tree.clone(), Arc::<str>::from("isaac"), 4);
+
+    let duration = start.elapsed();
+
+    log(format!(
+        "Query results from 'isaac' in current dir: {:?}",
+        q.recv().unwrap()
+    )
+    .as_str());
+    log(format!("querying took {:?}", duration).as_str());
 
     entries
 }
