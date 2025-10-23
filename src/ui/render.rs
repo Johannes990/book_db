@@ -48,22 +48,26 @@ where
 
 fn render_splash_screen(frame: &mut Frame, app: &App) {
     let mut frame_area = frame.area();
-    let mut footer_area = Rect::new(0, 0, 0, 0);
-    let footer_height = 1;
+
     if app.options.render_footer {
-        frame_area = Rect::new(
-            frame_area.x,
-            frame_area.y,
-            frame_area.width,
-            frame_area.height - footer_height,
-        );
-        footer_area = Rect::new(
-            frame_area.x,
-            frame_area.y + frame_area.height,
-            frame_area.width,
-            footer_height,
-        );
+        let chunks = get_chunks_from_fixed_limits(frame_area, Direction::Vertical, vec![1]);
+        frame_area = chunks[0];
+        let footer_area = chunks[1];
+        if let Some(stats) = app.statistics.get_statistics_data() {
+            let perf_info = format!(
+                " {}: {:.3}%  {}: {:.3}MB",
+                app.language.screen_splash_avg_proc_cpu_usage,
+                stats.avg_process_cpu_usage / 24.0,
+                app.language.screen_splash_avg_proc_memory_usage,
+                stats.avg_process_memory_usage / 1024.0 / 1024.0,
+            );
+
+            let date_and_time = chrono::Local::now().format("%b %d %H:%M ").to_string();
+
+            render_footer_row(frame, app, footer_area, perf_info, date_and_time);
+        }
     }
+
     let (main_chunk, info_chunk) = split_with_optional_info_chunk(frame_area, app);
     let main_page_style = Style::default()
         .bg(app.background_color())
@@ -90,22 +94,6 @@ fn render_splash_screen(frame: &mut Frame, app: &App) {
         Line::from(format!(" {}: {}", loaded_table_string, selected_table_name)),
     ];
 
-    if app.options.render_footer {
-        if let Some(stats) = app.statistics.get_statistics_data() {
-            let perf_info = format!(
-                " {}: {:.3}%  {}: {:.3}MB",
-                app.language.screen_splash_avg_proc_cpu_usage,
-                stats.avg_process_cpu_usage / 24.0,
-                app.language.screen_splash_avg_proc_memory_usage,
-                stats.avg_process_memory_usage / 1024.0 / 1024.0,
-            );
-
-            let date_and_time = chrono::Local::now().format("%b %d %H:%M ").to_string();
-
-            render_footer_row(frame, app, footer_area, perf_info, date_and_time);
-        }
-    }
-
     let main_page_paragraph = Paragraph::new(main_page_content).style(main_page_style);
 
     frame.render_widget(main_page_paragraph, main_chunk);
@@ -129,7 +117,28 @@ fn render_splash_screen(frame: &mut Frame, app: &App) {
 }
 
 fn render_file_explorer_screen(frame: &mut Frame, app: &mut App) {
-    let (main_chunk, info_chunk) = split_with_optional_info_chunk(frame.area(), app);
+    let mut frame_area = frame.area();
+
+    if app.options.render_footer {
+        let chunks = get_chunks_from_fixed_limits(frame_area, Direction::Vertical, vec![1]);
+        frame_area = chunks[0];
+        let footer_area = chunks[1];
+        if let Some(stats) = app.statistics.get_statistics_data() {
+            let perf_info = format!(
+                " {}: {:.3}%  {}: {:.3}MB",
+                app.language.screen_splash_avg_proc_cpu_usage,
+                stats.avg_process_cpu_usage / 24.0,
+                app.language.screen_splash_avg_proc_memory_usage,
+                stats.avg_process_memory_usage / 1024.0 / 1024.0,
+            );
+
+            let date_and_time = chrono::Local::now().format("%b %d %H:%M ").to_string();
+
+            render_footer_row(frame, app, footer_area, perf_info, date_and_time);
+        }
+    }
+
+    let (main_chunk, info_chunk) = split_with_optional_info_chunk(frame_area, app);
     let scrollbar_style = Style::default().fg(app.border_color());
     let fexp_page_style = Style::default()
         .bg(app.background_color())
@@ -252,10 +261,31 @@ fn render_file_explorer_screen(frame: &mut Frame, app: &mut App) {
 }
 
 fn render_database_schema_screen(frame: &mut Frame, app: &mut App) {
+    let mut frame_area = frame.area();
+
+    if app.options.render_footer {
+        let chunks = get_chunks_from_fixed_limits(frame_area, Direction::Vertical, vec![1]);
+        frame_area = chunks[0];
+        let footer_area = chunks[1];
+        if let Some(stats) = app.statistics.get_statistics_data() {
+            let perf_info = format!(
+                " {}: {:.3}%  {}: {:.3}MB",
+                app.language.screen_splash_avg_proc_cpu_usage,
+                stats.avg_process_cpu_usage / 24.0,
+                app.language.screen_splash_avg_proc_memory_usage,
+                stats.avg_process_memory_usage / 1024.0 / 1024.0,
+            );
+
+            let date_and_time = chrono::Local::now().format("%b %d %H:%M ").to_string();
+
+            render_footer_row(frame, app, footer_area, perf_info, date_and_time);
+        }
+    }
+
     let db_page_style = Style::default()
         .bg(app.background_color())
         .fg(app.text_color());
-    let (main_chunk, info_chunk) = split_with_optional_info_chunk(frame.area(), app);
+    let (main_chunk, info_chunk) = split_with_optional_info_chunk(frame_area, app);
     let no_db_found_string = &app.language.screen_db_schema_no_db_found;
     let db_name = app
         .selected_db
@@ -307,10 +337,31 @@ fn render_database_schema_screen(frame: &mut Frame, app: &mut App) {
 }
 
 fn render_new_database_screen(frame: &mut Frame, app: &mut App) {
+    let mut frame_area = frame.area();
+
+    if app.options.render_footer {
+        let chunks = get_chunks_from_fixed_limits(frame_area, Direction::Vertical, vec![1]);
+        frame_area = chunks[0];
+        let footer_area = chunks[1];
+        if let Some(stats) = app.statistics.get_statistics_data() {
+            let perf_info = format!(
+                " {}: {:.3}%  {}: {:.3}MB",
+                app.language.screen_splash_avg_proc_cpu_usage,
+                stats.avg_process_cpu_usage / 24.0,
+                app.language.screen_splash_avg_proc_memory_usage,
+                stats.avg_process_memory_usage / 1024.0 / 1024.0,
+            );
+
+            let date_and_time = chrono::Local::now().format("%b %d %H:%M ").to_string();
+
+            render_footer_row(frame, app, footer_area, perf_info, date_and_time);
+        }
+    }
+
     let page_style = Style::default()
         .bg(app.background_color())
         .fg(app.text_color());
-    let (main_chunk, info_chunk) = split_with_optional_info_chunk(frame.area(), app);
+    let (main_chunk, info_chunk) = split_with_optional_info_chunk(frame_area, app);
     let insert_text_area_on_style = Style::default()
         .bg(app.background_highlight_color())
         .fg(app.text_highlight_color());
@@ -344,7 +395,28 @@ fn render_new_database_screen(frame: &mut Frame, app: &mut App) {
 }
 
 fn render_database_table_screen(frame: &mut Frame, app: &mut App) {
-    let (main_chunk, info_chunk) = split_with_optional_info_chunk(frame.area(), app);
+    let mut frame_area = frame.area();
+
+    if app.options.render_footer {
+        let chunks = get_chunks_from_fixed_limits(frame_area, Direction::Vertical, vec![1]);
+        frame_area = chunks[0];
+        let footer_area = chunks[1];
+        if let Some(stats) = app.statistics.get_statistics_data() {
+            let perf_info = format!(
+                " {}: {:.3}%  {}: {:.3}MB",
+                app.language.screen_splash_avg_proc_cpu_usage,
+                stats.avg_process_cpu_usage / 24.0,
+                app.language.screen_splash_avg_proc_memory_usage,
+                stats.avg_process_memory_usage / 1024.0 / 1024.0,
+            );
+
+            let date_and_time = chrono::Local::now().format("%b %d %H:%M ").to_string();
+
+            render_footer_row(frame, app, footer_area, perf_info, date_and_time);
+        }
+    }
+
+    let (main_chunk, info_chunk) = split_with_optional_info_chunk(frame_area, app);
     let db_page_style = Style::default()
         .bg(app.background_color())
         .fg(app.text_color());
@@ -470,6 +542,27 @@ fn render_database_table_screen(frame: &mut Frame, app: &mut App) {
 }
 
 fn render_options_screen(frame: &mut Frame, app: &mut App) {
+    let mut frame_area = frame.area();
+
+    if app.options.render_footer {
+        let chunks = get_chunks_from_fixed_limits(frame_area, Direction::Vertical, vec![1]);
+        frame_area = chunks[0];
+        let footer_area = chunks[1];
+        if let Some(stats) = app.statistics.get_statistics_data() {
+            let perf_info = format!(
+                " {}: {:.3}%  {}: {:.3}MB",
+                app.language.screen_splash_avg_proc_cpu_usage,
+                stats.avg_process_cpu_usage / 24.0,
+                app.language.screen_splash_avg_proc_memory_usage,
+                stats.avg_process_memory_usage / 1024.0 / 1024.0,
+            );
+
+            let date_and_time = chrono::Local::now().format("%b %d %H:%M ").to_string();
+
+            render_footer_row(frame, app, footer_area, perf_info, date_and_time);
+        }
+    }
+
     let general_page_style = Style::default()
         .fg(app.text_color())
         .bg(app.background_color());
@@ -479,7 +572,7 @@ fn render_options_screen(frame: &mut Frame, app: &mut App) {
         .title(options_title.to_string())
         .style(general_page_style);
 
-    frame.render_widget(options_block, frame.area());
+    frame.render_widget(options_block, frame_area);
 
     let color_scheme_preview_rows = 8;
     let limits = if app.options.render_info_section {
@@ -487,7 +580,7 @@ fn render_options_screen(frame: &mut Frame, app: &mut App) {
     } else {
         vec![color_scheme_preview_rows]
     };
-    let vertical_chunks = get_chunks_from_fixed_limits(frame.area(), Direction::Vertical, limits);
+    let vertical_chunks = get_chunks_from_fixed_limits(frame_area, Direction::Vertical, limits);
     let horizontal_chunks =
         get_chunks_from_percentages(vertical_chunks[1], Direction::Horizontal, vec![50, 50]);
     let color_schemes_string = &app.language.screen_options_color_schemes;
