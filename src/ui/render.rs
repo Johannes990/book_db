@@ -47,7 +47,24 @@ where
 }
 
 fn render_splash_screen(frame: &mut Frame, app: &App) {
-    let (main_chunk, info_chunk) = split_with_optional_info_chunk(frame.area(), app);
+    let mut frame_area = frame.area();
+    let mut footer_area = Rect::new(0, 0, 0, 0);
+    let footer_height = 1;
+    if app.options.render_footer {
+        frame_area = Rect::new(
+            frame_area.x,
+            frame_area.y,
+            frame_area.width,
+            frame_area.height - footer_height,
+        );
+        footer_area = Rect::new(
+            frame_area.x,
+            frame_area.y + frame_area.height,
+            frame_area.width,
+            footer_height,
+        );
+    }
+    let (main_chunk, info_chunk) = split_with_optional_info_chunk(frame_area, app);
     let main_page_style = Style::default()
         .bg(app.background_color())
         .fg(app.text_color());
@@ -66,33 +83,27 @@ fn render_splash_screen(frame: &mut Frame, app: &App) {
     let loaded_db_string = &app.language.screen_splash_loaded_db;
     let loaded_table_string = &app.language.screen_splash_loaded_table;
 
-    let mut main_page_content = vec![
+    let main_page_content = vec![
         Line::from(format!(" {}", app_name)),
         Line::from(""),
         Line::from(format!(" {}: {}", loaded_db_string, loaded_db_name)),
         Line::from(format!(" {}: {}", loaded_table_string, selected_table_name)),
     ];
 
-    if app.options.log_performance_metrics {
-        let stats = app.statistics.get_statistics_data();
-        main_page_content.push(Line::from(format!(
-            " {}: {}%, {}: {}%",
-            app.language.screen_splash_avg_system_cpu_usage,
-            stats.avg_system_cpu_usage / 24.0,
-            app.language.screen_splash_avg_proc_cpu_usage,
-            stats.avg_process_cpu_usage / 24.0
-        )));
-        main_page_content.push(Line::from(format!(
-            " {}: {} MB, {}: {} MB",
-            app.language.screen_splash_avg_system_memory_usage,
-            stats.avg_system_memory_usage / 1048576.0,
-            app.language.screen_splash_avg_proc_memory_usage,
-            stats.avg_process_memory_usage / 1048576.0
-        )));
-        main_page_content.push(Line::from(format!(
-            " {}: {:?}",
-            app.language.screen_splash_avg_render_call_duration, stats.avg_render_call_duration
-        )));
+    if app.options.render_footer {
+        if let Some(stats) = app.statistics.get_statistics_data() {
+            let perf_info = format!(
+                " {}: {:.3}%  {}: {:.3}MB",
+                app.language.screen_splash_avg_proc_cpu_usage,
+                stats.avg_process_cpu_usage / 24.0,
+                app.language.screen_splash_avg_proc_memory_usage,
+                stats.avg_process_memory_usage / 1024.0 / 1024.0,
+            );
+
+            let date_and_time = chrono::Local::now().format("%b %d %H:%M ").to_string();
+
+            render_footer_row(frame, app, footer_area, perf_info, date_and_time);
+        }
     }
 
     let main_page_paragraph = Paragraph::new(main_page_content).style(main_page_style);
@@ -543,6 +554,7 @@ fn render_options_screen(frame: &mut Frame, app: &mut App) {
     let selectable_options_strings = [
         &app.language.screen_options_metadata_in_table,
         &app.language.screen_options_metadata_in_insert,
+        &app.language.screen_options_render_footer,
         &app.language.screen_options_render_info,
         &app.language.screen_options_info_block_height,
         &app.language.screen_options_log_performance_info,
@@ -1340,6 +1352,24 @@ where
     }
 
     info_text
+}
+
+fn render_footer_row(
+    frame: &mut Frame,
+    app: &App,
+    area: Rect,
+    left_info: String,
+    right_info: String,
+) {
+    let footer_style = Style::default()
+        .bg(app.background_alt_color())
+        .fg(app.text_color());
+    let footer_block = Block::default()
+        .style(footer_style)
+        .title(Line::from(left_info).left_aligned())
+        .title(Line::from(right_info).right_aligned());
+
+    frame.render_widget(footer_block, area);
 }
 
 fn line_width(line: &Line) -> usize {

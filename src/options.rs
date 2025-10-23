@@ -22,6 +22,7 @@ pub enum OptionKind {
 pub enum SelectedOption {
     TableMetainfoToggle,
     InsertMetainfoToggle,
+    RenderFooter,
     RenderInfoSection,
     InfoSectionHeight,
     LogPerformanceMetrics,
@@ -61,6 +62,7 @@ pub struct Options {
     // actual options values
     pub display_col_metainfo_in_table_view: bool,
     pub display_col_metainfo_in_insert_view: bool,
+    pub render_footer: bool,
     pub render_info_section: bool,
     pub info_section_height: u16,
     pub log_performance_metrics: bool,
@@ -86,6 +88,7 @@ impl Options {
             selected_language: SupportedLanguage::English,
             display_col_metainfo_in_table_view: true,
             display_col_metainfo_in_insert_view: true,
+            render_footer: false,
             render_info_section: true,
             info_section_height: 5,
             log_performance_metrics: false,
@@ -157,6 +160,10 @@ impl Options {
                 selected: self.selected_option == SelectedOption::InsertMetainfoToggle,
             },
             SelectableField {
+                kind: OptionKind::Toggle(self.render_footer),
+                selected: self.selected_option == SelectedOption::RenderFooter,
+            },
+            SelectableField {
                 kind: OptionKind::Toggle(self.render_info_section),
                 selected: self.selected_option == SelectedOption::RenderInfoSection,
             },
@@ -186,17 +193,22 @@ impl Options {
                 }
                 2 => {
                     if let OptionKind::Toggle(v) = field.kind {
-                        self.render_info_section = v;
+                        self.render_footer = v;
                     }
                 }
                 3 => {
+                    if let OptionKind::Toggle(v) = field.kind {
+                        self.render_info_section = v;
+                    }
+                }
+                4 => {
                     if let OptionKind::TextInput(ref s) = field.kind {
                         if let Ok(num) = s.parse::<u16>() {
                             self.info_section_height = num;
                         }
                     }
                 }
-                4 => {
+                5 => {
                     if let OptionKind::Toggle(v) = field.kind {
                         self.log_performance_metrics = v;
                     }

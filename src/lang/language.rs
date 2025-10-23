@@ -71,6 +71,7 @@ pub struct AppLanguage {
     pub screen_options_color_schemes: String,
     pub screen_options_metadata_in_table: String,
     pub screen_options_metadata_in_insert: String,
+    pub screen_options_render_footer: String,
     pub screen_options_render_info: String,
     pub screen_options_info_block_height: String,
     pub screen_options_log_performance_info: String,
