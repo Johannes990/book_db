@@ -67,6 +67,7 @@ pub struct StatisticsProfiling {
     system_mem_readings: SizedDeque<u64>,
     process_mem_readings: SizedDeque<u64>,
     render_call_durations: SizedDeque<Duration>,
+    calculated_data: Option<StatisticsData>,
 }
 
 impl StatisticsProfiling {
@@ -77,6 +78,7 @@ impl StatisticsProfiling {
             system_mem_readings: SizedDeque::new(buffer_size),
             process_mem_readings: SizedDeque::new(buffer_size),
             render_call_durations: SizedDeque::new(buffer_size),
+            calculated_data: None,
         }
     }
 
@@ -97,7 +99,11 @@ impl StatisticsProfiling {
         self.render_call_durations.push(render_time);
     }
 
-    pub fn get_statistics_data(&self) -> StatisticsData {
+    pub fn get_statistics_data(&self) -> &Option<StatisticsData> {
+        &self.calculated_data
+    }
+
+    pub fn calculate_statistics(&mut self) {
         let avg_system_cpu_usage = self.system_cpu_readings.mean().unwrap_or(0.0);
         let avg_system_memory_usage = self.system_mem_readings.mean().unwrap_or(0.0);
         let avg_process_cpu_usage = self.process_cpu_readings.mean().unwrap_or(0.0);
@@ -109,12 +115,12 @@ impl StatisticsProfiling {
             Duration::ZERO
         };
 
-        StatisticsData {
+        self.calculated_data = Some(StatisticsData {
             avg_system_cpu_usage,
             avg_system_memory_usage,
             avg_process_cpu_usage,
             avg_process_memory_usage,
             avg_render_call_duration,
-        }
+        });
     }
 }

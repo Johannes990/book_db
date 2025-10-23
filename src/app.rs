@@ -171,6 +171,8 @@ impl App {
                 }
             }
 
+            self.statistics.calculate_statistics();
+
             // handle_key_events poll duration controls the app update rate
             if handle_key_events(self)? {
                 break;
