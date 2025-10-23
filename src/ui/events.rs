@@ -491,7 +491,10 @@ fn no_db_loaded_popup_handler(app: &mut App, key_event: KeyEvent) -> io::Result<
         match event {
             AppInputEvent::OpenQuitAppPopUp => app.switch_to_popup(PopUp::Quit),
             AppInputEvent::ClosePopUp => app.switch_to_popup(PopUp::None),
-            AppInputEvent::OpenFileExplorerScreen => app.switch_to_screen(Screen::FileExplorer),
+            AppInputEvent::OpenFileExplorerScreen => {
+                app.switch_to_screen(Screen::FileExplorer);
+                app.switch_to_popup(PopUp::None);
+            }
             _ => {}
         }
     }
