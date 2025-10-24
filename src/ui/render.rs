@@ -52,20 +52,7 @@ fn render_splash_screen(frame: &mut Frame, app: &App) {
     if app.options.render_footer {
         let chunks = get_chunks_from_fixed_limits(frame_area, Direction::Vertical, vec![1]);
         frame_area = chunks[0];
-        let footer_area = chunks[1];
-        if let Some(stats) = app.statistics.get_statistics_data() {
-            let perf_info = format!(
-                " {}: {:.3}%  {}: {:.3}MB",
-                app.language.screen_splash_avg_proc_cpu_usage,
-                stats.avg_process_cpu_usage / 24.0,
-                app.language.screen_splash_avg_proc_memory_usage,
-                stats.avg_process_memory_usage / 1024.0 / 1024.0,
-            );
-
-            let date_and_time = chrono::Local::now().format("%b %d %H:%M ").to_string();
-
-            render_footer_row(frame, app, footer_area, perf_info, date_and_time);
-        }
+        handle_footer_data_and_rendering(frame, app, chunks[1]);
     }
 
     let (main_chunk, info_chunk) = split_with_optional_info_chunk(frame_area, app);
@@ -122,20 +109,7 @@ fn render_file_explorer_screen(frame: &mut Frame, app: &mut App) {
     if app.options.render_footer {
         let chunks = get_chunks_from_fixed_limits(frame_area, Direction::Vertical, vec![1]);
         frame_area = chunks[0];
-        let footer_area = chunks[1];
-        if let Some(stats) = app.statistics.get_statistics_data() {
-            let perf_info = format!(
-                " {}: {:.3}%  {}: {:.3}MB",
-                app.language.screen_splash_avg_proc_cpu_usage,
-                stats.avg_process_cpu_usage / 24.0,
-                app.language.screen_splash_avg_proc_memory_usage,
-                stats.avg_process_memory_usage / 1024.0 / 1024.0,
-            );
-
-            let date_and_time = chrono::Local::now().format("%b %d %H:%M ").to_string();
-
-            render_footer_row(frame, app, footer_area, perf_info, date_and_time);
-        }
+        handle_footer_data_and_rendering(frame, app, chunks[1]);
     }
 
     let (main_chunk, info_chunk) = split_with_optional_info_chunk(frame_area, app);
@@ -266,20 +240,7 @@ fn render_database_schema_screen(frame: &mut Frame, app: &mut App) {
     if app.options.render_footer {
         let chunks = get_chunks_from_fixed_limits(frame_area, Direction::Vertical, vec![1]);
         frame_area = chunks[0];
-        let footer_area = chunks[1];
-        if let Some(stats) = app.statistics.get_statistics_data() {
-            let perf_info = format!(
-                " {}: {:.3}%  {}: {:.3}MB",
-                app.language.screen_splash_avg_proc_cpu_usage,
-                stats.avg_process_cpu_usage / 24.0,
-                app.language.screen_splash_avg_proc_memory_usage,
-                stats.avg_process_memory_usage / 1024.0 / 1024.0,
-            );
-
-            let date_and_time = chrono::Local::now().format("%b %d %H:%M ").to_string();
-
-            render_footer_row(frame, app, footer_area, perf_info, date_and_time);
-        }
+        handle_footer_data_and_rendering(frame, app, chunks[1]);
     }
 
     let db_page_style = Style::default()
@@ -342,20 +303,7 @@ fn render_new_database_screen(frame: &mut Frame, app: &mut App) {
     if app.options.render_footer {
         let chunks = get_chunks_from_fixed_limits(frame_area, Direction::Vertical, vec![1]);
         frame_area = chunks[0];
-        let footer_area = chunks[1];
-        if let Some(stats) = app.statistics.get_statistics_data() {
-            let perf_info = format!(
-                " {}: {:.3}%  {}: {:.3}MB",
-                app.language.screen_splash_avg_proc_cpu_usage,
-                stats.avg_process_cpu_usage / 24.0,
-                app.language.screen_splash_avg_proc_memory_usage,
-                stats.avg_process_memory_usage / 1024.0 / 1024.0,
-            );
-
-            let date_and_time = chrono::Local::now().format("%b %d %H:%M ").to_string();
-
-            render_footer_row(frame, app, footer_area, perf_info, date_and_time);
-        }
+        handle_footer_data_and_rendering(frame, app, chunks[1]);
     }
 
     let page_style = Style::default()
@@ -400,20 +348,7 @@ fn render_database_table_screen(frame: &mut Frame, app: &mut App) {
     if app.options.render_footer {
         let chunks = get_chunks_from_fixed_limits(frame_area, Direction::Vertical, vec![1]);
         frame_area = chunks[0];
-        let footer_area = chunks[1];
-        if let Some(stats) = app.statistics.get_statistics_data() {
-            let perf_info = format!(
-                " {}: {:.3}%  {}: {:.3}MB",
-                app.language.screen_splash_avg_proc_cpu_usage,
-                stats.avg_process_cpu_usage / 24.0,
-                app.language.screen_splash_avg_proc_memory_usage,
-                stats.avg_process_memory_usage / 1024.0 / 1024.0,
-            );
-
-            let date_and_time = chrono::Local::now().format("%b %d %H:%M ").to_string();
-
-            render_footer_row(frame, app, footer_area, perf_info, date_and_time);
-        }
+        handle_footer_data_and_rendering(frame, app, chunks[1]);
     }
 
     let (main_chunk, info_chunk) = split_with_optional_info_chunk(frame_area, app);
@@ -547,20 +482,7 @@ fn render_options_screen(frame: &mut Frame, app: &mut App) {
     if app.options.render_footer {
         let chunks = get_chunks_from_fixed_limits(frame_area, Direction::Vertical, vec![1]);
         frame_area = chunks[0];
-        let footer_area = chunks[1];
-        if let Some(stats) = app.statistics.get_statistics_data() {
-            let perf_info = format!(
-                " {}: {:.3}%  {}: {:.3}MB",
-                app.language.screen_splash_avg_proc_cpu_usage,
-                stats.avg_process_cpu_usage / 24.0,
-                app.language.screen_splash_avg_proc_memory_usage,
-                stats.avg_process_memory_usage / 1024.0 / 1024.0,
-            );
-
-            let date_and_time = chrono::Local::now().format("%b %d %H:%M ").to_string();
-
-            render_footer_row(frame, app, footer_area, perf_info, date_and_time);
-        }
+        handle_footer_data_and_rendering(frame, app, chunks[1]);
     }
 
     let general_page_style = Style::default()
@@ -1445,6 +1367,27 @@ where
     }
 
     info_text
+}
+
+fn handle_footer_data_and_rendering(frame: &mut Frame, app: &App, area: Rect) {
+    let datetime_format = "%b %d %H:%M ";
+    let mut perf_info = String::from(" Perf profile unavailable");
+
+    if let Some(stats) = app.statistics.get_statistics_data() {
+        let prec = 3;
+        let megs = 1024.0 * 1024.0;
+        perf_info = format!(
+            " {}: {:.prec$}%  {}: {:.prec$}MB",
+            app.language.screen_splash_avg_proc_cpu_usage,
+            stats.avg_process_cpu_usage / 24.0,
+            app.language.screen_splash_avg_proc_memory_usage,
+            stats.avg_process_memory_usage / megs,
+        );
+    }
+
+    let date_and_time = chrono::Local::now().format(datetime_format).to_string();
+
+    render_footer_row(frame, app, area, perf_info, date_and_time);
 }
 
 fn render_footer_row(
