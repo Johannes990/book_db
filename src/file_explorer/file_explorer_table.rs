@@ -198,16 +198,19 @@ fn get_data_from_path(
     let tree_rx = spawn_tree_builder(paths_to_search_from);
     let tree = tree_rx.recv().unwrap();
 
-    let q = spawn_lookup_thread(tree.clone(), Arc::<str>::from("isaac"), 4);
-
     let duration = start.elapsed();
+    log(format!("Tree build took {:?}", duration).as_str());
+
+    let start2 = Instant::now();
+    let q = spawn_lookup_thread(tree.clone(), Arc::<str>::from("isaac"), 10);
+    let duration2 = start2.elapsed();
 
     log(format!(
         "Query results from 'isaac' in current dir: {:?}",
         q.recv().unwrap()
     )
     .as_str());
-    log(format!("querying took {:?}", duration).as_str());
+    log(format!("querying took {:?}", duration2).as_str());
 
     entries
 }
