@@ -67,6 +67,7 @@ pub struct StatisticsProfiling {
     system_mem_readings: SizedDeque<u64>,
     process_mem_readings: SizedDeque<u64>,
     render_call_durations: SizedDeque<Duration>,
+    pub thread_count: Option<usize>,
     calculated_data: Option<StatisticsData>,
 }
 
@@ -78,6 +79,7 @@ impl StatisticsProfiling {
             system_mem_readings: SizedDeque::new(buffer_size),
             process_mem_readings: SizedDeque::new(buffer_size),
             render_call_durations: SizedDeque::new(buffer_size),
+            thread_count: None,
             calculated_data: None,
         }
     }
@@ -97,6 +99,12 @@ impl StatisticsProfiling {
 
     pub fn push_render_time(&mut self, render_time: Duration) {
         self.render_call_durations.push(render_time);
+    }
+
+    pub fn set_thread_count(&mut self, core_count: usize) {
+        if self.thread_count.is_none() {
+            self.thread_count = Some(core_count);
+        }
     }
 
     pub fn get_statistics_data(&self) -> &Option<StatisticsData> {

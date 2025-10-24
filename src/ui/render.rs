@@ -1376,10 +1376,11 @@ fn handle_footer_data_and_rendering(frame: &mut Frame, app: &App, area: Rect) {
     if let Some(stats) = app.statistics.get_statistics_data() {
         let prec = 3;
         let megs = 1024.0 * 1024.0;
+        let thread_count = app.statistics.thread_count.unwrap_or(1) as f32;
         perf_info = format!(
             " {}: {:.prec$}%  {}: {:.prec$}MB",
             app.language.screen_splash_avg_proc_cpu_usage,
-            stats.avg_process_cpu_usage / 24.0,
+            stats.avg_process_cpu_usage / thread_count,
             app.language.screen_splash_avg_proc_memory_usage,
             stats.avg_process_memory_usage / megs,
         );

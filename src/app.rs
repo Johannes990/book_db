@@ -162,6 +162,7 @@ impl App {
                 while let Ok(stats) = rx.try_recv() {
                     log(format!("{}", stats).as_str());
                     log(format!("avg frame render time: {:?}", render_duration).as_str());
+                    self.statistics.set_thread_count(stats.thread_count);
                     self.statistics.push_cpu_and_memory_values(
                         stats.global_used_cpu,
                         stats.global_used_memory,
