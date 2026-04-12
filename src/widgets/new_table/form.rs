@@ -1,6 +1,7 @@
 use crate::widgets::new_table::draft::{ColumnDraft, TableDraft};
 
 #[derive(PartialEq)]
+#[allow(dead_code)]
 pub enum ColumnField {
     Name,
     DataType,
@@ -12,6 +13,7 @@ pub enum ColumnField {
     ForeignKeyColumn,
 }
 
+#[allow(dead_code)]
 impl ColumnField {
     pub fn next(&self, col: &ColumnDraft) -> Self {
         match self {
@@ -53,16 +55,19 @@ impl ColumnField {
 }
 
 #[derive(PartialEq)]
+#[allow(dead_code)]
 pub enum TableField {
     TableName,
     Column(usize, ColumnField),
 }
 
+#[allow(dead_code)]
 pub struct TableForm {
     pub draft: TableDraft,
     pub selected_field: TableField,
 }
 
+#[allow(dead_code)]
 impl TableForm {
     pub fn new() -> Self {
         Self {

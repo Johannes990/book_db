@@ -1,10 +1,12 @@
 use std::fmt;
 
+#[allow(dead_code)]
 pub struct ForeignKeyDraft {
     pub referenced_table: String,
     pub referenced_column: String,
 }
 
+#[allow(dead_code)]
 impl ForeignKeyDraft {
     pub fn new() -> Self {
         Self {
@@ -14,6 +16,7 @@ impl ForeignKeyDraft {
     }
 }
 
+#[allow(dead_code)]
 pub enum SqlDataType {
     Integer,
     Real,
@@ -33,6 +36,7 @@ impl fmt::Display for SqlDataType {
     }
 }
 
+#[allow(dead_code)]
 pub struct ColumnDraft {
     pub name: String,
     pub data_type: SqlDataType,
@@ -42,6 +46,7 @@ pub struct ColumnDraft {
     pub foreign_key: Option<ForeignKeyDraft>,
 }
 
+#[allow(dead_code)]
 impl ColumnDraft {
     pub fn new() -> Self {
         Self {
@@ -98,6 +103,7 @@ pub struct TableDraft {
     pub columns: Vec<ColumnDraft>,
 }
 
+#[allow(dead_code)]
 impl TableDraft {
     pub fn new() -> Self {
         Self {

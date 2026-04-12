@@ -104,6 +104,7 @@ pub fn edit_distance(s1: &str, s2: &str) -> usize {
     distance
 }
 
+#[allow(dead_code)]
 fn index(i: usize, j: usize, n: usize) -> usize {
     i * n + j
 }

@@ -1,10 +1,13 @@
 use std::{collections::VecDeque, time::Duration};
 
 pub struct StatisticsData {
+    #[allow(dead_code)]
     pub avg_system_cpu_usage: f32,
+    #[allow(dead_code)]
     pub avg_system_memory_usage: f32,
     pub avg_process_cpu_usage: f32,
     pub avg_process_memory_usage: f32,
+    #[allow(dead_code)]
     pub avg_render_call_duration: Duration,
 }
 
