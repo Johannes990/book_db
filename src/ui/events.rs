@@ -197,14 +197,20 @@ fn database_schema_screen_handler(app: &mut App, key_event: KeyEvent) -> io::Res
                 }
             }
             AppInputEvent::MoveUpSecondary => {
-                if app.column_list_view.is_some() {
-                    let _ = &app.column_list_view.as_mut().unwrap().previous();
+                if let Some(col_list_view) = &mut app.column_list_view {
+                    col_list_view.previous();
                 }
+                //if app.column_list_view.is_some() {
+                //    let _ = &app.column_list_view.as_mut().unwrap().previous();
+                //}
             }
             AppInputEvent::MoveDownSecondary => {
-                if app.column_list_view.is_some() {
-                    let _ = &app.column_list_view.as_mut().unwrap().next();
+                if let Some(col_list_view) = &mut app.column_list_view {
+                    col_list_view.next();
                 }
+                //if app.column_list_view.is_some() {
+                //    let _ = &app.column_list_view.as_mut().unwrap().next();
+                //}
             }
             AppInputEvent::OpenInsertTablePopUp => {
                 app.create_table_insert_form();
