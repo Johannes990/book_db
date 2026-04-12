@@ -39,7 +39,7 @@ pub struct ColumnDraft {
     pub primary_key: bool,
     pub unique: bool,
     pub not_null: bool,
-    pub foreign_key: Option<ForeignKeyDraft> 
+    pub foreign_key: Option<ForeignKeyDraft>,
 }
 
 impl ColumnDraft {
@@ -56,7 +56,7 @@ impl ColumnDraft {
 
     pub fn toggle_data_type_next(&mut self) {
         self.data_type = match self.data_type {
-            SqlDataType::Integer =>  SqlDataType::Real,
+            SqlDataType::Integer => SqlDataType::Real,
             SqlDataType::Real => SqlDataType::Text,
             SqlDataType::Text => SqlDataType::Blob,
             SqlDataType::Blob => SqlDataType::Integer,
@@ -147,6 +147,10 @@ impl TableDraft {
             }
         }
 
-        format!("CREATE TABLE {} (\n{}\n);", self.name, col_sql_strings.join(",\n"))
+        format!(
+            "CREATE TABLE {} (\n{}\n);",
+            self.name,
+            col_sql_strings.join(",\n")
+        )
     }
 }

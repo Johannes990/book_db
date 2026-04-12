@@ -76,9 +76,9 @@ impl TableForm {
 
         if col_count == 0 {
             self.selected_field = TableField::TableName;
-            return ;
+            return;
         }
-        
+
         match &self.selected_field {
             TableField::TableName => self.selected_field = TableField::Column(0, ColumnField::Name),
             TableField::Column(col_idx, _col_type) => {
@@ -97,11 +97,13 @@ impl TableForm {
 
         if col_count == 0 {
             self.selected_field = TableField::TableName;
-            return ;
+            return;
         }
 
         match &self.selected_field {
-            TableField::TableName => self.selected_field = TableField::Column(col_count - 1, ColumnField::Name),
+            TableField::TableName => {
+                self.selected_field = TableField::Column(col_count - 1, ColumnField::Name)
+            }
             TableField::Column(col_idx, _col_type) => {
                 if *col_idx > 0 {
                     self.selected_field = TableField::Column(col_idx - 1, ColumnField::Name);
@@ -115,7 +117,8 @@ impl TableForm {
     pub fn previous_form_row_field(&mut self) {
         if let TableField::Column(col_idx, selected_col_field) = &self.selected_field {
             if let Some(col) = self.draft.columns.get(*col_idx) {
-                self.selected_field = TableField::Column(*col_idx, selected_col_field.previous(col));
+                self.selected_field =
+                    TableField::Column(*col_idx, selected_col_field.previous(col));
             }
         }
     }
