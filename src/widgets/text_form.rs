@@ -34,10 +34,10 @@ impl Widget for &TextForm {
         for (i, field) in self.fields.iter().enumerate() {
             let mut line = format!("{}: ", self.labels[i]);
             if i == self.index {
-                line.push_str(&field.text_value);
+                line.push_str(&field.text_box.text_value);
                 text.push_line(Span::styled(line, self.on_style));
             } else {
-                line.push_str(&field.text_value);
+                line.push_str(&field.text_box.text_value);
                 text.push_line(Span::styled(line, self.off_style));
             }
         }
@@ -52,7 +52,7 @@ impl TextForm {
     pub fn new(labels: Vec<String>, title: String) -> Self {
         let mut fields = Vec::new();
         for (i, _label) in labels.iter().enumerate() {
-            fields.push(TextEntryField::default(String::new(), i == 0))
+            fields.push(TextEntryField::from(String::new(), i == 0))
         }
         Self {
             fields,
@@ -87,13 +87,13 @@ impl TextForm {
 
     pub fn enter_char(&mut self, c: char) {
         if let Some(field) = self.fields.get_mut(self.index) {
-            field.enter_char(c);
+            field.text_box.enter_char(c);
         }
     }
 
     pub fn pop_char(&mut self) {
         if let Some(field) = self.fields.get_mut(self.index) {
-            field.pop_char();
+            field.text_box.pop_char();
         }
     }
 
@@ -106,7 +106,7 @@ impl TextForm {
     pub fn update_cursor_pos(&self, frame: &mut Frame, area: Rect) {
         if let Some(active_field) = self.fields.get(self.index) {
             let cursor_x =
-                area.x + self.labels[self.index].len() as u16 + 3 + active_field.cursor_pos as u16;
+                area.x + self.labels[self.index].len() as u16 + 3 + active_field.text_box.cursor_pos as u16;
             let cursor_y = area.y + self.index as u16 + 1;
             frame.set_cursor_position((cursor_x, cursor_y));
         }

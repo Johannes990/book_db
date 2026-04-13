@@ -1,17 +1,19 @@
 use std::fmt;
 
+use crate::widgets::text_box::TextBox;
+
 #[allow(dead_code)]
 pub struct ForeignKeyDraft {
-    pub referenced_table: String,
-    pub referenced_column: String,
+    pub referenced_table: TextBox,
+    pub referenced_column: TextBox,
 }
 
 #[allow(dead_code)]
 impl ForeignKeyDraft {
     pub fn new() -> Self {
         Self {
-            referenced_table: String::new(),
-            referenced_column: String::new(),
+            referenced_table: TextBox::default(),
+            referenced_column: TextBox::default(),
         }
     }
 }
@@ -38,7 +40,7 @@ impl fmt::Display for SqlDataType {
 
 #[allow(dead_code)]
 pub struct ColumnDraft {
-    pub name: String,
+    pub name: TextBox,
     pub data_type: SqlDataType,
     pub primary_key: bool,
     pub unique: bool,
@@ -50,7 +52,7 @@ pub struct ColumnDraft {
 impl ColumnDraft {
     pub fn new() -> Self {
         Self {
-            name: String::new(),
+            name: TextBox::default(),
             data_type: SqlDataType::Integer,
             primary_key: false,
             unique: false,
@@ -99,7 +101,7 @@ impl ColumnDraft {
 }
 
 pub struct TableDraft {
-    pub name: String,
+    pub name: TextBox,
     pub columns: Vec<ColumnDraft>,
 }
 
@@ -107,7 +109,7 @@ pub struct TableDraft {
 impl TableDraft {
     pub fn new() -> Self {
         Self {
-            name: String::new(),
+            name: TextBox::default(),
             columns: Vec::new(),
         }
     }
@@ -126,7 +128,7 @@ impl TableDraft {
         let mut col_sql_strings = vec![];
 
         for col in &self.columns {
-            let mut col_def = format!("{} {}", col.name, col.data_type);
+            let mut col_def = format!("{} {}", col.name.text_value, col.data_type);
 
             if col.primary_key {
                 col_def.push_str(" PRIMARY KEY");
@@ -147,7 +149,7 @@ impl TableDraft {
             if let Some(fk) = &col.foreign_key {
                 let fk_def = format!(
                     "FOREIGN KEY ({}) REFERENCES {}({})",
-                    col.name, fk.referenced_table, fk.referenced_column
+                    col.name.text_value, fk.referenced_table.text_value, fk.referenced_column.text_value
                 );
                 col_sql_strings.push(fk_def);
             }
@@ -155,7 +157,7 @@ impl TableDraft {
 
         format!(
             "CREATE TABLE {} (\n{}\n);",
-            self.name,
+            self.name.text_value,
             col_sql_strings.join(",\n")
         )
     }

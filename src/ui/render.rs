@@ -756,12 +756,12 @@ fn render_insert_row_popup(frame: &mut Frame, app: &mut App) {
             let field = &form.fields[i];
             if field.selected {
                 label_line.spans.push(Span::styled(
-                    field.text_value.clone(),
+                    field.text_box.text_value.clone(),
                     insert_text_area_on_style,
                 ))
             } else {
                 label_line.spans.push(Span::styled(
-                    field.text_value.clone(),
+                    field.text_box.text_value.clone(),
                     insert_text_area_off_style,
                 ));
             }

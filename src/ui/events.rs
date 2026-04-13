@@ -410,7 +410,7 @@ fn create_new_file_screen_handler(app: &mut App, key_event: KeyEvent) -> io::Res
                     AppInputEvent::ExecuteAction => {
                         if app.selected_db.is_none() {
                             if let Some(form) = &app.create_db_form {
-                                let db_name = form.fields[0].text_value.clone();
+                                let db_name = form.fields[0].text_box.text_value.clone();
                                 let db_extension = ".db".to_string();
 
                                 match DB::new(db_name, db_extension) {
@@ -534,8 +534,8 @@ fn insert_row_popup_handler(app: &mut App, key_event: KeyEvent) -> io::Result<()
                         for (item, col_info) in form.fields.iter().zip(&app.selected_table_columns)
                         {
                             columns.push(col_info.name.clone());
-                            values.push(&item.text_value as &dyn ToSql);
-                            values_str.push(&item.text_value);
+                            values.push(&item.text_box.text_value as &dyn ToSql);
+                            values_str.push(&item.text_box.text_value);
                         }
 
                         match db.insert_rows_statement(table_name.clone(), columns, values) {
@@ -603,8 +603,8 @@ fn delete_row_popup_handler(app: &mut App, key_event: KeyEvent) -> io::Result<()
                         let db = app.selected_db.as_mut().unwrap();
                         let table_name = app.selected_db_table.as_ref().unwrap();
                         let form = app.row_delete_form.as_mut().unwrap();
-                        let col = form.fields[0].text_value.clone();
-                        let row = form.fields[1].text_value.clone();
+                        let col = form.fields[0].text_box.text_value.clone();
+                        let row = form.fields[1].text_box.text_value.clone();
 
                         match db.delete_row_statement(table_name, &col, &row) {
                             Ok(affected) => {
@@ -671,6 +671,7 @@ fn insert_table_popup_handler(app: &mut App, key_event: KeyEvent) -> io::Result<
                         if let Some(db) = &mut app.selected_db {
                             match db.execute_raw_sql(
                                 app.table_insert_form.as_ref().unwrap().fields[0]
+                                    .text_box
                                     .text_value
                                     .clone(),
                             ) {
@@ -727,6 +728,7 @@ fn delete_table_popup_handler(app: &mut App, key_event: KeyEvent) -> io::Result<
                         if let Some(db) = &mut app.selected_db {
                             match db.drop_table(
                                 app.table_delete_form.as_ref().unwrap().fields[0]
+                                    .text_box
                                     .text_value
                                     .clone(),
                             ) {
