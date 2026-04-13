@@ -1,6 +1,6 @@
 use crate::{
     column::{column_info::ColumnInfo, column_list::ColumnListView},
-    db::{DBError, DB},
+    db::{DB, DBError},
     file_explorer::file_explorer_table::FileExplorerTable,
     handle_key_events,
     lang::language::AppLanguage,
@@ -14,7 +14,7 @@ use crate::{
         input::key_bindings::KeyBindings,
         render,
     },
-    widgets::text_form::TextForm,
+    widgets::{new_table::form::CreateTableForm, text_form::TextForm},
 };
 use ratatui::{style::Color, Terminal};
 use serde::{Deserialize, Serialize};
@@ -40,6 +40,7 @@ pub enum PopUp {
     NoDBLoaded,
     InsertRow,
     DeleteRow,
+    InsertRawSql,
     InsertTable,
     DeleteTable,
     Error,
@@ -68,7 +69,8 @@ pub struct App {
     pub row_list_view: Option<RowListView>,
     pub row_insert_form: Option<TextForm>,
     pub row_delete_form: Option<TextForm>,
-    pub table_insert_form: Option<TextForm>,
+    pub raw_sql_form: Option<TextForm>,
+    pub table_insert_form: Option<CreateTableForm>,
     pub table_delete_form: Option<TextForm>,
     pub create_db_form: Option<TextForm>,
     pub should_quit: bool,
@@ -130,6 +132,7 @@ impl App {
             row_list_view: None,
             row_insert_form: None,
             row_delete_form: None,
+            raw_sql_form: None,
             table_insert_form: None,
             table_delete_form: None,
             create_db_form: None,
@@ -331,12 +334,20 @@ impl App {
         ));
     }
 
-    pub fn create_table_insert_form(&mut self) {
+    pub fn create_raw_sql_insert_form(&mut self) {
         let title_text = format!(
-            "Create new table into database {}",
+            "Inject raw SQL into database {}",
             self.selected_db.as_ref().unwrap().get_db_name()
         );
-        self.table_insert_form = Some(TextForm::new(vec!["Raw SQL".to_string()], title_text));
+        self.raw_sql_form = Some(TextForm::new(vec!["Raw SQL".to_string()], title_text));
+    }
+
+    pub fn create_table_insert_form(&mut self) {
+        let title_text = format!(
+            "Create new table in database {}",
+            self.selected_db.as_ref().unwrap().get_db_name()
+        );
+        self.table_insert_form = Some(CreateTableForm::new());
     }
 
     pub fn create_table_delete_form(&mut self) {

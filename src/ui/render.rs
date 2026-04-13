@@ -38,6 +38,7 @@ where
             PopUp::NoDBLoaded => render_no_db_loaded_popup(frame, app),
             PopUp::InsertRow => render_insert_row_popup(frame, app),
             PopUp::DeleteRow => render_delete_row_popup(frame, app),
+            PopUp::InsertRawSql => render_insert_raw_sql_popup(frame, app),
             PopUp::InsertTable => render_insert_table_popup(frame, app),
             PopUp::DeleteTable => render_drop_table_popup(frame, app),
             PopUp::Error => render_error_popup(frame, app),
@@ -800,7 +801,7 @@ fn render_insert_row_popup(frame: &mut Frame, app: &mut App) {
     }
 }
 
-fn render_insert_table_popup(frame: &mut Frame, app: &mut App) {
+fn render_insert_raw_sql_popup(frame: &mut Frame, app: &mut App) {
     let area = centered_rect(55, 55, frame.area());
     let (main_chunk, info_chunk) = split_with_optional_info_chunk(area, app);
     let insert_table_popup_style = Style::default()
@@ -813,7 +814,7 @@ fn render_insert_table_popup(frame: &mut Frame, app: &mut App) {
         .bg(app.text_color())
         .fg(app.background_alt_color());
 
-    if let Some(form) = &mut app.table_insert_form {
+    if let Some(form) = &mut app.raw_sql_form {
         form.set_styles(
             insert_text_area_on_style,
             insert_text_area_off_style,
@@ -821,7 +822,7 @@ fn render_insert_table_popup(frame: &mut Frame, app: &mut App) {
         );
     }
 
-    if let Some(form) = &app.table_insert_form {
+    if let Some(form) = &app.raw_sql_form {
         form.render_widget_and_cursor(frame, main_chunk);
     }
 
@@ -838,6 +839,10 @@ fn render_insert_table_popup(frame: &mut Frame, app: &mut App) {
 
         render_info_paragraph(&info_bits, frame, app, info_chunk);
     }
+}
+
+fn render_insert_table_popup(frame: &mut Frame, app: &mut App) {
+
 }
 
 fn render_drop_table_popup(frame: &mut Frame, app: &mut App) {

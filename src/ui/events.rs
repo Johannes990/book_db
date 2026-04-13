@@ -26,6 +26,7 @@ pub fn handle_key_events(app: &mut App) -> io::Result<bool> {
                 PopUp::NoDBLoaded => no_db_loaded_popup_handler(app, key_event)?,
                 PopUp::InsertRow => insert_row_popup_handler(app, key_event)?,
                 PopUp::DeleteRow => delete_row_popup_handler(app, key_event)?,
+                PopUp::InsertRawSql => insert_raw_sql_popup_handler(app, key_event)?,
                 PopUp::InsertTable => insert_table_popup_handler(app, key_event)?,
                 PopUp::DeleteTable => delete_table_popup_handler(app, key_event)?,
                 PopUp::Error => error_popup_handler(app, key_event)?,
@@ -207,8 +208,8 @@ fn database_schema_screen_handler(app: &mut App, key_event: KeyEvent) -> io::Res
                 }
             }
             AppInputEvent::OpenInsertTablePopUp => {
-                app.create_table_insert_form();
-                app.switch_to_popup(PopUp::InsertTable);
+                app.create_raw_sql_insert_form();
+                app.switch_to_popup(PopUp::InsertRawSql);
             }
             AppInputEvent::OpenDeleteTablePopUp => {
                 app.create_table_delete_form();
@@ -651,7 +652,7 @@ fn delete_row_popup_handler(app: &mut App, key_event: KeyEvent) -> io::Result<()
     Ok(())
 }
 
-fn insert_table_popup_handler(app: &mut App, key_event: KeyEvent) -> io::Result<()> {
+fn insert_raw_sql_popup_handler(app: &mut App, key_event: KeyEvent) -> io::Result<()> {
     if key_event.kind != KeyEventKind::Press {
         return Ok(());
     }
@@ -670,7 +671,7 @@ fn insert_table_popup_handler(app: &mut App, key_event: KeyEvent) -> io::Result<
                     AppInputEvent::ExecuteAction => {
                         if let Some(db) = &mut app.selected_db {
                             match db.execute_raw_sql(
-                                app.table_insert_form.as_ref().unwrap().fields[0]
+                                app.raw_sql_form.as_ref().unwrap().fields[0]
                                     .text_box
                                     .text_value
                                     .clone(),
@@ -690,7 +691,7 @@ fn insert_table_popup_handler(app: &mut App, key_event: KeyEvent) -> io::Result<
             }
         }
         Mode::Edit => {
-            let form = app.table_insert_form.as_mut().unwrap();
+            let form = app.raw_sql_form.as_mut().unwrap();
             match (key_event.code, key_event.modifiers) {
                 (KeyCode::Char(c), KeyModifiers::NONE) => form.enter_char(c),
                 (KeyCode::Char(c), KeyModifiers::SHIFT) => {
@@ -702,6 +703,57 @@ fn insert_table_popup_handler(app: &mut App, key_event: KeyEvent) -> io::Result<
                 (KeyCode::BackTab, KeyModifiers::SHIFT) => app.switch_mode(Mode::Browse),
                 _ => {}
             }
+        }
+    }
+
+    Ok(())
+}
+
+fn insert_table_popup_handler(app: &mut App, key_event: KeyEvent) -> io::Result<()> {
+    if key_event.kind != KeyEventKind::Press {
+        return Ok(());
+    }
+
+    if app.table_insert_form.is_none() {
+        return Ok(())
+    }
+
+    let mut insert_form = app.table_insert_form.as_mut().unwrap();
+
+    match app.current_mode {
+        Mode::Browse => {
+            if let Some(event) = app.key_bindings.resolve_event(
+                app.current_screen,
+                app.current_popup,
+                app.current_mode,
+                key_event,
+            ) {
+                match event {
+                    AppInputEvent::ClosePopUp => app.switch_to_popup(PopUp::None),
+                    AppInputEvent::SwitchToEdit => {
+                        if insert_form.selected_textbox_mut().is_some() {
+                            app.switch_mode(Mode::Edit)
+                        }
+                    },
+                    _ => {},
+                }
+            }
+        }
+        Mode::Edit => {
+            if let Some(text_box) = insert_form.selected_textbox_mut() {
+                match (key_event.code, key_event.modifiers) {
+                    (KeyCode::Char(c), KeyModifiers::NONE) => text_box.enter_char(c),
+                    (KeyCode::Char(c), KeyModifiers::SHIFT) => {
+                        for upper in c.to_uppercase() {
+                            text_box.enter_char(upper);
+                        }
+                    },
+                    (KeyCode::Backspace, KeyModifiers::NONE) => text_box.pop_char(),
+                    (KeyCode::BackTab, KeyModifiers::SHIFT) => app.switch_mode(Mode::Browse),
+                    _ => {},
+                }
+            }
+            
         }
     }
 

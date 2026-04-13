@@ -65,7 +65,7 @@ pub enum TableField {
 }
 
 #[allow(dead_code)]
-pub struct TableForm {
+pub struct CreateTableForm {
     pub table_state: TableState,
     pub draft: TableDraft,
     pub selected_field: TableField,
@@ -73,7 +73,7 @@ pub struct TableForm {
 }
 
 #[allow(dead_code)]
-impl TableForm {
+impl CreateTableForm {
     pub fn new() -> Self {
         Self {
             table_state: TableState::default(),
