@@ -1,6 +1,6 @@
 use crate::{
     column::{column_info::ColumnInfo, column_list::ColumnListView},
-    db::{DB, DBError},
+    db::{DBError, DB},
     file_explorer::file_explorer_table::FileExplorerTable,
     handle_key_events,
     lang::language::AppLanguage,
@@ -343,7 +343,7 @@ impl App {
     }
 
     pub fn create_table_insert_form(&mut self) {
-        let title_text = format!(
+        let _title_text = format!(
             "Create new table in database {}",
             self.selected_db.as_ref().unwrap().get_db_name()
         );

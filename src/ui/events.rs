@@ -4,6 +4,7 @@ use crate::{
     log::log,
     options::{OptionKind, SelectedOption},
     ui::input::key_bindings::AppInputEvent,
+    widgets::new_table::form::{ColumnField, TableField},
 };
 use crossterm::event::{KeyEvent, KeyModifiers};
 use ratatui::crossterm::event::{self, Event, KeyCode, KeyEventKind};
@@ -207,9 +208,13 @@ fn database_schema_screen_handler(app: &mut App, key_event: KeyEvent) -> io::Res
                     col_list_view.next();
                 }
             }
-            AppInputEvent::OpenInsertTablePopUp => {
+            AppInputEvent::OpenInsertRawSqlPopUp => {
                 app.create_raw_sql_insert_form();
                 app.switch_to_popup(PopUp::InsertRawSql);
+            }
+            AppInputEvent::OpenInsertTablePopUp => {
+                app.create_table_insert_form();
+                app.switch_to_popup(PopUp::InsertTable);
             }
             AppInputEvent::OpenDeleteTablePopUp => {
                 app.create_table_delete_form();
@@ -715,10 +720,10 @@ fn insert_table_popup_handler(app: &mut App, key_event: KeyEvent) -> io::Result<
     }
 
     if app.table_insert_form.is_none() {
-        return Ok(())
+        return Ok(());
     }
 
-    let mut insert_form = app.table_insert_form.as_mut().unwrap();
+    let insert_form = app.table_insert_form.as_mut().unwrap();
 
     match app.current_mode {
         Mode::Browse => {
@@ -734,8 +739,39 @@ fn insert_table_popup_handler(app: &mut App, key_event: KeyEvent) -> io::Result<
                         if insert_form.selected_textbox_mut().is_some() {
                             app.switch_mode(Mode::Edit)
                         }
-                    },
-                    _ => {},
+                    }
+                    AppInputEvent::InsertColumn => insert_form.draft.add_column(),
+                    AppInputEvent::RemoveColumn => {
+                        let column_count = insert_form.draft.columns.len();
+
+                        if column_count == 0 {
+                            return Ok(());
+                        }
+
+                        if insert_form.selected_field == TableField::TableName {
+                            insert_form.draft.remove_column(column_count - 1);
+                        } else if let TableField::Column(idx, _) = insert_form.selected_field {
+                            if idx == 0 {
+                                insert_form.selected_field = TableField::TableName;
+                                insert_form.draft.remove_column(idx);
+                            } else {
+                                insert_form.selected_field =
+                                    TableField::Column(idx - 1, ColumnField::Name);
+                                insert_form.draft.remove_column(idx);
+                            }
+                        }
+                    }
+                    AppInputEvent::MoveUpPrimary => insert_form.previous_form_row(),
+                    AppInputEvent::MoveDownPrimary => insert_form.next_form_row(),
+                    AppInputEvent::MoveUpSecondary => {
+                        insert_form.previous_form_row();
+                        insert_form.previous_form_row_field();
+                    }
+                    AppInputEvent::MoveDownSecondary => {
+                        insert_form.next_form_row();
+                        insert_form.next_form_row_field();
+                    }
+                    _ => {}
                 }
             }
         }
@@ -747,13 +783,12 @@ fn insert_table_popup_handler(app: &mut App, key_event: KeyEvent) -> io::Result<
                         for upper in c.to_uppercase() {
                             text_box.enter_char(upper);
                         }
-                    },
+                    }
                     (KeyCode::Backspace, KeyModifiers::NONE) => text_box.pop_char(),
                     (KeyCode::BackTab, KeyModifiers::SHIFT) => app.switch_mode(Mode::Browse),
-                    _ => {},
+                    _ => {}
                 }
             }
-            
         }
     }
 

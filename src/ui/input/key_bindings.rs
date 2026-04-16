@@ -26,7 +26,8 @@ pub enum AppInputEvent {
     OpenOptionsScreen,       // open options screen
     OpenInsertRowPopUp,      // open insert row popup
     OpenDeleteRowPopUp,      // open delete row popup
-    OpenInsertTablePopUp,    // open insert new table popup
+    OpenInsertRawSqlPopUp,   // open popup for executing raw sql strings
+    OpenInsertTablePopUp,    // open popup for creating a new table
     OpenDeleteTablePopUp,    // open delete table popup
     ClosePopUp,              // close popup meaning switch to PopUp::None
     OpenQuitAppPopUp,        // open quit app popup
@@ -37,10 +38,12 @@ pub enum AppInputEvent {
     MoveDownSecondary,       // go down in secondary table or in coloschemes
     ExecuteAction,           // execute current popup or SQL action
     ToggleOption,            // toggle selected option on/off
+    InsertColumn,            // insert column into new table draft
+    RemoveColumn,            // remove column from new table draft
     FileExplorerSelect,      // select folder or file to load
     FileExplorerBack,        // go up to parent folder in file explorer
     SwitchToEdit,            // switch to app edit mode, allowing text editing in text fields
-    SwitchToBrowse,          // switch to app browse mode, allowing use of commands via simple keystrokes
+    SwitchToBrowse, // switch to app browse mode, allowing use of commands via simple keystrokes
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
@@ -229,6 +232,7 @@ impl KeyBindings {
                 AppInputEvent::OpenOptionsScreen => &language.event_open_options_screen,
                 AppInputEvent::OpenInsertRowPopUp => &language.event_open_insert_row_popup,
                 AppInputEvent::OpenDeleteRowPopUp => &language.event_open_delete_row_popup,
+                AppInputEvent::OpenInsertRawSqlPopUp => &language.event_open_insert_raw_sql_popup,
                 AppInputEvent::OpenInsertTablePopUp => &language.event_open_insert_table_popup,
                 AppInputEvent::OpenDeleteTablePopUp => &language.event_open_delete_table_popup,
                 AppInputEvent::ClosePopUp => &language.event_close_popup,
@@ -240,6 +244,8 @@ impl KeyBindings {
                 AppInputEvent::MoveDownSecondary => &language.event_move_down_secondary,
                 AppInputEvent::ExecuteAction => &language.event_execute_action,
                 AppInputEvent::ToggleOption => &language.event_toggle_option,
+                AppInputEvent::InsertColumn => &language.event_insert_column,
+                AppInputEvent::RemoveColumn => &language.event_remove_column,
                 AppInputEvent::FileExplorerSelect => &language.event_file_explorer_select,
                 AppInputEvent::FileExplorerBack => &language.event_file_explorer_back,
                 AppInputEvent::SwitchToEdit => &language.event_switch_to_edit,
@@ -304,16 +310,22 @@ impl KeyBindings {
                 AppInputEvent::OpenDeleteRowPopUp,
             ),
             context_event(
-                KeyCode::Char('i'),
+                KeyCode::Char('r'),
                 KeyModifiers::NONE,
                 InputContext::Screen(Screen::DatabaseSchema),
-                AppInputEvent::OpenInsertTablePopUp,
+                AppInputEvent::OpenInsertRawSqlPopUp,
             ),
             context_event(
                 KeyCode::Char('d'),
                 KeyModifiers::NONE,
                 InputContext::Screen(Screen::DatabaseSchema),
                 AppInputEvent::OpenDeleteTablePopUp,
+            ),
+            context_event(
+                KeyCode::Char('n'),
+                KeyModifiers::NONE,
+                InputContext::Screen(Screen::DatabaseSchema),
+                AppInputEvent::OpenInsertTablePopUp,
             ),
             context_event(
                 KeyCode::Esc,

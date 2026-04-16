@@ -285,6 +285,7 @@ fn render_database_schema_screen(frame: &mut Frame, app: &mut App) {
             AppInputEvent::MoveDownPrimary,
             AppInputEvent::MoveUpSecondary,
             AppInputEvent::MoveDownSecondary,
+            AppInputEvent::OpenInsertRawSqlPopUp,
             AppInputEvent::OpenInsertTablePopUp,
             AppInputEvent::OpenDeleteTablePopUp,
             AppInputEvent::OpenDBTableScreen,
@@ -804,7 +805,7 @@ fn render_insert_row_popup(frame: &mut Frame, app: &mut App) {
 fn render_insert_raw_sql_popup(frame: &mut Frame, app: &mut App) {
     let area = centered_rect(55, 55, frame.area());
     let (main_chunk, info_chunk) = split_with_optional_info_chunk(area, app);
-    let insert_table_popup_style = Style::default()
+    let insert_raw_sql_popup_style = Style::default()
         .bg(app.background_alt_color())
         .fg(app.text_color());
     let insert_text_area_on_style = Style::default()
@@ -818,7 +819,7 @@ fn render_insert_raw_sql_popup(frame: &mut Frame, app: &mut App) {
         form.set_styles(
             insert_text_area_on_style,
             insert_text_area_off_style,
-            insert_table_popup_style,
+            insert_raw_sql_popup_style,
         );
     }
 
@@ -842,7 +843,45 @@ fn render_insert_raw_sql_popup(frame: &mut Frame, app: &mut App) {
 }
 
 fn render_insert_table_popup(frame: &mut Frame, app: &mut App) {
+    let area = centered_rect(55, 55, frame.area());
+    let (main_chunk, info_chunk) = split_with_optional_info_chunk(area, app);
+    let insert_table_popup_style = Style::default()
+        .bg(app.background_alt_color())
+        .fg(app.text_color());
+    let scrollbar_style = Style::default().fg(app.border_color());
 
+    let unwrapped_table_insert_form = app.table_insert_form.as_mut().unwrap();
+    let popup_block = Block::default()
+        .borders(Borders::ALL)
+        .style(insert_table_popup_style);
+
+    frame.render_widget(Clear, main_chunk);
+    frame.render_widget(popup_block, main_chunk);
+
+    render_vertical_scrollbar(
+        frame,
+        scrollbar_style,
+        area,
+        None,
+        &mut unwrapped_table_insert_form.scroll_state,
+    );
+
+    if let Some(info_chunk) = info_chunk {
+        let events = [
+            AppInputEvent::ClosePopUp,
+            AppInputEvent::SwitchToEdit,
+            AppInputEvent::MoveUpPrimary,
+            AppInputEvent::MoveDownPrimary,
+            AppInputEvent::MoveUpSecondary,
+            AppInputEvent::MoveDownSecondary,
+        ];
+
+        let info_bits = &app
+            .key_bindings
+            .get_info_bits_from_events(&events, &app.language);
+
+        render_info_paragraph(&info_bits, frame, app, info_chunk);
+    }
 }
 
 fn render_drop_table_popup(frame: &mut Frame, app: &mut App) {

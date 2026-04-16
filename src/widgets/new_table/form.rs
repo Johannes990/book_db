@@ -1,6 +1,12 @@
 use ratatui::widgets::{ScrollbarState, TableState};
 
-use crate::{file_explorer::file_explorer_table::ITEM_HEIGHT, widgets::{new_table::draft::{ColumnDraft, TableDraft}, text_box::TextBox}};
+use crate::{
+    file_explorer::file_explorer_table::ITEM_HEIGHT,
+    widgets::{
+        new_table::draft::{ColumnDraft, TableDraft},
+        text_box::TextBox,
+    },
+};
 
 #[derive(PartialEq)]
 #[allow(dead_code)]
@@ -33,7 +39,6 @@ impl ColumnField {
             }
             ColumnField::ForeignKeyTable => ColumnField::ForeignKeyColumn,
             ColumnField::ForeignKeyColumn => ColumnField::Name,
-            
         }
     }
 
@@ -66,7 +71,7 @@ pub enum TableField {
 
 #[allow(dead_code)]
 pub struct CreateTableForm {
-    pub table_state: TableState,
+    pub state: TableState,
     pub draft: TableDraft,
     pub selected_field: TableField,
     pub scroll_state: ScrollbarState,
@@ -76,7 +81,7 @@ pub struct CreateTableForm {
 impl CreateTableForm {
     pub fn new() -> Self {
         Self {
-            table_state: TableState::default(),
+            state: TableState::default(),
             draft: TableDraft::new(),
             selected_field: TableField::TableName,
             scroll_state: ScrollbarState::new(1 * ITEM_HEIGHT),
@@ -116,7 +121,9 @@ impl CreateTableForm {
         }
 
         match &self.selected_field {
-            TableField::TableName => self.selected_field = TableField::Column(col_count - 1, ColumnField::Name),
+            TableField::TableName => {
+                self.selected_field = TableField::Column(col_count - 1, ColumnField::Name)
+            }
             TableField::Column(col_idx, _col_type) => {
                 if *col_idx > 0 {
                     self.selected_field = TableField::Column(col_idx - 1, ColumnField::Name);
@@ -136,8 +143,6 @@ impl CreateTableForm {
                     TableField::Column(*col_idx, selected_col_field.previous(col));
             }
         };
-
-        
     }
 
     pub fn next_form_row_field(&mut self) {
@@ -167,26 +172,28 @@ impl CreateTableForm {
     pub fn selected_textbox_mut(&mut self) -> Option<&mut TextBox> {
         match self.selected_field {
             TableField::TableName => Some(&mut self.draft.name),
-            TableField::Column(i, ColumnField::ForeignKeyTable) => {
-                self.draft.columns.get_mut(i)
-                    .and_then(|c| c.foreign_key.as_mut())
-                    .map(|fk| &mut fk.referenced_table)
-            }
-            TableField::Column(i, ColumnField::ForeignKeyColumn) => {
-                self.draft.columns.get_mut(i)
-                    .and_then(|c| c.foreign_key.as_mut())
-                    .map(|fk| &mut fk.referenced_column)
-            }
+            TableField::Column(i, ColumnField::ForeignKeyTable) => self
+                .draft
+                .columns
+                .get_mut(i)
+                .and_then(|c| c.foreign_key.as_mut())
+                .map(|fk| &mut fk.referenced_table),
+            TableField::Column(i, ColumnField::ForeignKeyColumn) => self
+                .draft
+                .columns
+                .get_mut(i)
+                .and_then(|c| c.foreign_key.as_mut())
+                .map(|fk| &mut fk.referenced_column),
             _ => None,
         }
     }
 
     fn sync_table_state(&mut self) {
         if let Some(i) = self.selected_row() {
-            self.table_state.select(Some(i));
+            self.state.select(Some(i));
             self.scroll_state = self.scroll_state.position(i * ITEM_HEIGHT);
         } else {
-            self.table_state.select(None);
+            self.state.select(None);
         }
     }
 

@@ -149,7 +149,9 @@ impl TableDraft {
             if let Some(fk) = &col.foreign_key {
                 let fk_def = format!(
                     "FOREIGN KEY ({}) REFERENCES {}({})",
-                    col.name.text_value, fk.referenced_table.text_value, fk.referenced_column.text_value
+                    col.name.text_value,
+                    fk.referenced_table.text_value,
+                    fk.referenced_column.text_value
                 );
                 col_sql_strings.push(fk_def);
             }

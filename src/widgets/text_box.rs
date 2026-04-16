@@ -22,7 +22,7 @@ impl TextBox {
     }
 
     pub fn enter_char(&mut self, c: char) {
-        self.text_value.insert( self.cursor_pos, c);
+        self.text_value.insert(self.cursor_pos, c);
         self.move_cursor_right();
     }
 
