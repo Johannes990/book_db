@@ -282,7 +282,7 @@ impl KeyBindings {
             context_event(
                 KeyCode::Char('t'),
                 KeyModifiers::NONE,
-                InputContext::Screen(Screen::DatabaseSchema),
+                InputContext::Global,
                 AppInputEvent::OpenDBTableScreen,
             ),
             context_event(
