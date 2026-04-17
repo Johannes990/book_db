@@ -28,7 +28,7 @@ impl TextBox {
 
     pub fn pop_char(&mut self) {
         if self.cursor_pos > 0 {
-            self.text_value.remove(self.cursor_pos);
+            self.text_value.remove(self.cursor_pos - 1);
             self.move_cursor_left();
         }
     }
