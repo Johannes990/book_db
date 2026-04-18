@@ -44,6 +44,7 @@ where
             PopUp::Error => render_error_popup(frame, app),
         }
     })?;
+
     Ok(())
 }
 

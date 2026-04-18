@@ -1,6 +1,7 @@
 use crate::{
     app::{App, Mode, PopUp, Screen},
-    db::{DBError, DB},
+    db::DB,
+    errors::{app_error::AppError, backend::DBError, navigation::NavigationError},
     log::log,
     options::{OptionKind, SelectedOption},
     ui::input::key_bindings::AppInputEvent,
@@ -9,9 +10,9 @@ use crate::{
 use crossterm::event::{KeyEvent, KeyModifiers};
 use ratatui::crossterm::event::{self, Event, KeyCode, KeyEventKind};
 use rusqlite::ToSql;
-use std::{io, time::Duration};
+use std::time::Duration;
 
-pub fn handle_key_events(app: &mut App) -> io::Result<bool> {
+pub fn handle_key_events(app: &mut App) -> Result<bool, AppError> {
     if event::poll(Duration::from_millis(10))? {
         if let Event::Key(key_event) = event::read()? {
             // popups are always the active componenet, when they exist
@@ -36,7 +37,6 @@ pub fn handle_key_events(app: &mut App) -> io::Result<bool> {
                 Screen::Options => options_screen_handler(app, key_event)?,
                 Screen::CreateNewFile => create_new_file_screen_handler(app, key_event)?,
             }
-            
         }
     }
 
@@ -54,11 +54,11 @@ fn handle_global_navigation(app: &mut App, event: &AppInputEvent) -> bool {
         AppInputEvent::OpenSplashScreen => {
             app.switch_to_screen(Screen::Splash);
             true
-        },
+        }
         AppInputEvent::OpenFileExplorerScreen => {
             app.switch_to_screen(Screen::FileExplorer);
             true
-        },
+        }
         AppInputEvent::OpenDBSchemaScreen => {
             if app.selected_db.is_some() {
                 app.switch_to_screen(Screen::DatabaseSchema);
@@ -66,29 +66,27 @@ fn handle_global_navigation(app: &mut App, event: &AppInputEvent) -> bool {
                 app.switch_to_popup(PopUp::NoDBLoaded);
             }
             true
-        },
+        }
         AppInputEvent::OpenDBTableScreen => {
             let Some(selected_table) = &app.selected_db_table else {
-                app.current_error = Some(
-                    DBError::TableDoesNotExist("Table not selected or does not exist".to_string())
-                );
+                app.current_error = Some(DBError::TableDoesNotExist("".to_string()).into());
                 app.switch_to_popup(PopUp::Error);
                 return true;
             };
-            
+
             app.select_table_rows(selected_table.to_string());
             app.switch_to_screen(Screen::DataBaseTable);
             true
-        },
+        }
         AppInputEvent::OpenCreateNewFileScreen => {
             app.create_new_db_form();
             app.switch_to_screen(Screen::CreateNewFile);
             true
-        },
+        }
         AppInputEvent::OpenOptionsScreen => {
             app.switch_to_screen(Screen::Options);
             true
-        },
+        }
         AppInputEvent::OpenQuitAppPopUp => {
             app.switch_to_popup(PopUp::Quit);
             true
@@ -97,7 +95,7 @@ fn handle_global_navigation(app: &mut App, event: &AppInputEvent) -> bool {
     }
 }
 
-fn splash_screen_handler(app: &mut App, key_event: KeyEvent) -> io::Result<()> {
+fn splash_screen_handler(app: &mut App, key_event: KeyEvent) -> Result<(), AppError> {
     if app.current_popup != PopUp::None {
         return Ok(());
     }
@@ -122,7 +120,7 @@ fn splash_screen_handler(app: &mut App, key_event: KeyEvent) -> io::Result<()> {
     Ok(())
 }
 
-fn file_explorer_screen_handler(app: &mut App, key_event: KeyEvent) -> io::Result<()> {
+fn file_explorer_screen_handler(app: &mut App, key_event: KeyEvent) -> Result<(), AppError> {
     if app.current_popup != PopUp::None {
         return Ok(());
     }
@@ -170,20 +168,13 @@ fn file_explorer_screen_handler(app: &mut App, key_event: KeyEvent) -> io::Resul
     Ok(())
 }
 
-fn database_schema_screen_handler(app: &mut App, key_event: KeyEvent) -> io::Result<()> {
+fn database_schema_screen_handler(app: &mut App, key_event: KeyEvent) -> Result<(), AppError> {
     if app.current_popup != PopUp::None {
         return Ok(());
     }
 
     if key_event.kind != KeyEventKind::Press {
         return Ok(());
-    }
-
-    if app.selected_db.is_none() {
-        app.current_error = Some(DBError::ConnectionCreationError(
-            "Cannot open selected database schema!".to_string(),
-        ));
-        app.switch_to_popup(PopUp::Error);
     }
 
     let Some(event) = app.key_bindings.resolve_event(
@@ -202,9 +193,11 @@ fn database_schema_screen_handler(app: &mut App, key_event: KeyEvent) -> io::Res
     match event {
         AppInputEvent::MoveUpPrimary => {
             let Some(db) = &app.selected_db.as_mut() else {
+                app.current_error = Some(DBError::NoDBInMemory.into());
+                app.switch_to_popup(PopUp::Error);
                 return Ok(());
             };
-            
+
             let tables = db.get_table_list().unwrap_or_default();
 
             if tables.is_empty() {
@@ -284,7 +277,7 @@ fn database_schema_screen_handler(app: &mut App, key_event: KeyEvent) -> io::Res
     Ok(())
 }
 
-fn database_table_screen_handler(app: &mut App, key_event: KeyEvent) -> io::Result<()> {
+fn database_table_screen_handler(app: &mut App, key_event: KeyEvent) -> Result<(), AppError> {
     if app.current_popup != PopUp::None {
         return Ok(());
     }
@@ -294,10 +287,9 @@ fn database_table_screen_handler(app: &mut App, key_event: KeyEvent) -> io::Resu
     }
 
     if app.selected_db_table.is_none() {
-        app.current_error = Some(DBError::TableDoesNotExist(
-            "Table does not exist!".to_string(),
-        ));
+        app.current_error = Some(DBError::NoTableInMemory.into());
         app.switch_to_popup(PopUp::Error);
+        return Ok(());
     }
 
     let Some(event) = app.key_bindings.resolve_event(
@@ -339,11 +331,11 @@ fn database_table_screen_handler(app: &mut App, key_event: KeyEvent) -> io::Resu
         }
         _ => {}
     }
-    
+
     Ok(())
 }
 
-fn options_screen_handler(app: &mut App, key_event: KeyEvent) -> io::Result<()> {
+fn options_screen_handler(app: &mut App, key_event: KeyEvent) -> Result<(), AppError> {
     if app.current_popup != PopUp::None {
         return Ok(());
     }
@@ -402,7 +394,7 @@ fn options_screen_handler(app: &mut App, key_event: KeyEvent) -> io::Result<()> 
         app.current_screen,
         app.current_popup,
         app.current_mode,
-        key_event
+        key_event,
     ) else {
         return Ok(());
     };
@@ -446,7 +438,7 @@ fn options_screen_handler(app: &mut App, key_event: KeyEvent) -> io::Result<()> 
     Ok(())
 }
 
-fn create_new_file_screen_handler(app: &mut App, key_event: KeyEvent) -> io::Result<()> {
+fn create_new_file_screen_handler(app: &mut App, key_event: KeyEvent) -> Result<(), AppError> {
     if app.current_popup != PopUp::None {
         return Ok(());
     }
@@ -474,7 +466,7 @@ fn create_new_file_screen_handler(app: &mut App, key_event: KeyEvent) -> io::Res
 
         return Ok(());
     }
-    
+
     let Some(event) = app.key_bindings.resolve_event(
         app.current_screen,
         app.current_popup,
@@ -506,428 +498,504 @@ fn create_new_file_screen_handler(app: &mut App, key_event: KeyEvent) -> io::Res
                     app.switch_to_screen(Screen::DatabaseSchema);
                 }
                 Err(e) => {
-                    let err = DBError::ConnectionCreationError(e.to_string());
-                    app.show_error(err);
+                    app.current_error =
+                        Some(DBError::ConnectionCreationError(e.to_string()).into());
+                    app.switch_to_popup(PopUp::Error);
                 }
             }
         }
         _ => {}
     }
-            
 
     Ok(())
 }
 
-fn quit_popup_handler(app: &mut App, key_event: KeyEvent) -> io::Result<()> {
+fn quit_popup_handler(app: &mut App, key_event: KeyEvent) -> Result<(), AppError> {
     if key_event.kind != KeyEventKind::Press {
         return Ok(());
     }
 
-    log("popup quit");
-
-    if let Some(event) = app.key_bindings.resolve_event(
+    let Some(event) = app.key_bindings.resolve_event(
         app.current_screen,
         app.current_popup,
         app.current_mode,
         key_event,
-    ) {
-        match event {
-            AppInputEvent::QuitAppConfirm => {
-                app.should_quit = true;
-                log(format!("app.should_quit: {:?}", app.should_quit).as_str());
-            }
-            AppInputEvent::ClosePopUp => app.switch_to_popup(PopUp::None),
-            _ => {}
+    ) else {
+        return Ok(());
+    };
+
+    match event {
+        AppInputEvent::QuitAppConfirm => {
+            app.should_quit = true;
+            log(format!("app.should_quit: {:?}", app.should_quit).as_str());
         }
+        AppInputEvent::ClosePopUp => app.switch_to_popup(PopUp::None),
+        _ => {}
     }
 
     Ok(())
 }
 
-fn no_db_loaded_popup_handler(app: &mut App, key_event: KeyEvent) -> io::Result<()> {
+fn no_db_loaded_popup_handler(app: &mut App, key_event: KeyEvent) -> Result<(), AppError> {
     if key_event.kind != KeyEventKind::Press {
         return Ok(());
     }
 
-    if let Some(event) = app.key_bindings.resolve_event(
+    let Some(event) = app.key_bindings.resolve_event(
         app.current_screen,
         app.current_popup,
         app.current_mode,
         key_event,
-    ) {
-        match event {
-            AppInputEvent::OpenQuitAppPopUp => app.switch_to_popup(PopUp::Quit),
-            AppInputEvent::ClosePopUp => app.switch_to_popup(PopUp::None),
-            AppInputEvent::OpenFileExplorerScreen => {
-                app.switch_to_screen(Screen::FileExplorer);
-                app.switch_to_popup(PopUp::None);
-            }
-            _ => {}
-        }
-    }
-
-    Ok(())
-}
-
-fn insert_row_popup_handler(app: &mut App, key_event: KeyEvent) -> io::Result<()> {
-    if key_event.kind != KeyEventKind::Press {
+    ) else {
         return Ok(());
-    }
+    };
 
-    match app.current_mode {
-        Mode::Browse => {
-            if let Some(event) = app.key_bindings.resolve_event(
-                app.current_screen,
-                app.current_popup,
-                app.current_mode,
-                key_event,
-            ) {
-                match event {
-                    AppInputEvent::ClosePopUp => app.switch_to_popup(PopUp::None),
-                    AppInputEvent::SwitchToEdit => app.switch_mode(Mode::Edit),
-                    AppInputEvent::MoveUpPrimary => {
-                        app.row_insert_form.as_mut().unwrap().previous()
-                    }
-                    AppInputEvent::MoveDownPrimary => app.row_insert_form.as_mut().unwrap().next(),
-                    AppInputEvent::ExecuteAction => {
-                        let db = app.selected_db.as_mut().unwrap();
-                        let table_name = app.selected_db_table.as_ref().unwrap();
-                        let form = &app.row_insert_form.as_ref().unwrap();
-                        let mut columns: Vec<String> = Vec::new();
-                        let mut values: Vec<&dyn ToSql> = Vec::new();
-                        let mut values_str = Vec::new();
-
-                        // Pair form items with their column info
-                        for (item, col_info) in form.fields.iter().zip(&app.selected_table_columns)
-                        {
-                            columns.push(col_info.name.clone());
-                            values.push(&item.text_box.text_value as &dyn ToSql);
-                            values_str.push(&item.text_box.text_value);
-                        }
-
-                        match db.insert_rows_statement(table_name.clone(), columns, values) {
-                            Ok(_) => {
-                                let table_list = app.table_list_view.as_mut().unwrap();
-                                if let Some(table_info) =
-                                    table_list.items.iter_mut().find(|t| t.name == *table_name)
-                                {
-                                    table_info.increment_row_count();
-                                }
-
-                                app.select_table_rows(table_name.to_string());
-                                app.switch_to_popup(PopUp::None);
-                            }
-                            Err(e) => {
-                                app.show_error(e);
-                            }
-                        }
-                    }
-                    _ => {}
-                }
-            }
-        }
-        Mode::Edit => {
-            let form = app.row_insert_form.as_mut().unwrap();
-            match (key_event.code, key_event.modifiers) {
-                (KeyCode::Char(c), KeyModifiers::NONE) => form.enter_char(c),
-                (KeyCode::Char(c), KeyModifiers::SHIFT) => {
-                    for upper in c.to_uppercase() {
-                        form.enter_char(upper);
-                    }
-                }
-                (KeyCode::Backspace, KeyModifiers::NONE) => form.pop_char(),
-                (KeyCode::BackTab, KeyModifiers::SHIFT) => app.switch_mode(Mode::Browse),
-                _ => {}
-            }
-        }
-    }
-
-    Ok(())
-}
-
-#[allow(unused_variables)]
-fn delete_row_popup_handler(app: &mut App, key_event: KeyEvent) -> io::Result<()> {
-    if key_event.kind != KeyEventKind::Press {
-        return Ok(());
-    }
-
-    match app.current_mode {
-        Mode::Browse => {
-            if let Some(event) = app.key_bindings.resolve_event(
-                app.current_screen,
-                app.current_popup,
-                app.current_mode,
-                key_event,
-            ) {
-                match event {
-                    AppInputEvent::ClosePopUp => app.switch_to_popup(PopUp::None),
-                    AppInputEvent::SwitchToEdit => app.switch_mode(Mode::Edit),
-                    AppInputEvent::MoveUpPrimary => {
-                        app.row_delete_form.as_mut().unwrap().previous()
-                    }
-                    AppInputEvent::MoveDownPrimary => app.row_delete_form.as_mut().unwrap().next(),
-                    AppInputEvent::ExecuteAction => {
-                        let db = app.selected_db.as_mut().unwrap();
-                        let table_name = app.selected_db_table.as_ref().unwrap();
-                        let form = app.row_delete_form.as_mut().unwrap();
-                        let col = form.fields[0].text_box.text_value.clone();
-                        let row = form.fields[1].text_box.text_value.clone();
-
-                        match db.delete_row_statement(table_name, &col, &row) {
-                            Ok(affected) => {
-                                if affected > 0 {
-                                    let table_list = app.table_list_view.as_mut().unwrap();
-                                    if let Some(table_info) =
-                                        table_list.items.iter_mut().find(|t| t.name == *table_name)
-                                    {
-                                        table_info.decrement_row_count();
-                                    }
-
-                                    log(format!("Deleted {} rows", affected).as_str());
-                                } else {
-                                    log("No matching rows found");
-                                }
-                                app.select_table_rows(table_name.to_string());
-                                app.switch_to_popup(PopUp::None);
-                            }
-                            Err(e) => {
-                                app.show_error(e);
-                            }
-                        }
-                    }
-                    _ => {}
-                }
-            }
-        }
-        Mode::Edit => {
-            let form = app.row_delete_form.as_mut().unwrap();
-            match (key_event.code, key_event.modifiers) {
-                (KeyCode::Char(c), KeyModifiers::NONE) => form.enter_char(c),
-                (KeyCode::Char(c), KeyModifiers::SHIFT) => {
-                    for upper in c.to_uppercase() {
-                        form.enter_char(upper);
-                    }
-                }
-                (KeyCode::Backspace, KeyModifiers::NONE) => form.pop_char(),
-                (KeyCode::BackTab, KeyModifiers::SHIFT) => app.switch_mode(Mode::Browse),
-                _ => {}
-            }
-        }
-    }
-
-    Ok(())
-}
-
-fn insert_raw_sql_popup_handler(app: &mut App, key_event: KeyEvent) -> io::Result<()> {
-    if key_event.kind != KeyEventKind::Press {
-        return Ok(());
-    }
-
-    match app.current_mode {
-        Mode::Browse => {
-            if let Some(event) = app.key_bindings.resolve_event(
-                app.current_screen,
-                app.current_popup,
-                app.current_mode,
-                key_event,
-            ) {
-                match event {
-                    AppInputEvent::ClosePopUp => app.switch_to_popup(PopUp::None),
-                    AppInputEvent::SwitchToEdit => app.switch_mode(Mode::Edit),
-                    AppInputEvent::ExecuteAction => {
-                        if let Some(db) = &mut app.selected_db {
-                            match db.execute_raw_sql(
-                                app.raw_sql_form.as_ref().unwrap().fields[0]
-                                    .text_box
-                                    .text_value
-                                    .clone(),
-                            ) {
-                                Ok(_) => {
-                                    app.fetch_table_list();
-                                    app.switch_to_popup(PopUp::None);
-                                }
-                                Err(e) => {
-                                    app.show_error(e);
-                                }
-                            }
-                        }
-                    }
-                    _ => {}
-                }
-            }
-        }
-        Mode::Edit => {
-            let form = app.raw_sql_form.as_mut().unwrap();
-            match (key_event.code, key_event.modifiers) {
-                (KeyCode::Char(c), KeyModifiers::NONE) => form.enter_char(c),
-                (KeyCode::Char(c), KeyModifiers::SHIFT) => {
-                    for upper in c.to_uppercase() {
-                        form.enter_char(upper);
-                    }
-                }
-                (KeyCode::Backspace, KeyModifiers::NONE) => form.pop_char(),
-                (KeyCode::BackTab, KeyModifiers::SHIFT) => app.switch_mode(Mode::Browse),
-                _ => {}
-            }
-        }
-    }
-
-    Ok(())
-}
-
-fn insert_table_popup_handler(app: &mut App, key_event: KeyEvent) -> io::Result<()> {
-    if key_event.kind != KeyEventKind::Press {
-        return Ok(());
-    }
-
-    if app.table_insert_form.is_none() {
-        return Ok(());
-    }
-
-    let insert_form = app.table_insert_form.as_mut().unwrap();
-
-    match app.current_mode {
-        Mode::Browse => {
-            if let Some(event) = app.key_bindings.resolve_event(
-                app.current_screen,
-                app.current_popup,
-                app.current_mode,
-                key_event,
-            ) {
-                match event {
-                    AppInputEvent::ClosePopUp => app.switch_to_popup(PopUp::None),
-                    AppInputEvent::SwitchToEdit => {
-                        if insert_form.selected_textbox_mut().is_some() {
-                            app.switch_mode(Mode::Edit)
-                        }
-                    }
-                    AppInputEvent::InsertColumn => insert_form.draft.add_column(),
-                    AppInputEvent::RemoveColumn => {
-                        let column_count = insert_form.draft.columns.len();
-
-                        if column_count == 0 {
-                            return Ok(());
-                        }
-
-                        if insert_form.selected_field == TableField::TableName {
-                            insert_form.draft.remove_column(column_count - 1);
-                        } else if let TableField::Column(idx, _) = insert_form.selected_field {
-                            if idx == 0 {
-                                insert_form.selected_field = TableField::TableName;
-                                insert_form.draft.remove_column(idx);
-                            } else {
-                                insert_form.selected_field =
-                                    TableField::Column(idx - 1, ColumnField::Name);
-                                insert_form.draft.remove_column(idx);
-                            }
-                        }
-                    }
-                    AppInputEvent::MoveUpPrimary => insert_form.previous_form_row(),
-                    AppInputEvent::MoveDownPrimary => insert_form.next_form_row(),
-                    AppInputEvent::MoveUpSecondary => {
-                        insert_form.previous_form_row();
-                        insert_form.previous_form_row_field();
-                    }
-                    AppInputEvent::MoveDownSecondary => {
-                        insert_form.next_form_row();
-                        insert_form.next_form_row_field();
-                    }
-                    _ => {}
-                }
-            }
-        }
-        Mode::Edit => {
-            if let Some(text_box) = insert_form.selected_textbox_mut() {
-                match (key_event.code, key_event.modifiers) {
-                    (KeyCode::Char(c), KeyModifiers::NONE) => text_box.enter_char(c),
-                    (KeyCode::Char(c), KeyModifiers::SHIFT) => {
-                        for upper in c.to_uppercase() {
-                            text_box.enter_char(upper);
-                        }
-                    }
-                    (KeyCode::Backspace, KeyModifiers::NONE) => text_box.pop_char(),
-                    (KeyCode::BackTab, KeyModifiers::SHIFT) => app.switch_mode(Mode::Browse),
-                    _ => {}
-                }
-            }
-        }
-    }
-
-    Ok(())
-}
-
-fn delete_table_popup_handler(app: &mut App, key_event: KeyEvent) -> io::Result<()> {
-    if key_event.kind != KeyEventKind::Press {
-        return Ok(());
-    }
-
-    match app.current_mode {
-        Mode::Browse => {
-            if let Some(event) = app.key_bindings.resolve_event(
-                app.current_screen,
-                app.current_popup,
-                app.current_mode,
-                key_event,
-            ) {
-                match event {
-                    AppInputEvent::ClosePopUp => app.switch_to_popup(PopUp::None),
-                    AppInputEvent::SwitchToEdit => app.switch_mode(Mode::Edit),
-                    AppInputEvent::ExecuteAction => {
-                        if let Some(db) = &mut app.selected_db {
-                            match db.drop_table(
-                                app.table_delete_form.as_ref().unwrap().fields[0]
-                                    .text_box
-                                    .text_value
-                                    .clone(),
-                            ) {
-                                Ok(_) => {
-                                    app.fetch_table_list();
-                                    app.switch_to_popup(PopUp::None);
-                                }
-                                Err(e) => {
-                                    app.show_error(e);
-                                }
-                            }
-                        }
-                    }
-                    _ => {}
-                }
-            }
-        }
-        Mode::Edit => {
-            let form = app.table_delete_form.as_mut().unwrap();
-            match (key_event.code, key_event.modifiers) {
-                (KeyCode::Char(c), KeyModifiers::NONE) => form.enter_char(c),
-                (KeyCode::Char(c), KeyModifiers::SHIFT) => {
-                    for upper in c.to_uppercase() {
-                        form.enter_char(upper);
-                    }
-                }
-                (KeyCode::Backspace, KeyModifiers::NONE) => form.pop_char(),
-                (KeyCode::BackTab, KeyModifiers::SHIFT) => app.switch_mode(Mode::Browse),
-                _ => {}
-            }
-        }
-    }
-
-    Ok(())
-}
-
-fn error_popup_handler(app: &mut App, key_event: KeyEvent) -> io::Result<()> {
-    if key_event.kind != KeyEventKind::Press {
-        return Ok(());
-    }
-
-    if let Some(event) = app.key_bindings.resolve_event(
-        app.current_screen,
-        app.current_popup,
-        app.current_mode,
-        key_event,
-    ) {
-        if event == AppInputEvent::ClosePopUp {
-            app.current_error = None;
+    match event {
+        AppInputEvent::OpenQuitAppPopUp => app.switch_to_popup(PopUp::Quit),
+        AppInputEvent::ClosePopUp => app.switch_to_popup(PopUp::None),
+        AppInputEvent::OpenFileExplorerScreen => {
+            app.switch_to_screen(Screen::FileExplorer);
             app.switch_to_popup(PopUp::None);
         }
+        _ => {}
+    }
+
+    Ok(())
+}
+
+fn insert_row_popup_handler(app: &mut App, key_event: KeyEvent) -> Result<(), AppError> {
+    if key_event.kind != KeyEventKind::Press {
+        return Ok(());
+    }
+
+    if app.current_mode == Mode::Edit {
+        let Some(form) = app.row_insert_form.as_mut() else {
+            return Ok(());
+        };
+
+        match (key_event.code, key_event.modifiers) {
+            (KeyCode::Char(c), KeyModifiers::NONE) => form.enter_char(c),
+            (KeyCode::Char(c), KeyModifiers::SHIFT) => {
+                for upper in c.to_uppercase() {
+                    form.enter_char(upper);
+                }
+            }
+            (KeyCode::Backspace, KeyModifiers::NONE) => form.pop_char(),
+            (KeyCode::BackTab, KeyModifiers::SHIFT) => app.switch_mode(Mode::Browse),
+            _ => {}
+        }
+
+        return Ok(());
+    }
+
+    let Some(event) = app.key_bindings.resolve_event(
+        app.current_screen,
+        app.current_popup,
+        app.current_mode,
+        key_event,
+    ) else {
+        return Ok(());
+    };
+
+    match event {
+        AppInputEvent::ClosePopUp => app.switch_to_popup(PopUp::None),
+        AppInputEvent::SwitchToEdit => app.switch_mode(Mode::Edit),
+        AppInputEvent::MoveUpPrimary => {
+            let Some(form) = app.row_insert_form.as_mut() else {
+                app.current_error = Some(AppError::Navigation(
+                    NavigationError::RowInsertFormNavigation(
+                        "invalid mutable handle to row insert form".to_string(),
+                    ),
+                ));
+                app.switch_to_popup(PopUp::Error);
+                return Ok(());
+            };
+            form.previous();
+        }
+        AppInputEvent::MoveDownPrimary => {
+            let Some(form) = app.row_insert_form.as_mut() else {
+                return Ok(());
+            };
+            form.next();
+        }
+        AppInputEvent::ExecuteAction => {
+            let Some(db) = app.selected_db.as_mut() else {
+                return Ok(());
+            };
+            let Some(table_name) = app.selected_db_table.as_ref() else {
+                return Ok(());
+            };
+            let Some(form) = &app.row_insert_form.as_ref() else {
+                return Ok(());
+            };
+            let mut columns: Vec<String> = Vec::new();
+            let mut values: Vec<&dyn ToSql> = Vec::new();
+            let mut values_str = Vec::new();
+
+            // Pair form items with their column info
+            for (item, col_info) in form.fields.iter().zip(&app.selected_table_columns) {
+                columns.push(col_info.name.clone());
+                values.push(&item.text_box.text_value as &dyn ToSql);
+                values_str.push(&item.text_box.text_value);
+            }
+
+            match db.insert_rows_statement(table_name.clone(), columns, values) {
+                Ok(_) => {
+                    let Some(view) = app.table_list_view.as_mut() else {
+                        return Ok(());
+                    };
+                    if let Some(table_info) = view.items.iter_mut().find(|t| t.name == *table_name)
+                    {
+                        table_info.increment_row_count();
+                    }
+
+                    app.select_table_rows(table_name.to_string());
+                    app.switch_to_popup(PopUp::None);
+                }
+                Err(err) => {
+                    app.current_error = Some(err.into());
+                    app.switch_to_popup(PopUp::Error);
+                }
+            }
+        }
+        _ => {}
+    }
+
+    Ok(())
+}
+
+fn delete_row_popup_handler(app: &mut App, key_event: KeyEvent) -> Result<(), AppError> {
+    if key_event.kind != KeyEventKind::Press {
+        return Ok(());
+    }
+
+    if app.current_mode == Mode::Edit {
+        let Some(form) = app.row_delete_form.as_mut() else {
+            app.current_error = Some(
+                DBError::CannotDeleteRow(
+                    "cant get a mutable handle on row delete form".to_string(),
+                )
+                .into(),
+            );
+            app.switch_to_popup(PopUp::Error);
+            return Ok(());
+        };
+
+        match (key_event.code, key_event.modifiers) {
+            (KeyCode::Char(c), KeyModifiers::NONE) => form.enter_char(c),
+            (KeyCode::Char(c), KeyModifiers::SHIFT) => {
+                for upper in c.to_uppercase() {
+                    form.enter_char(upper);
+                }
+            }
+            (KeyCode::Backspace, KeyModifiers::NONE) => form.pop_char(),
+            (KeyCode::BackTab, KeyModifiers::SHIFT) => app.switch_mode(Mode::Browse),
+            _ => {}
+        }
+
+        return Ok(());
+    }
+
+    let Some(event) = app.key_bindings.resolve_event(
+        app.current_screen,
+        app.current_popup,
+        app.current_mode,
+        key_event,
+    ) else {
+        return Ok(());
+    };
+
+    match event {
+        AppInputEvent::ClosePopUp => app.switch_to_popup(PopUp::None),
+        AppInputEvent::SwitchToEdit => app.switch_mode(Mode::Edit),
+        AppInputEvent::MoveUpPrimary => {
+            let Some(form) = app.row_delete_form.as_mut() else {
+                app.current_error = Some(AppError::Navigation(
+                    NavigationError::RowDeleteFormNavigation(
+                        "unable to get a mutable handle on row delete form".to_string(),
+                    ),
+                ));
+                app.switch_to_popup(PopUp::Error);
+                return Ok(());
+            };
+            form.previous();
+        }
+        AppInputEvent::MoveDownPrimary => {
+            let Some(form) = app.row_delete_form.as_mut() else {
+                app.current_error = Some(AppError::Navigation(
+                    NavigationError::RowDeleteFormNavigation(
+                        "unable to get a mutable handle on row delete form".to_string(),
+                    ),
+                ));
+                app.switch_to_popup(PopUp::Error);
+                return Ok(());
+            };
+            form.next();
+        }
+        AppInputEvent::ExecuteAction => {
+            let Some(db) = app.selected_db.as_mut() else {
+                app.current_error = Some(DBError::NoDBInMemory.into());
+                app.switch_to_popup(PopUp::Error);
+                return Ok(());
+            };
+            let Some(table_name) = app.selected_db_table.as_ref() else {
+                app.current_error = Some(DBError::NoTableInMemory.into());
+                app.switch_to_popup(PopUp::Error);
+                return Ok(());
+            };
+            let Some(form) = app.row_delete_form.as_mut() else {
+                return Ok(());
+            };
+            let col = form.fields[0].text_box.text_value.clone();
+            let row = form.fields[1].text_box.text_value.clone();
+
+            match db.delete_row_statement(table_name, &col, &row) {
+                Ok(affected) => {
+                    if affected > 0 {
+                        let Some(table_list) = app.table_list_view.as_mut() else {
+                            return Ok(());
+                        };
+                        if let Some(table_info) =
+                            table_list.items.iter_mut().find(|t| t.name == *table_name)
+                        {
+                            table_info.decrement_row_count();
+                        }
+
+                        log(format!("Deleted {} rows", affected).as_str());
+                    } else {
+                        log("No matching rows found");
+                    }
+                    app.select_table_rows(table_name.to_string());
+                    app.switch_to_popup(PopUp::None);
+                }
+                Err(err) => {
+                    app.current_error = Some(err.into());
+                    app.switch_to_popup(PopUp::Error);
+                }
+            }
+        }
+        _ => {}
+    }
+
+    Ok(())
+}
+
+fn insert_raw_sql_popup_handler(app: &mut App, key_event: KeyEvent) -> Result<(), AppError> {
+    if key_event.kind != KeyEventKind::Press {
+        return Ok(());
+    }
+
+    if app.current_mode == Mode::Edit {
+        let form = app.raw_sql_form.as_mut().unwrap();
+        match (key_event.code, key_event.modifiers) {
+            (KeyCode::Char(c), KeyModifiers::NONE) => form.enter_char(c),
+            (KeyCode::Char(c), KeyModifiers::SHIFT) => {
+                for upper in c.to_uppercase() {
+                    form.enter_char(upper);
+                }
+            }
+            (KeyCode::Backspace, KeyModifiers::NONE) => form.pop_char(),
+            (KeyCode::BackTab, KeyModifiers::SHIFT) => app.switch_mode(Mode::Browse),
+            _ => {}
+        }
+
+        return Ok(());
+    }
+
+    let Some(event) = app.key_bindings.resolve_event(
+        app.current_screen,
+        app.current_popup,
+        app.current_mode,
+        key_event,
+    ) else {
+        return Ok(());
+    };
+
+    match event {
+        AppInputEvent::ClosePopUp => app.switch_to_popup(PopUp::None),
+        AppInputEvent::SwitchToEdit => app.switch_mode(Mode::Edit),
+        AppInputEvent::ExecuteAction => {
+            if let Some(db) = &mut app.selected_db {
+                match db.execute_raw_sql(
+                    app.raw_sql_form.as_ref().unwrap().fields[0]
+                        .text_box
+                        .text_value
+                        .clone(),
+                ) {
+                    Ok(_) => {
+                        app.fetch_table_list();
+                        app.switch_to_popup(PopUp::None);
+                    }
+                    Err(err) => {
+                        app.current_error = Some(err.into());
+                        app.switch_to_popup(PopUp::Error);
+                    }
+                }
+            }
+        }
+        _ => {}
+    }
+
+    Ok(())
+}
+
+fn insert_table_popup_handler(app: &mut App, key_event: KeyEvent) -> Result<(), AppError> {
+    if key_event.kind != KeyEventKind::Press {
+        return Ok(());
+    }
+
+    let Some(insert_form) = app.table_insert_form.as_mut() else {
+        app.current_error = Some(AppError::InvalidHandle("CreateTableForm".to_string()));
+        app.switch_to_popup(PopUp::Error);
+        return Ok(());
+    };
+
+    if app.current_mode == Mode::Edit {
+        if let Some(text_box) = insert_form.selected_textbox_mut() {
+            match (key_event.code, key_event.modifiers) {
+                (KeyCode::Char(c), KeyModifiers::NONE) => text_box.enter_char(c),
+                (KeyCode::Char(c), KeyModifiers::SHIFT) => {
+                    for upper in c.to_uppercase() {
+                        text_box.enter_char(upper);
+                    }
+                }
+                (KeyCode::Backspace, KeyModifiers::NONE) => text_box.pop_char(),
+                (KeyCode::BackTab, KeyModifiers::SHIFT) => app.switch_mode(Mode::Browse),
+                _ => {}
+            }
+        }
+
+        return Ok(());
+    }
+
+    let Some(event) = app.key_bindings.resolve_event(
+        app.current_screen,
+        app.current_popup,
+        app.current_mode,
+        key_event,
+    ) else {
+        return Ok(());
+    };
+
+    match event {
+        AppInputEvent::ClosePopUp => app.switch_to_popup(PopUp::None),
+        AppInputEvent::SwitchToEdit => {
+            if insert_form.selected_textbox_mut().is_some() {
+                app.switch_mode(Mode::Edit)
+            }
+        }
+        AppInputEvent::InsertColumn => insert_form.draft.add_column(),
+        AppInputEvent::RemoveColumn => {
+            let column_count = insert_form.draft.columns.len();
+
+            if column_count == 0 {
+                return Ok(());
+            }
+
+            if insert_form.selected_field == TableField::TableName {
+                insert_form.draft.remove_column(column_count - 1);
+            } else if let TableField::Column(idx, _) = insert_form.selected_field {
+                if idx == 0 {
+                    insert_form.selected_field = TableField::TableName;
+                    insert_form.draft.remove_column(idx);
+                } else {
+                    insert_form.selected_field = TableField::Column(idx - 1, ColumnField::Name);
+                    insert_form.draft.remove_column(idx);
+                }
+            }
+        }
+        AppInputEvent::MoveUpPrimary => insert_form.previous_form_row(),
+        AppInputEvent::MoveDownPrimary => insert_form.next_form_row(),
+        AppInputEvent::MoveUpSecondary => {
+            insert_form.previous_form_row();
+            insert_form.previous_form_row_field();
+        }
+        AppInputEvent::MoveDownSecondary => {
+            insert_form.next_form_row();
+            insert_form.next_form_row_field();
+        }
+        _ => {}
+    }
+
+    Ok(())
+}
+
+fn delete_table_popup_handler(app: &mut App, key_event: KeyEvent) -> Result<(), AppError> {
+    if key_event.kind != KeyEventKind::Press {
+        return Ok(());
+    }
+
+    if app.current_mode == Mode::Edit {
+        let form = app.table_delete_form.as_mut().unwrap();
+        match (key_event.code, key_event.modifiers) {
+            (KeyCode::Char(c), KeyModifiers::NONE) => form.enter_char(c),
+            (KeyCode::Char(c), KeyModifiers::SHIFT) => {
+                for upper in c.to_uppercase() {
+                    form.enter_char(upper);
+                }
+            }
+            (KeyCode::Backspace, KeyModifiers::NONE) => form.pop_char(),
+            (KeyCode::BackTab, KeyModifiers::SHIFT) => app.switch_mode(Mode::Browse),
+            _ => {}
+        }
+
+        return Ok(());
+    }
+
+    let Some(event) = app.key_bindings.resolve_event(
+        app.current_screen,
+        app.current_popup,
+        app.current_mode,
+        key_event,
+    ) else {
+        return Ok(());
+    };
+
+    match event {
+        AppInputEvent::ClosePopUp => app.switch_to_popup(PopUp::None),
+        AppInputEvent::SwitchToEdit => app.switch_mode(Mode::Edit),
+        AppInputEvent::ExecuteAction => {
+            if let Some(db) = &mut app.selected_db {
+                match db.drop_table(
+                    app.table_delete_form.as_ref().unwrap().fields[0]
+                        .text_box
+                        .text_value
+                        .clone(),
+                ) {
+                    Ok(_) => {
+                        app.fetch_table_list();
+                        app.switch_to_popup(PopUp::None);
+                    }
+                    Err(err) => {
+                        app.current_error = Some(err.into());
+                        app.switch_to_popup(PopUp::Error);
+                    }
+                }
+            }
+        }
+        _ => {}
+    }
+
+    Ok(())
+}
+
+fn error_popup_handler(app: &mut App, key_event: KeyEvent) -> Result<(), AppError> {
+    if key_event.kind != KeyEventKind::Press {
+        return Ok(());
+    }
+
+    let Some(event) = app.key_bindings.resolve_event(
+        app.current_screen,
+        app.current_popup,
+        app.current_mode,
+        key_event,
+    ) else {
+        return Ok(());
+    };
+
+    if event == AppInputEvent::ClosePopUp {
+        app.current_error = None;
+        app.switch_to_popup(PopUp::None);
     }
 
     Ok(())

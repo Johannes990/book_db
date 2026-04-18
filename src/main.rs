@@ -1,6 +1,7 @@
 mod app;
 mod column;
 mod db;
+mod errors;
 mod file_explorer;
 mod lang;
 mod log;
@@ -28,7 +29,7 @@ use std::{io, sync::mpsc::Receiver};
 use ui::events::handle_key_events;
 
 use crate::{
-    perf::resources::Resources, threading::spawn_profiler_thread,
+    errors::app_error::AppError, perf::resources::Resources, threading::spawn_profiler_thread,
     ui::colors::static_colors::StaticColors,
 };
 
@@ -111,8 +112,8 @@ where
     Ok(())
 }
 
-fn handle_errors(res: io::Result<()>) {
+fn handle_errors(res: Result<(), AppError>) {
     if let Err(err) = res {
-        eprintln!("Error: {:?}", err)
+        eprintln!("Error: {}", err)
     }
 }

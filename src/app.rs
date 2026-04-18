@@ -1,6 +1,8 @@
 use crate::{
     column::{column_info::ColumnInfo, column_list::ColumnListView},
-    db::{DBError, DB},
+    db::DB,
+    errors::backend::DBError,
+    errors::{app_error::AppError, backend::BackendError},
     file_explorer::file_explorer_table::FileExplorerTable,
     handle_key_events,
     lang::language::AppLanguage,
@@ -59,7 +61,7 @@ pub struct App {
     pub current_screen: Screen,
     pub current_popup: PopUp,
     pub current_mode: Mode,
-    pub current_error: Option<DBError>,
+    pub current_error: Option<AppError>,
     pub selected_db: Option<DB>,
     pub selected_db_table: Option<String>,
     pub selected_table_columns: Vec<ColumnInfo>,
@@ -152,7 +154,7 @@ impl App {
     pub fn run<B: ratatui::backend::Backend>(
         &mut self,
         terminal: &mut Terminal<B>,
-    ) -> io::Result<()> {
+    ) -> Result<(), AppError> {
         loop {
             let start = Instant::now();
 
@@ -185,7 +187,7 @@ impl App {
         Ok(())
     }
 
-    pub fn open_db_file(&mut self, path: PathBuf) -> Result<(), DBError> {
+    pub fn open_db_file(&mut self, path: &PathBuf) -> Result<(), DBError> {
         let sqlite_extensions = HashSet::from([
             OsString::from("db"),
             OsString::from("db3"),
@@ -305,11 +307,13 @@ impl App {
     }
 
     pub fn open_file(&mut self, path: PathBuf) {
-        if self.open_db_file(path).is_err() {
+        if self.open_db_file(&path).is_err() {
+            self.current_error = Some(AppError::Backend(BackendError::DB(
+                DBError::ConnectionCreationError(
+                    format!("unable to open file at path: {}", path.display()).to_string(),
+                ),
+            )));
             self.switch_to_popup(PopUp::Error);
-            self.current_error = Some(DBError::ConnectionCreationError(
-                "Cant open that file".to_string(),
-            ))
         } else {
             self.switch_to_screen(Screen::DatabaseSchema);
         }
@@ -423,7 +427,7 @@ impl App {
         self.current_mode = mode;
     }
 
-    pub fn show_error(&mut self, error: DBError) {
+    pub fn show_error(&mut self, error: AppError) {
         self.switch_to_popup(PopUp::Error);
         self.current_error = Some(error);
     }

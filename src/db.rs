@@ -1,59 +1,10 @@
 use crate::column::column_info::ColumnInfo;
+use crate::errors::backend::DBError;
 use crate::row::row_info::RowInfo;
-use rusqlite::{types::ValueRef, Connection, Error, Result, Statement, ToSql};
-use serde::{Deserialize, Serialize};
+use rusqlite::{types::ValueRef, Connection, Result, Statement, ToSql};
 use sqlparser::dialect::SQLiteDialect;
-use sqlparser::parser::{Parser, ParserError};
+use sqlparser::parser::Parser;
 use std::collections::HashMap;
-use std::fmt;
-
-#[allow(dead_code)]
-#[derive(Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
-pub enum DBError {
-    ConnectionCreationError(String),
-    TableAlreadyExists(String),
-    TableDoesNotExist(String),
-    ColumnDoesNotExist(String),
-    CannotAddRow(String),
-    CannotDeleteRow(String),
-    SqlError(String),
-    ParseError(String),
-}
-
-impl fmt::Display for DBError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            DBError::ConnectionCreationError(name) => {
-                write!(f, "Can't open connection to database '{}'", name)
-            }
-            DBError::TableAlreadyExists(table) => write!(f, "Table '{}' already exists", table),
-            DBError::TableDoesNotExist(err) => write!(f, "{}", err),
-            DBError::ColumnDoesNotExist(column) => write!(f, "Column '{}' does not exist", column),
-            DBError::CannotAddRow(row) => write!(f, "Unable to add row '{}'", row),
-            DBError::CannotDeleteRow(row) => write!(f, "Unable to delete row '{}'", row),
-            Self::SqlError(e) => write!(f, "SQL Error: {}", e),
-            DBError::ParseError(e) => write!(f, "SQL Parse Error: {}", e),
-        }
-    }
-}
-
-impl fmt::Debug for DBError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self)
-    }
-}
-
-impl From<Error> for DBError {
-    fn from(err: Error) -> DBError {
-        DBError::SqlError(err.to_string())
-    }
-}
-
-impl From<ParserError> for DBError {
-    fn from(err: ParserError) -> DBError {
-        DBError::ParseError(err.to_string())
-    }
-}
 
 pub struct DB {
     pub db_name: String,
