@@ -10,9 +10,15 @@ pub enum NavigationError {
 impl fmt::Display for NavigationError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Self::RowInsertFormNavigation(msg) => write!(f, "row insert form navigation error: {}", msg),
-            Self::RowDeleteFormNavigation(msg) => write!(f, "row delete form navigation error: {}", msg),
-            Self::NewTableFormNavigation(msg) => write!(f, "new table form navigation error: {}", msg),
+            Self::RowInsertFormNavigation(msg) => {
+                write!(f, "row insert form navigation error: {}", msg)
+            }
+            Self::RowDeleteFormNavigation(msg) => {
+                write!(f, "row delete form navigation error: {}", msg)
+            }
+            Self::NewTableFormNavigation(msg) => {
+                write!(f, "new table form navigation error: {}", msg)
+            }
         }
     }
 }
