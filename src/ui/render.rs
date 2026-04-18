@@ -1161,8 +1161,9 @@ fn render_column_list(frame: &mut Frame, app: &mut App, area: Rect) {
             .borders(Borders::ALL)
             .style(border_block_style)
             .title(column_list_title.to_string());
-        let unwrapped_column_list: &mut crate::column::column_list::ColumnListView =
-            app.column_list_view.as_mut().unwrap();
+        let Some(unwrapped_column_list) = app.column_list_view.as_mut() else {
+            return;
+        };
 
         render_table(
             frame,

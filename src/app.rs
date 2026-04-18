@@ -21,7 +21,7 @@ use crate::{
 use ratatui::{style::Color, Terminal};
 use serde::{Deserialize, Serialize};
 use std::{
-    collections::HashSet, ffi::OsString, io, path::PathBuf, sync::mpsc::Receiver, time::Instant,
+    collections::HashSet, ffi::OsString, io, path::{Path, PathBuf}, sync::mpsc::Receiver, time::Instant,
 };
 use strum::Display;
 
@@ -187,7 +187,7 @@ impl App {
         Ok(())
     }
 
-    pub fn open_db_file(&mut self, path: &PathBuf) -> Result<(), DBError> {
+    pub fn open_db_file(&mut self, path: &Path) -> Result<(), DBError> {
         let sqlite_extensions = HashSet::from([
             OsString::from("db"),
             OsString::from("db3"),

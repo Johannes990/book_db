@@ -84,7 +84,7 @@ impl CreateTableForm {
             state: TableState::default(),
             draft: TableDraft::new(),
             selected_field: TableField::TableName,
-            scroll_state: ScrollbarState::new(1 * ITEM_HEIGHT),
+            scroll_state: ScrollbarState::new(ITEM_HEIGHT),
         }
     }
 

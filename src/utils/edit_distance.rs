@@ -57,7 +57,7 @@ pub fn edit_distance(s1: &str, s2: &str) -> usize {
 
     // Step 1: Build bitmasks for each character in s1
     let word_len = 64;
-    let k = (n + word_len * 1) / word_len; // words needed
+    let k = (n + word_len) / word_len; // words needed
 
     let mut peq = [[0u64; 5]; 256]; // ASCII only; extend for full Unicode if needed; 5 words cover 255 bits
     for (i, &b) in s1_bytes.iter().enumerate() {
@@ -134,7 +134,7 @@ mod tests {
     #[test]
     fn test_edit_distance_empty_strings_for_s1() {
         let s1 = "";
-        let s2_vec = vec!["aaa", "test_string", "eoipcj*&hji43f897y40caikj3498"];
+        let s2_vec = ["aaa", "test_string", "eoipcj*&hji43f897y40caikj3498"];
 
         for s2 in s2_vec {
             assert_eq!(edit_distance(s1, s2), s2.chars().count());
@@ -143,7 +143,7 @@ mod tests {
 
     #[test]
     fn test_edit_distance_empty_strings_for_s2() {
-        let s1_vec = vec![
+        let s1_vec = [
             "ax",
             "_________",
             "0wec9i43f08fduv9578y8gfas908dfubv465ohgijUOYTG(^T",
@@ -157,9 +157,9 @@ mod tests {
 
     #[test]
     fn test_edit_distance_small_strings() {
-        let s1_vec = vec!["aa", "aba", "bar"];
-        let s2_vec = vec!["bb", "baa", "baz"];
-        let true_distances = vec![2, 2, 1];
+        let s1_vec = ["aa", "aba", "bar"];
+        let s2_vec = ["bb", "baa", "baz"];
+        let true_distances = [2, 2, 1];
 
         for (idx, s1) in s1_vec.iter().enumerate() {
             assert_eq!(true_distances[idx], edit_distance(s1, s2_vec[idx]));
@@ -168,28 +168,28 @@ mod tests {
 
     #[test]
     fn test_edit_distance_medium_strings() {
-        let s1_vec = vec!["ratas", "korgus", "inimene", "sizzlydoop"];
-        let s2_vec = vec!["satar", "random", "imeloom", "fizzlygoon"];
-        let true_distances = vec![2, 5, 6, 3];
+        let s1_vec = ["ratas", "korgus", "inimene", "sizzlydoop"];
+        let s2_vec = ["satar", "random", "imeloom", "fizzlygoon"];
+        let true_distances = [2, 5, 6, 3];
 
         for (idx, s1) in s1_vec.iter().enumerate() {
-            assert_eq!(true_distances[idx], edit_distance(&s1, s2_vec[idx]));
+            assert_eq!(true_distances[idx], edit_distance(s1, s2_vec[idx]));
         }
     }
 
     #[test]
     fn test_edit_distance_longish_strings() {
-        let s1_vec = vec![
+        let s1_vec = [
             "somelongishstring",
             "edededrfrftgtgtgtzzxxccds",
             "12345678909876543321",
         ];
-        let s2_vec = vec![
+        let s2_vec = [
             "somelongisherstring",
             "deeddeedtgtgrfrfrfrxcxcxz",
             "12345678999876543212",
         ];
-        let true_distances = vec![2, 16, 3];
+        let true_distances = [2, 16, 3];
 
         for (idx, s1) in s1_vec.iter().enumerate() {
             assert_eq!(true_distances[idx], edit_distance(s1, s2_vec[idx]));
@@ -210,8 +210,8 @@ mod tests {
 
     #[test]
     fn test_edit_distance_symmetricity() {
-        let s1_vec = vec!["asdsds", "sxss", "239d8u897h587yt"];
-        let s2_vec = vec!["aaaaa", "sxss", "4sd87y48v98u5gyb"];
+        let s1_vec = ["asdsds", "sxss", "239d8u897h587yt"];
+        let s2_vec = ["aaaaa", "sxss", "4sd87y48v98u5gyb"];
 
         for (idx, s1) in s1_vec.iter().enumerate() {
             assert_eq!(
