@@ -427,11 +427,6 @@ impl App {
         self.current_mode = mode;
     }
 
-    pub fn show_error(&mut self, error: AppError) {
-        self.switch_to_popup(PopUp::Error);
-        self.current_error = Some(error);
-    }
-
     pub fn populate_table_col_map(&mut self) {
         if let Some(db) = &mut self.selected_db {
             db.db_tab_col_map.clear();
