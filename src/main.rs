@@ -10,10 +10,10 @@ mod perf;
 mod row;
 mod table;
 mod threading;
+mod traits;
 mod ui;
 mod utils;
 mod widgets;
-mod traits;
 
 use app::App;
 use crossterm::{

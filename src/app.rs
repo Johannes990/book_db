@@ -21,7 +21,12 @@ use crate::{
 use ratatui::{style::Color, Terminal};
 use serde::{Deserialize, Serialize};
 use std::{
-    collections::HashSet, ffi::OsString, io, path::{Path, PathBuf}, sync::mpsc::Receiver, time::Instant,
+    collections::HashSet,
+    ffi::OsString,
+    io,
+    path::{Path, PathBuf},
+    sync::mpsc::Receiver,
+    time::Instant,
 };
 use strum::Display;
 

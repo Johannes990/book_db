@@ -1,7 +1,12 @@
 use crate::{
-    app::{App, Mode, PopUp, Screen}, db::DB, errors::{app_error::AppError, backend::DBError, navigation::NavigationError},
-    log::log, options::{OptionKind, SelectedOption}, ui::input::key_bindings::AppInputEvent,
-    widgets::new_table::form::{ColumnField, TableField}, traits::writeable::Writable,
+    app::{App, Mode, PopUp, Screen},
+    db::DB,
+    errors::{app_error::AppError, backend::DBError, navigation::NavigationError},
+    log::log,
+    options::{OptionKind, SelectedOption},
+    traits::writeable::Writable,
+    ui::input::key_bindings::AppInputEvent,
+    widgets::new_table::form::{ColumnField, TableField},
 };
 use crossterm::event::{KeyEvent, KeyModifiers};
 use ratatui::crossterm::event::{self, Event, KeyCode, KeyEventKind};
@@ -355,7 +360,7 @@ fn options_screen_handler(app: &mut App, key_event: KeyEvent) -> Result<(), AppE
         return Ok(());
     }
 
-    let mut changed: bool = false;  
+    let mut changed: bool = false;
 
     if app.current_mode == Mode::Edit {
         let active_field = &mut app.options.fields[app.options.index];

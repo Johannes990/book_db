@@ -87,8 +87,6 @@ impl TextForm {
         }
     }
 
-
-
     pub fn set_styles(&mut self, on_style: Style, off_style: Style, base_style: Style) {
         self.on_style = on_style;
         self.off_style = off_style;
