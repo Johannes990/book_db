@@ -1,11 +1,7 @@
 use crate::{
-    app::{App, Mode, PopUp, Screen},
-    db::DB,
-    errors::{app_error::AppError, backend::DBError, navigation::NavigationError},
-    log::log,
-    options::{OptionKind, SelectedOption},
-    ui::input::key_bindings::AppInputEvent,
-    widgets::new_table::form::{ColumnField, TableField},
+    app::{App, Mode, PopUp, Screen}, db::DB, errors::{app_error::AppError, backend::DBError, navigation::NavigationError},
+    log::log, options::{OptionKind, SelectedOption}, ui::input::key_bindings::AppInputEvent,
+    widgets::new_table::form::{ColumnField, TableField}, traits::writeable::Writable,
 };
 use crossterm::event::{KeyEvent, KeyModifiers};
 use ratatui::crossterm::event::{self, Event, KeyCode, KeyEventKind};
@@ -95,6 +91,27 @@ fn handle_global_navigation(app: &mut App, event: &AppInputEvent) -> bool {
     }
 }
 
+fn handle_edit_mode_input<T: Writable>(target: &mut T, key_event: &KeyEvent) -> bool {
+    if key_event.kind != KeyEventKind::Press {
+        return false;
+    }
+
+    // return true when Switch mode event registered
+    match (key_event.code, key_event.modifiers) {
+        (KeyCode::Char(c), KeyModifiers::NONE) => target.enter_char(c),
+        (KeyCode::Char(c), KeyModifiers::SHIFT) => {
+            for upper in c.to_uppercase() {
+                target.enter_char(upper);
+            }
+        }
+        (KeyCode::Backspace, KeyModifiers::NONE) => target.pop_char(),
+        (KeyCode::BackTab, KeyModifiers::SHIFT) => return true,
+        _ => {}
+    }
+
+    false
+}
+
 fn splash_screen_handler(app: &mut App, key_event: KeyEvent) -> Result<(), AppError> {
     if app.current_popup != PopUp::None {
         return Ok(());
@@ -108,7 +125,7 @@ fn splash_screen_handler(app: &mut App, key_event: KeyEvent) -> Result<(), AppEr
         app.current_screen,
         app.current_popup,
         app.current_mode,
-        key_event,
+        &key_event,
     ) else {
         return Ok(());
     };
@@ -133,7 +150,7 @@ fn file_explorer_screen_handler(app: &mut App, key_event: KeyEvent) -> Result<()
         app.current_screen,
         app.current_popup,
         app.current_mode,
-        key_event,
+        &key_event,
     ) else {
         return Ok(());
     };
@@ -181,7 +198,7 @@ fn database_schema_screen_handler(app: &mut App, key_event: KeyEvent) -> Result<
         app.current_screen,
         app.current_popup,
         app.current_mode,
-        key_event,
+        &key_event,
     ) else {
         return Ok(());
     };
@@ -286,17 +303,11 @@ fn database_table_screen_handler(app: &mut App, key_event: KeyEvent) -> Result<(
         return Ok(());
     }
 
-    if app.selected_db_table.is_none() {
-        app.current_error = Some(DBError::NoTableInMemory.into());
-        app.switch_to_popup(PopUp::Error);
-        return Ok(());
-    }
-
     let Some(event) = app.key_bindings.resolve_event(
         app.current_screen,
         app.current_popup,
         app.current_mode,
-        key_event,
+        &key_event,
     ) else {
         return Ok(());
     };
@@ -344,7 +355,7 @@ fn options_screen_handler(app: &mut App, key_event: KeyEvent) -> Result<(), AppE
         return Ok(());
     }
 
-    let mut changed: bool = false;
+    let mut changed: bool = false;  
 
     if app.current_mode == Mode::Edit {
         let active_field = &mut app.options.fields[app.options.index];
@@ -394,7 +405,7 @@ fn options_screen_handler(app: &mut App, key_event: KeyEvent) -> Result<(), AppE
         app.current_screen,
         app.current_popup,
         app.current_mode,
-        key_event,
+        &key_event,
     ) else {
         return Ok(());
     };
@@ -443,27 +454,21 @@ fn create_new_file_screen_handler(app: &mut App, key_event: KeyEvent) -> Result<
         return Ok(());
     }
 
-    if key_event.kind != KeyEventKind::Press {
-        return Ok(());
-    }
-
     if app.current_mode == Mode::Edit {
         let Some(form) = app.create_db_form.as_mut() else {
             return Ok(());
         };
 
-        match (key_event.code, key_event.modifiers) {
-            (KeyCode::Char(c), KeyModifiers::NONE) => form.enter_char(c),
-            (KeyCode::Char(c), KeyModifiers::SHIFT) => {
-                for upper in c.to_uppercase() {
-                    form.enter_char(upper);
-                }
-            }
-            (KeyCode::Backspace, KeyModifiers::NONE) => form.pop_char(),
-            (KeyCode::BackTab, KeyModifiers::SHIFT) => app.switch_mode(Mode::Browse),
-            _ => {}
+        let exit = handle_edit_mode_input(form, &key_event);
+
+        if exit {
+            app.switch_mode(Mode::Browse);
         }
 
+        return Ok(());
+    }
+
+    if key_event.kind != KeyEventKind::Press {
         return Ok(());
     }
 
@@ -471,7 +476,7 @@ fn create_new_file_screen_handler(app: &mut App, key_event: KeyEvent) -> Result<
         app.current_screen,
         app.current_popup,
         app.current_mode,
-        key_event,
+        &key_event,
     ) else {
         return Ok(());
     };
@@ -519,7 +524,7 @@ fn quit_popup_handler(app: &mut App, key_event: KeyEvent) -> Result<(), AppError
         app.current_screen,
         app.current_popup,
         app.current_mode,
-        key_event,
+        &key_event,
     ) else {
         return Ok(());
     };
@@ -545,7 +550,7 @@ fn no_db_loaded_popup_handler(app: &mut App, key_event: KeyEvent) -> Result<(), 
         app.current_screen,
         app.current_popup,
         app.current_mode,
-        key_event,
+        &key_event,
     ) else {
         return Ok(());
     };
@@ -564,27 +569,21 @@ fn no_db_loaded_popup_handler(app: &mut App, key_event: KeyEvent) -> Result<(), 
 }
 
 fn insert_row_popup_handler(app: &mut App, key_event: KeyEvent) -> Result<(), AppError> {
-    if key_event.kind != KeyEventKind::Press {
-        return Ok(());
-    }
-
     if app.current_mode == Mode::Edit {
         let Some(form) = app.row_insert_form.as_mut() else {
             return Ok(());
         };
 
-        match (key_event.code, key_event.modifiers) {
-            (KeyCode::Char(c), KeyModifiers::NONE) => form.enter_char(c),
-            (KeyCode::Char(c), KeyModifiers::SHIFT) => {
-                for upper in c.to_uppercase() {
-                    form.enter_char(upper);
-                }
-            }
-            (KeyCode::Backspace, KeyModifiers::NONE) => form.pop_char(),
-            (KeyCode::BackTab, KeyModifiers::SHIFT) => app.switch_mode(Mode::Browse),
-            _ => {}
+        let exit = handle_edit_mode_input(form, &key_event);
+
+        if exit {
+            app.switch_mode(Mode::Browse);
         }
 
+        return Ok(());
+    }
+
+    if key_event.kind != KeyEventKind::Press {
         return Ok(());
     }
 
@@ -592,7 +591,7 @@ fn insert_row_popup_handler(app: &mut App, key_event: KeyEvent) -> Result<(), Ap
         app.current_screen,
         app.current_popup,
         app.current_mode,
-        key_event,
+        &key_event,
     ) else {
         return Ok(());
     };
@@ -681,16 +680,10 @@ fn delete_row_popup_handler(app: &mut App, key_event: KeyEvent) -> Result<(), Ap
             return Ok(());
         };
 
-        match (key_event.code, key_event.modifiers) {
-            (KeyCode::Char(c), KeyModifiers::NONE) => form.enter_char(c),
-            (KeyCode::Char(c), KeyModifiers::SHIFT) => {
-                for upper in c.to_uppercase() {
-                    form.enter_char(upper);
-                }
-            }
-            (KeyCode::Backspace, KeyModifiers::NONE) => form.pop_char(),
-            (KeyCode::BackTab, KeyModifiers::SHIFT) => app.switch_mode(Mode::Browse),
-            _ => {}
+        let exit = handle_edit_mode_input(form, &key_event);
+
+        if exit {
+            app.switch_mode(Mode::Browse);
         }
 
         return Ok(());
@@ -700,7 +693,7 @@ fn delete_row_popup_handler(app: &mut App, key_event: KeyEvent) -> Result<(), Ap
         app.current_screen,
         app.current_popup,
         app.current_mode,
-        key_event,
+        &key_event,
     ) else {
         return Ok(());
     };
@@ -786,17 +779,14 @@ fn insert_raw_sql_popup_handler(app: &mut App, key_event: KeyEvent) -> Result<()
     }
 
     if app.current_mode == Mode::Edit {
-        let form = app.raw_sql_form.as_mut().unwrap();
-        match (key_event.code, key_event.modifiers) {
-            (KeyCode::Char(c), KeyModifiers::NONE) => form.enter_char(c),
-            (KeyCode::Char(c), KeyModifiers::SHIFT) => {
-                for upper in c.to_uppercase() {
-                    form.enter_char(upper);
-                }
-            }
-            (KeyCode::Backspace, KeyModifiers::NONE) => form.pop_char(),
-            (KeyCode::BackTab, KeyModifiers::SHIFT) => app.switch_mode(Mode::Browse),
-            _ => {}
+        let Some(form) = app.raw_sql_form.as_mut() else {
+            return Ok(());
+        };
+
+        let exit = handle_edit_mode_input(form, &key_event);
+
+        if exit {
+            app.switch_mode(Mode::Browse);
         }
 
         return Ok(());
@@ -806,7 +796,7 @@ fn insert_raw_sql_popup_handler(app: &mut App, key_event: KeyEvent) -> Result<()
         app.current_screen,
         app.current_popup,
         app.current_mode,
-        key_event,
+        &key_event,
     ) else {
         return Ok(());
     };
@@ -851,18 +841,14 @@ fn insert_table_popup_handler(app: &mut App, key_event: KeyEvent) -> Result<(), 
     };
 
     if app.current_mode == Mode::Edit {
-        if let Some(text_box) = insert_form.selected_textbox_mut() {
-            match (key_event.code, key_event.modifiers) {
-                (KeyCode::Char(c), KeyModifiers::NONE) => text_box.enter_char(c),
-                (KeyCode::Char(c), KeyModifiers::SHIFT) => {
-                    for upper in c.to_uppercase() {
-                        text_box.enter_char(upper);
-                    }
-                }
-                (KeyCode::Backspace, KeyModifiers::NONE) => text_box.pop_char(),
-                (KeyCode::BackTab, KeyModifiers::SHIFT) => app.switch_mode(Mode::Browse),
-                _ => {}
-            }
+        let Some(text_box) = insert_form.selected_textbox_mut() else {
+            return Ok(());
+        };
+
+        let exit = handle_edit_mode_input(text_box, &key_event);
+
+        if exit {
+            app.switch_mode(Mode::Browse);
         }
 
         return Ok(());
@@ -872,7 +858,7 @@ fn insert_table_popup_handler(app: &mut App, key_event: KeyEvent) -> Result<(), 
         app.current_screen,
         app.current_popup,
         app.current_mode,
-        key_event,
+        &key_event,
     ) else {
         return Ok(());
     };
@@ -926,17 +912,14 @@ fn delete_table_popup_handler(app: &mut App, key_event: KeyEvent) -> Result<(), 
     }
 
     if app.current_mode == Mode::Edit {
-        let form = app.table_delete_form.as_mut().unwrap();
-        match (key_event.code, key_event.modifiers) {
-            (KeyCode::Char(c), KeyModifiers::NONE) => form.enter_char(c),
-            (KeyCode::Char(c), KeyModifiers::SHIFT) => {
-                for upper in c.to_uppercase() {
-                    form.enter_char(upper);
-                }
-            }
-            (KeyCode::Backspace, KeyModifiers::NONE) => form.pop_char(),
-            (KeyCode::BackTab, KeyModifiers::SHIFT) => app.switch_mode(Mode::Browse),
-            _ => {}
+        let Some(form) = app.table_delete_form.as_mut() else {
+            return Ok(());
+        };
+
+        let exit = handle_edit_mode_input(form, &key_event);
+
+        if exit {
+            app.switch_mode(Mode::Browse);
         }
 
         return Ok(());
@@ -946,7 +929,7 @@ fn delete_table_popup_handler(app: &mut App, key_event: KeyEvent) -> Result<(), 
         app.current_screen,
         app.current_popup,
         app.current_mode,
-        key_event,
+        &key_event,
     ) else {
         return Ok(());
     };
@@ -988,7 +971,7 @@ fn error_popup_handler(app: &mut App, key_event: KeyEvent) -> Result<(), AppErro
         app.current_screen,
         app.current_popup,
         app.current_mode,
-        key_event,
+        &key_event,
     ) else {
         return Ok(());
     };

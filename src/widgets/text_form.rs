@@ -7,6 +7,8 @@ use ratatui::{
     Frame,
 };
 
+use crate::traits::writeable::Writable;
+
 use super::text_entry_field::TextEntryField;
 
 pub struct TextForm {
@@ -85,17 +87,7 @@ impl TextForm {
         }
     }
 
-    pub fn enter_char(&mut self, c: char) {
-        if let Some(field) = self.fields.get_mut(self.index) {
-            field.text_box.enter_char(c);
-        }
-    }
 
-    pub fn pop_char(&mut self) {
-        if let Some(field) = self.fields.get_mut(self.index) {
-            field.text_box.pop_char();
-        }
-    }
 
     pub fn set_styles(&mut self, on_style: Style, off_style: Style, base_style: Style) {
         self.on_style = on_style;
@@ -118,5 +110,19 @@ impl TextForm {
         frame.render_widget(Clear, area);
         frame.render_widget(self, area);
         self.update_cursor_pos(frame, area);
+    }
+}
+
+impl Writable for TextForm {
+    fn enter_char(&mut self, c: char) {
+        if let Some(field) = self.fields.get_mut(self.index) {
+            field.text_box.enter_char(c);
+        }
+    }
+
+    fn pop_char(&mut self) {
+        if let Some(field) = self.fields.get_mut(self.index) {
+            field.text_box.pop_char();
+        }
     }
 }

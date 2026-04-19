@@ -13,6 +13,7 @@ mod threading;
 mod ui;
 mod utils;
 mod widgets;
+mod traits;
 
 use app::App;
 use crossterm::{

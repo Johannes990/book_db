@@ -178,7 +178,7 @@ impl KeyBindings {
         current_screen: Screen,
         current_popup: PopUp,
         current_mode: Mode,
-        key_event: KeyEvent,
+        key_event: &KeyEvent,
     ) -> Option<AppInputEvent> {
         let log_msg = format!(
             "resolving input event: {:?}, current popup: {:?}, current screen: {:?}, current mode: {:?}",
