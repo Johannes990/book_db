@@ -1,7 +1,7 @@
 use crate::{
     file_explorer::file_explorer_data::FileExplorerData,
-    log::log,
     threading::{spawn_lookup_thread, spawn_tree_builder},
+    utils::log::log,
 };
 use chrono::{DateTime, Utc};
 use ratatui::widgets::{ScrollbarState, TableState};

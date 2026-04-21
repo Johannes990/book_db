@@ -2,9 +2,9 @@ mod app;
 mod column;
 mod db;
 mod errors;
+mod events;
 mod file_explorer;
 mod lang;
-mod log;
 mod options;
 mod perf;
 mod row;
@@ -21,13 +21,13 @@ use crossterm::{
     execute,
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
+use events::event_handling::handle_key_events;
 use ratatui::{
     prelude::{Backend, CrosstermBackend},
     Terminal,
 };
 use rusqlite::Result;
 use std::{io, sync::mpsc::Receiver};
-use ui::events::handle_key_events;
 
 use crate::{
     errors::app_error::AppError, perf::resources::Resources, threading::spawn_profiler_thread,

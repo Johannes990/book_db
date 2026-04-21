@@ -3,7 +3,7 @@ use ratatui::{
     layout::Rect,
     style::Style,
     text::{Span, Text},
-    widgets::{Block, Borders, Clear, Paragraph, Widget, Wrap},
+    widgets::{Block, Clear, Paragraph, Widget, Wrap},
     Frame,
 };
 
@@ -24,8 +24,8 @@ pub struct TextForm {
 impl Widget for &TextForm {
     fn render(self, area: Rect, buf: &mut Buffer) {
         let block = Block::default()
-            .borders(Borders::ALL)
-            .title(self.block_title.clone())
+            //.borders(Borders::ALL)
+            .title(format!(" {}", self.block_title.clone()))
             .style(self.base_style);
 
         block.clone().render(area, buf);
@@ -34,7 +34,7 @@ impl Widget for &TextForm {
         let mut text = Text::default();
 
         for (i, field) in self.fields.iter().enumerate() {
-            let mut line = format!("{}: ", self.labels[i]);
+            let mut line = format!(" {}: ", self.labels[i]);
             if i == self.index {
                 line.push_str(&field.text_box.text_value);
                 text.push_line(Span::styled(line, self.on_style));

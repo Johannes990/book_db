@@ -1,7 +1,8 @@
 use serde::{Deserialize, Serialize};
 use strum::EnumIter;
 
-use crate::ui::colors::app_colors::{hsv_to_rgb, rgb, rgb_to_hsv, AppColors, ColorScheme};
+use crate::traits::color_scheme::ColorScheme;
+use crate::ui::colors::app_colors::{hsv_to_rgb, rgb, rgb_to_hsv, AppColors};
 
 const BRIGHTNESS_THRESHOLD: f32 = 0.5;
 const TEXT_HIGHLIGHT_SATURATION_WEIGHT: f32 = 1.2;

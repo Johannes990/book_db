@@ -3,19 +3,17 @@ use crate::{
     db::DB,
     errors::backend::DBError,
     errors::{app_error::AppError, backend::BackendError},
+    events::input::key_bindings::KeyBindings,
     file_explorer::file_explorer_table::FileExplorerTable,
     handle_key_events,
     lang::language::AppLanguage,
-    log::log,
     options::Options,
     perf::{resources::Resources, statistics::StatisticsProfiling},
     row::row_list::RowListView,
     table::{table_info::TableInfo, table_list::TableListView},
-    ui::{
-        colors::{app_colors::ColorScheme, static_colors::StaticColors},
-        input::key_bindings::KeyBindings,
-        render,
-    },
+    traits::color_scheme::ColorScheme,
+    ui::{colors::static_colors::StaticColors, render},
+    utils::log::log,
     widgets::{new_table::form::CreateTableForm, text_form::TextForm},
 };
 use ratatui::{style::Color, Terminal};

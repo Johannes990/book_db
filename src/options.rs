@@ -6,10 +6,11 @@ use strum::{EnumIter, IntoEnumIterator};
 use crate::{
     lang::language::SupportedLanguage,
     ui::colors::{
-        app_colors::{AppColors, ColorScheme},
+        app_colors::AppColors,
         dynamic_colors::DynamicColors,
         static_colors::StaticColors,
     },
+    traits::color_scheme::ColorScheme,
     widgets::{generic_list_view::GenericListView, selectable_field::SelectableField},
 };
 
@@ -30,16 +31,16 @@ pub enum SelectedOption {
 
 #[derive(Clone, Copy, Debug, Deserialize, Serialize, PartialEq)]
 #[serde(untagged)]
-pub enum SelectedScheme {
+pub enum SelectedColorScheme {
     Static(StaticColors),
     Dynamic(DynamicColors),
 }
 
-impl ColorScheme for SelectedScheme {
+impl ColorScheme for SelectedColorScheme {
     fn colors(&self) -> AppColors {
         match self {
-            SelectedScheme::Static(s) => s.colors(),
-            SelectedScheme::Dynamic(d) => d.colors(),
+            SelectedColorScheme::Static(s) => s.colors(),
+            SelectedColorScheme::Dynamic(d) => d.colors(),
         }
     }
 }
@@ -47,8 +48,8 @@ impl ColorScheme for SelectedScheme {
 #[derive(Serialize, Deserialize)]
 pub struct Options {
     // colors
-    pub available_color_schemes: GenericListView<SelectedScheme>,
-    pub selected_color_scheme: SelectedScheme,
+    pub available_color_schemes: GenericListView<SelectedColorScheme>,
+    pub selected_color_scheme: SelectedColorScheme,
     // serialization for selected option
     pub selected_option: SelectedOption,
     pub available_options: Vec<SelectedOption>,
@@ -71,15 +72,15 @@ pub struct Options {
 impl Options {
     pub fn new(default_color_scheme: StaticColors) -> Self {
         let mut schemes = Vec::new();
-        schemes.extend(StaticColors::iter().map(SelectedScheme::Static));
-        schemes.extend(DynamicColors::iter().map(SelectedScheme::Dynamic));
+        schemes.extend(StaticColors::iter().map(SelectedColorScheme::Static));
+        schemes.extend(DynamicColors::iter().map(SelectedColorScheme::Dynamic));
         let available_color_schemes = GenericListView::new(schemes);
         let available_options = SelectedOption::iter().collect();
         let available_languages = SupportedLanguage::iter().collect();
 
         Self {
             available_color_schemes,
-            selected_color_scheme: SelectedScheme::Static(default_color_scheme),
+            selected_color_scheme: SelectedColorScheme::Static(default_color_scheme),
             selected_option: SelectedOption::TableMetainfoToggle,
             available_options,
             fields: Vec::new(),
@@ -114,8 +115,8 @@ impl Options {
             options.available_color_schemes.rebuild();
 
             let mut schemes = Vec::new();
-            schemes.extend(StaticColors::iter().map(SelectedScheme::Static));
-            schemes.extend(DynamicColors::iter().map(SelectedScheme::Dynamic));
+            schemes.extend(StaticColors::iter().map(SelectedColorScheme::Static));
+            schemes.extend(DynamicColors::iter().map(SelectedColorScheme::Dynamic));
 
             options.available_color_schemes = GenericListView::new(schemes);
 
@@ -124,7 +125,7 @@ impl Options {
                 .items
                 .contains(&options.selected_color_scheme)
             {
-                options.selected_color_scheme = SelectedScheme::Static(default_color_scheme);
+                options.selected_color_scheme = SelectedColorScheme::Static(default_color_scheme);
             }
 
             Ok(options)
@@ -218,7 +219,7 @@ impl Options {
         }
     }
 
-    fn select_color_scheme(&mut self, color_scheme: SelectedScheme) {
+    fn select_color_scheme(&mut self, color_scheme: SelectedColorScheme) {
         if self.available_color_schemes.items.contains(&color_scheme) {
             self.selected_color_scheme = color_scheme;
         }

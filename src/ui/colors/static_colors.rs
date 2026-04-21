@@ -1,7 +1,8 @@
 use serde::{Deserialize, Serialize};
 use strum_macros::EnumIter;
 
-use crate::ui::colors::app_colors::{rgb, AppColors, ColorScheme};
+use crate::traits::color_scheme::ColorScheme;
+use crate::ui::colors::app_colors::{rgb, AppColors};
 
 #[derive(Clone, Copy, EnumIter, Debug, PartialEq, Serialize, Deserialize)]
 pub enum StaticColors {
