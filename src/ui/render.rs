@@ -1,9 +1,10 @@
 use crate::{
     app::{App, PopUp, Screen},
     column::column_info::ColumnInfo,
-    options::{OptionKind, SelectedScheme},
+    events::input::key_bindings::AppInputEvent,
+    options::{OptionKind, SelectedColorScheme},
     row::row_info::RowInfo,
-    ui::{colors::app_colors::ColorScheme, input::key_bindings::AppInputEvent},
+    traits::color_scheme::ColorScheme,
 };
 
 use ratatui::{
@@ -259,7 +260,7 @@ fn render_database_schema_screen(frame: &mut Frame, app: &mut App) {
     let current_db_string = &app.language.screen_db_schema_current_db;
     let current_app_mode_string = &app.language.mode_current_mode;
     let outer_block = Block::default()
-        .title(Line::from(format!("{}: {} ", current_db_string, db_name)).left_aligned())
+        .title(Line::from(format!(" {}: {} ", current_db_string, db_name)).left_aligned())
         .title(
             Line::from(format!(
                 "{}: {} ",
@@ -322,8 +323,15 @@ fn render_new_database_screen(frame: &mut Frame, app: &mut App) {
         form.set_styles(insert_text_area_on_style, Style::default(), page_style);
     }
 
+    let content_area = Rect {
+        x: main_chunk.x + 1,
+        y: main_chunk.y,
+        width: main_chunk.width - 1,
+        height: main_chunk.height,
+    };
+
     if let Some(form) = &app.create_db_form {
-        form.render_widget_and_cursor(frame, main_chunk);
+        form.render_widget_and_cursor(frame, content_area);
     }
 
     if let Some(info_chunk) = info_chunk {
@@ -495,7 +503,7 @@ fn render_options_screen(frame: &mut Frame, app: &mut App) {
     let selected_style = Style::default().fg(app.error_color());
     let options_title = &app.language.screen_options_title;
     let options_block = Block::default()
-        .title(options_title.to_string())
+        .title(format!(" {}", options_title.to_string()))
         .style(general_page_style);
 
     frame.render_widget(options_block, frame_area);
@@ -914,34 +922,42 @@ fn render_insert_table_popup(frame: &mut Frame, app: &mut App) {
         let unique = "Unique";
         let not_null = "Not Null";
         let foreign_key = "FK";
-        let header = Some(Row::new(vec![
-            name,
-            data_type,
-            primary_key,
-            unique,
-            not_null,
-            foreign_key,
-        ]));
+        let mut header_vec = vec![name, data_type, primary_key, unique, not_null, foreign_key];
+
+        let mut widths = vec![
+            Constraint::Min(7),
+            Constraint::Min(10),
+            Constraint::Max(3),
+            Constraint::Max(7),
+            Constraint::Max(8),
+            Constraint::Max(3),
+        ];
 
         for col in &unwrapped_table_insert_form.draft.columns {
             let dt = format!("{}", col.data_type);
-            let pk = format!("{}", if col.primary_key { "y" } else { "n" });
-            let unique = format!("{}", if col.unique { "y" } else { "n" });
-            let nn = format!("{}", if col.not_null { "y" } else { "n" });
-            let fk = format!("{}", if col.foreign_key.is_some() { "y" } else { "n" });
-            let col_row = vec![col.name.text_value.clone(), dt, pk, unique, nn, fk];
+            let pk = format!("{}", if col.primary_key { "X" } else { "" });
+            let unique = format!("{}", if col.unique { "X" } else { "" });
+            let nn = format!("{}", if col.not_null { "X" } else { "" });
+            let fk = format!("{}", if col.foreign_key.is_some() { "X" } else { "" });
+            let mut col_row = vec![col.name.text_value.clone(), dt, pk, unique, nn, fk];
+
+            if let Some(fk) = &col.foreign_key {
+                let fk_col = fk.referenced_column.text_value.clone();
+                let fk_table = fk.referenced_table.text_value.clone();
+                let fk_col_header = "Ref Col";
+                let fk_table_header = "Ref Table";
+                header_vec.push(fk_table_header);
+                header_vec.push(fk_col_header);
+                widths.push(Constraint::Min(10));
+                widths.push(Constraint::Min(8));
+                col_row.push(fk_table);
+                col_row.push(fk_col);
+            }
 
             table_form_rows.push(Row::new(col_row));
         }
 
-        let widths = vec![
-            Constraint::Percentage(17),
-            Constraint::Percentage(17),
-            Constraint::Percentage(17),
-            Constraint::Percentage(17),
-            Constraint::Percentage(17),
-            Constraint::Percentage(15),
-        ];
+        let header = Some(Row::new(header_vec));
 
         render_table(
             frame,
@@ -1293,7 +1309,7 @@ fn render_column_list(frame: &mut Frame, app: &mut App, area: Rect) {
 fn render_color_scheme_preview(
     frame: &mut Frame,
     area: Rect,
-    color_scheme: &SelectedScheme,
+    color_scheme: &SelectedColorScheme,
     border_style: Style,
 ) {
     let border_block = Block::default().style(border_style).borders(Borders::ALL);
