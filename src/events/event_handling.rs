@@ -2,10 +2,10 @@ use crate::{
     app::{App, Mode, PopUp, Screen},
     db::DB,
     errors::{app_error::AppError, backend::DBError, navigation::NavigationError},
-    log::log,
+    events::input::key_bindings::AppInputEvent,
     options::{OptionKind, SelectedOption},
     traits::writeable::Writable,
-    ui::input::key_bindings::AppInputEvent,
+    utils::log::log,
     widgets::new_table::form::{ColumnField, TableField},
 };
 use crossterm::event::{KeyEvent, KeyModifiers};

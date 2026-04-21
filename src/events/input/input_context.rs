@@ -2,7 +2,7 @@ use crossterm::event::{KeyCode, KeyModifiers};
 
 use crate::{
     app::{Mode, PopUp, Screen},
-    ui::input::key_bindings::{AppInputEvent, KeyBinding},
+    events::input::key_bindings::{AppInputEvent, KeyBinding},
 };
 
 use serde::{Deserialize, Serialize};
