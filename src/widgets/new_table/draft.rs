@@ -2,13 +2,11 @@ use std::fmt;
 
 use crate::widgets::text_box::TextBox;
 
-#[allow(dead_code)]
 pub struct ForeignKeyDraft {
     pub referenced_table: TextBox,
     pub referenced_column: TextBox,
 }
 
-#[allow(dead_code)]
 impl ForeignKeyDraft {
     pub fn new() -> Self {
         Self {
@@ -18,7 +16,6 @@ impl ForeignKeyDraft {
     }
 }
 
-#[allow(dead_code)]
 pub enum SqlDataType {
     Integer,
     Real,
@@ -38,7 +35,6 @@ impl fmt::Display for SqlDataType {
     }
 }
 
-#[allow(dead_code)]
 pub struct ColumnDraft {
     pub name: TextBox,
     pub data_type: SqlDataType,

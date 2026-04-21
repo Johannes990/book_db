@@ -5,6 +5,7 @@ use crate::{
     row::row_info::RowInfo,
     ui::{colors::app_colors::ColorScheme, input::key_bindings::AppInputEvent},
 };
+
 use ratatui::{
     layout::{Constraint, Direction, Flex, Layout},
     prelude::{Alignment, Margin, Rect},
@@ -849,28 +850,117 @@ fn render_insert_table_popup(frame: &mut Frame, app: &mut App) {
     let insert_table_popup_style = Style::default()
         .bg(app.background_alt_color())
         .fg(app.text_color());
+    let border_block_style = Style::default()
+        .bg(app.background_color())
+        .fg(app.border_color());
+    let highlight_style = Style::default()
+        .bg(app.background_highlight_color())
+        .fg(app.text_highlight_color());
     let scrollbar_style = Style::default().fg(app.border_color());
 
-    let unwrapped_table_insert_form = app.table_insert_form.as_mut().unwrap();
+    let Some(unwrapped_table_insert_form) = app.table_insert_form.as_mut() else {
+        return;
+    };
     let popup_block = Block::default()
         .borders(Borders::ALL)
         .style(insert_table_popup_style);
 
+    let table_block = Block::new().style(insert_table_popup_style);
+
     frame.render_widget(Clear, main_chunk);
     frame.render_widget(popup_block, main_chunk);
+
+    let table_chunk_area_without_top_row = Rect {
+        x: main_chunk.x,
+        y: main_chunk.y + 1,
+        height: main_chunk.height - 1,
+        width: main_chunk.width,
+    };
+
+    let (table_area, scrollbar_area) =
+        get_table_and_scrollbar_areas(table_chunk_area_without_top_row);
+
+    let table_name = format!(
+        "Table: {}",
+        unwrapped_table_insert_form.draft.name.text_value,
+    );
+
+    let table_name_paragraph = Paragraph::new(table_name).style(border_block_style);
+
+    frame.render_widget(
+        table_name_paragraph,
+        Rect {
+            x: main_chunk.x,
+            y: main_chunk.y,
+            width: main_chunk.width,
+            height: 1,
+        },
+    );
 
     render_vertical_scrollbar(
         frame,
         scrollbar_style,
-        area,
+        scrollbar_area,
         None,
         &mut unwrapped_table_insert_form.scroll_state,
     );
+
+    let mut table_form_rows = Vec::new();
+
+    if !unwrapped_table_insert_form.draft.columns.is_empty() {
+        let name = "Column";
+        let data_type = "Data Type";
+        let primary_key = "PK";
+        let unique = "Unique";
+        let not_null = "Not Null";
+        let foreign_key = "FK";
+        let header = Some(Row::new(vec![
+            name,
+            data_type,
+            primary_key,
+            unique,
+            not_null,
+            foreign_key,
+        ]));
+
+        for col in &unwrapped_table_insert_form.draft.columns {
+            let dt = format!("{}", col.data_type);
+            let pk = format!("{}", if col.primary_key { "y" } else { "n" });
+            let unique = format!("{}", if col.unique { "y" } else { "n" });
+            let nn = format!("{}", if col.not_null { "y" } else { "n" });
+            let fk = format!("{}", if col.foreign_key.is_some() { "y" } else { "n" });
+            let col_row = vec![col.name.text_value.clone(), dt, pk, unique, nn, fk];
+
+            table_form_rows.push(Row::new(col_row));
+        }
+
+        let widths = vec![
+            Constraint::Percentage(17),
+            Constraint::Percentage(17),
+            Constraint::Percentage(17),
+            Constraint::Percentage(17),
+            Constraint::Percentage(17),
+            Constraint::Percentage(15),
+        ];
+
+        render_table(
+            frame,
+            &mut unwrapped_table_insert_form.state,
+            header,
+            table_form_rows,
+            widths,
+            table_area,
+            highlight_style,
+            table_block,
+        );
+    }
 
     if let Some(info_chunk) = info_chunk {
         let events = [
             AppInputEvent::ClosePopUp,
             AppInputEvent::SwitchToEdit,
+            AppInputEvent::InsertColumn,
+            AppInputEvent::RemoveColumn,
             AppInputEvent::MoveUpPrimary,
             AppInputEvent::MoveDownPrimary,
             AppInputEvent::MoveUpSecondary,

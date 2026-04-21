@@ -868,10 +868,27 @@ fn insert_table_popup_handler(app: &mut App, key_event: KeyEvent) -> Result<(), 
         return Ok(());
     };
 
+    let textbox_selected = insert_form.selected_textbox_mut().is_some();
+
+    let mut logging_info = "selected new table form field: ".to_string();
+
+    match &insert_form.selected_field {
+        TableField::TableName => {
+            logging_info.push_str("Tablename");
+        }
+        TableField::Column(col_idx, col_type) => {
+            logging_info.push_str(format!("{} {}", col_idx, col_type).as_str());
+        }
+    }
+
+    logging_info.push_str(format!(", selected is textbox: {}", textbox_selected).as_str());
+
+    log(&logging_info);
+
     match event {
         AppInputEvent::ClosePopUp => app.switch_to_popup(PopUp::None),
         AppInputEvent::SwitchToEdit => {
-            if insert_form.selected_textbox_mut().is_some() {
+            if textbox_selected {
                 app.switch_mode(Mode::Edit)
             }
         }
@@ -898,12 +915,33 @@ fn insert_table_popup_handler(app: &mut App, key_event: KeyEvent) -> Result<(), 
         AppInputEvent::MoveUpPrimary => insert_form.previous_form_row(),
         AppInputEvent::MoveDownPrimary => insert_form.next_form_row(),
         AppInputEvent::MoveUpSecondary => {
-            insert_form.previous_form_row();
             insert_form.previous_form_row_field();
         }
         AppInputEvent::MoveDownSecondary => {
-            insert_form.next_form_row();
             insert_form.next_form_row_field();
+        }
+        AppInputEvent::ToggleOption => {
+            if let TableField::Column(idx, field) = insert_form.selected_field {
+                insert_form.toggle_field(idx, &field);
+            }
+        }
+        AppInputEvent::ExecuteAction => {
+            let Some(db) = &mut app.selected_db else {
+                return Ok(());
+            };
+            let sql_string = insert_form.draft.to_sql();
+            {
+                match db.execute_raw_sql(sql_string) {
+                    Ok(_) => {
+                        app.fetch_table_list();
+                        app.switch_to_popup(PopUp::None);
+                    }
+                    Err(err) => {
+                        app.current_error = Some(err.into());
+                        app.switch_to_popup(PopUp::Error);
+                    }
+                }
+            }
         }
         _ => {}
     }

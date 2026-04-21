@@ -8,14 +8,16 @@ use crate::{
     },
 };
 
-#[derive(PartialEq)]
+use std::fmt;
+
+#[derive(PartialEq, Copy, Clone)]
 #[allow(dead_code)]
 pub enum ColumnField {
     Name,
     DataType,
     PrimaryKey,
-    NotNull,
     Unique,
+    NotNull,
     ForeignKeyToggle,
     ForeignKeyTable,
     ForeignKeyColumn,
@@ -27,9 +29,9 @@ impl ColumnField {
         match self {
             ColumnField::Name => ColumnField::DataType,
             ColumnField::DataType => ColumnField::PrimaryKey,
-            ColumnField::PrimaryKey => ColumnField::NotNull,
-            ColumnField::NotNull => ColumnField::Unique,
-            ColumnField::Unique => ColumnField::ForeignKeyToggle,
+            ColumnField::PrimaryKey => ColumnField::Unique,
+            ColumnField::Unique => ColumnField::NotNull,
+            ColumnField::NotNull => ColumnField::ForeignKeyToggle,
             ColumnField::ForeignKeyToggle => {
                 if col.foreign_key.is_some() {
                     ColumnField::ForeignKeyTable
@@ -53,12 +55,33 @@ impl ColumnField {
             }
             ColumnField::DataType => ColumnField::Name,
             ColumnField::PrimaryKey => ColumnField::DataType,
-            ColumnField::NotNull => ColumnField::PrimaryKey,
-            ColumnField::Unique => ColumnField::NotNull,
-            ColumnField::ForeignKeyToggle => ColumnField::Unique,
+            ColumnField::Unique => ColumnField::PrimaryKey,
+            ColumnField::NotNull => ColumnField::Unique,
+            ColumnField::ForeignKeyToggle => ColumnField::NotNull,
             ColumnField::ForeignKeyTable => ColumnField::ForeignKeyToggle,
             ColumnField::ForeignKeyColumn => ColumnField::ForeignKeyTable,
         }
+    }
+}
+
+impl fmt::Display for ColumnField {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            ColumnField::Name => write!(f, "Name"),
+            ColumnField::DataType => write!(f, "Data type"),
+            ColumnField::PrimaryKey => write!(f, "Primary key"),
+            ColumnField::NotNull => write!(f, "Not null"),
+            ColumnField::Unique => write!(f, "Unique"),
+            ColumnField::ForeignKeyToggle => write!(f, "FK toggle"),
+            ColumnField::ForeignKeyColumn => write!(f, "FK Column"),
+            ColumnField::ForeignKeyTable => write!(f, "FM Table"),
+        }
+    }
+}
+
+impl fmt::Debug for ColumnField {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self)
     }
 }
 
@@ -158,7 +181,7 @@ impl CreateTableForm {
     }
 
     pub fn is_col_name_field_selected(&self, col_idx: usize) -> bool {
-        matches!(self.selected_field, TableField::Column(i, ColumnField::Name)if i == col_idx)
+        matches!(self.selected_field, TableField::Column(i, ColumnField::Name) if i == col_idx)
     }
 
     pub fn is_col_fk_table_field_selected(&self, col_idx: usize) -> bool {
@@ -172,6 +195,9 @@ impl CreateTableForm {
     pub fn selected_textbox_mut(&mut self) -> Option<&mut TextBox> {
         match self.selected_field {
             TableField::TableName => Some(&mut self.draft.name),
+            TableField::Column(i, ColumnField::Name) => {
+                self.draft.columns.get_mut(i).map(|name| &mut name.name)
+            }
             TableField::Column(i, ColumnField::ForeignKeyTable) => self
                 .draft
                 .columns
@@ -185,6 +211,20 @@ impl CreateTableForm {
                 .and_then(|c| c.foreign_key.as_mut())
                 .map(|fk| &mut fk.referenced_column),
             _ => None,
+        }
+    }
+
+    pub fn toggle_field(&mut self, idx: usize, field: &ColumnField) {
+        let Some(col) = self.draft.columns.get_mut(idx as usize) else {
+            return;
+        };
+        match field {
+            ColumnField::ForeignKeyToggle => col.toggle_foreign_key(),
+            ColumnField::NotNull => col.toggle_not_null(),
+            ColumnField::PrimaryKey => col.toggle_primary_key(),
+            ColumnField::Unique => col.toggle_unique(),
+            ColumnField::DataType => col.toggle_data_type_next(),
+            _ => {}
         }
     }
 

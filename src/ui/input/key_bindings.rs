@@ -382,6 +382,24 @@ impl KeyBindings {
                 AppInputEvent::ToggleOption,
             ),
             context_event(
+                KeyCode::Tab,
+                KeyModifiers::NONE,
+                InputContext::PopUp(PopUp::InsertTable),
+                AppInputEvent::ToggleOption,
+            ),
+            context_event(
+                KeyCode::Char('i'),
+                KeyModifiers::CONTROL,
+                InputContext::PopUp(PopUp::InsertTable),
+                AppInputEvent::InsertColumn,
+            ),
+            context_event(
+                KeyCode::Char('r'),
+                KeyModifiers::CONTROL,
+                InputContext::PopUp(PopUp::InsertTable),
+                AppInputEvent::RemoveColumn,
+            ),
+            context_event(
                 KeyCode::Enter,
                 KeyModifiers::NONE,
                 InputContext::Screen(Screen::FileExplorer),
