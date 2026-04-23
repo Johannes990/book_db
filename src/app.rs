@@ -1,8 +1,10 @@
 use crate::{
     column::{column_info::ColumnInfo, column_list::ColumnListView},
     db::DB,
-    errors::backend::DBError,
-    errors::{app_error::AppError, backend::BackendError},
+    errors::{
+        app_error::AppError,
+        backend::{BackendError, DBError},
+    },
     events::input::key_bindings::KeyBindings,
     file_explorer::file_explorer_table::FileExplorerTable,
     handle_key_events,
@@ -12,11 +14,11 @@ use crate::{
     row::row_list::RowListView,
     table::{table_info::TableInfo, table_list::TableListView},
     traits::color_scheme::ColorScheme,
-    ui::{colors::static_colors::StaticColors, render},
+    ui::{app_styles::AppStyles, colors::static_colors::StaticColors, render},
     utils::log::log,
     widgets::{new_table::form::CreateTableForm, text_form::TextForm},
 };
-use ratatui::{style::Color, Terminal};
+use ratatui::Terminal;
 use serde::{Deserialize, Serialize};
 use std::{
     collections::HashSet,
@@ -80,6 +82,7 @@ pub struct App {
     pub create_db_form: Option<TextForm>,
     pub should_quit: bool,
     pub options: Options,
+    pub styles: AppStyles,
     pub key_bindings: KeyBindings,
     pub language: AppLanguage,
     pub perf_profiler: Option<Receiver<Resources>>,
@@ -120,6 +123,8 @@ impl App {
             language.screen_file_explorer_dir_read_error.clone(),
         );
 
+        let styles = AppStyles::from(&options.selected_color_scheme.colors());
+
         Ok(Self {
             qualifier,
             organization,
@@ -143,6 +148,7 @@ impl App {
             create_db_form: None,
             should_quit: false,
             options,
+            styles,
             key_bindings,
             language,
             perf_profiler: None,
@@ -368,50 +374,6 @@ impl App {
     pub fn create_new_db_form(&mut self) {
         let title_text = "Create a new database".to_string();
         self.create_db_form = Some(TextForm::new(vec!["Database name".to_string()], title_text));
-    }
-
-    pub fn text_color(&self) -> Color {
-        self.options.selected_color_scheme.colors().text
-    }
-
-    pub fn text_alt_color(&self) -> Color {
-        self.options.selected_color_scheme.colors().text_alt
-    }
-
-    pub fn text_highlight_color(&self) -> Color {
-        self.options.selected_color_scheme.colors().text_highlight
-    }
-
-    pub fn background_color(&self) -> Color {
-        self.options.selected_color_scheme.colors().background
-    }
-
-    pub fn background_alt_color(&self) -> Color {
-        self.options.selected_color_scheme.colors().background_alt
-    }
-
-    pub fn background_highlight_color(&self) -> Color {
-        self.options
-            .selected_color_scheme
-            .colors()
-            .background_highlight
-    }
-
-    pub fn warning_color(&self) -> Color {
-        self.options.selected_color_scheme.colors().warning
-    }
-
-    pub fn error_color(&self) -> Color {
-        self.options.selected_color_scheme.colors().error
-    }
-
-    pub fn border_color(&self) -> Color {
-        self.options.selected_color_scheme.colors().border
-    }
-
-    #[allow(dead_code)]
-    pub fn accent_color(&self) -> Color {
-        self.options.selected_color_scheme.colors().accent
     }
 
     pub fn switch_to_screen(&mut self, screen: Screen) {

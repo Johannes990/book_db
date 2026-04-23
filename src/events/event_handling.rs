@@ -4,7 +4,8 @@ use crate::{
     errors::{app_error::AppError, backend::DBError, navigation::NavigationError},
     events::input::key_bindings::AppInputEvent,
     options::{OptionKind, SelectedOption},
-    traits::writeable::Writable,
+    traits::{color_scheme::ColorScheme, writeable::Writable},
+    ui::app_styles::AppStyles,
     utils::log::log,
     widgets::new_table::form::{ColumnField, TableField},
 };
@@ -430,10 +431,12 @@ fn options_screen_handler(app: &mut App, key_event: KeyEvent) -> Result<(), AppE
         }
         AppInputEvent::MoveUpSecondary => {
             app.options.previous_color_scheme();
+            app.styles = AppStyles::from(&app.options.selected_color_scheme.colors());
             changed = true;
         }
         AppInputEvent::MoveDownSecondary => {
             app.options.next_color_scheme();
+            app.styles = AppStyles::from(&app.options.selected_color_scheme.colors());
             changed = true;
         }
         AppInputEvent::ToggleOption => {

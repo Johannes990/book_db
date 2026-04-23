@@ -5,6 +5,7 @@ use crate::{
     options::{OptionKind, SelectedColorScheme},
     row::row_info::RowInfo,
     traits::color_scheme::ColorScheme,
+    widgets::new_table::form::TableField,
 };
 
 use ratatui::{
@@ -60,9 +61,6 @@ fn render_splash_screen(frame: &mut Frame, app: &App) {
     }
 
     let (main_chunk, info_chunk) = split_with_optional_info_chunk(frame_area, app);
-    let main_page_style = Style::default()
-        .bg(app.background_color())
-        .fg(app.text_color());
     let loaded_db_name_default = &app.language.screen_splash_db_placeholder;
     let loaded_db_name = app
         .selected_db
@@ -85,7 +83,7 @@ fn render_splash_screen(frame: &mut Frame, app: &App) {
         Line::from(format!(" {}: {}", loaded_table_string, selected_table_name)),
     ];
 
-    let main_page_paragraph = Paragraph::new(main_page_content).style(main_page_style);
+    let main_page_paragraph = Paragraph::new(main_page_content).style(app.styles.screen_style);
 
     frame.render_widget(main_page_paragraph, main_chunk);
 
@@ -117,10 +115,6 @@ fn render_file_explorer_screen(frame: &mut Frame, app: &mut App) {
     }
 
     let (main_chunk, info_chunk) = split_with_optional_info_chunk(frame_area, app);
-    let scrollbar_style = Style::default().fg(app.border_color());
-    let fexp_page_style = Style::default()
-        .bg(app.background_color())
-        .fg(app.text_color());
     let file_explorer_title = &app.language.screen_file_explorer_title;
     let file_explorer_currently_in_string = &app.language.screen_file_explorer_current_location;
     let current_app_mode_string = &app.language.mode_current_mode;
@@ -142,22 +136,19 @@ fn render_file_explorer_screen(frame: &mut Frame, app: &mut App) {
             .right_aligned(),
         )
         .borders(Borders::NONE)
-        .style(fexp_page_style);
+        .style(app.styles.screen_style);
 
     frame.render_widget(file_explorer_block, main_chunk);
 
     let header_file_folder_string = &app.language.screen_file_explorer_file_folder_header;
     let header_size_string = &app.language.screen_file_explorer_size_header;
     let header_date_created_string = &app.language.screen_file_explorer_date_created_header;
-    let header = [
+    let header_row = Row::new(vec![
         header_file_folder_string.as_str(),
         header_size_string.as_str(),
         header_date_created_string.as_str(),
-    ]
-    .into_iter()
-    .map(Cell::from)
-    .collect::<Row>()
-    .style(fexp_page_style)
+    ])
+    .style(app.styles.screen_style)
     .height(1);
     let rows: Vec<Row> = app
         .file_explorer_table
@@ -165,15 +156,12 @@ fn render_file_explorer_screen(frame: &mut Frame, app: &mut App) {
         .iter()
         .enumerate()
         .map(|(i, data)| {
-            let color = match i % 2 {
-                0 => app.background_color(),
-                _ => app.background_alt_color(),
+            let style = match i % 2 {
+                0 => app.styles.list_row_style,
+                _ => app.styles.list_row_alt_style,
             };
-            let item = data.ref_array();
-            item.into_iter()
-                .map(|content| Cell::from(Text::from(content.to_string())))
-                .collect::<Row>()
-                .style(Style::new().bg(color).fg(app.text_color()))
+            let items: Vec<&str> = data.ref_array().iter().map(|item| item.as_str()).collect();
+            Row::new(items).style(style)
         })
         .collect();
     let col_constraints = [
@@ -182,13 +170,9 @@ fn render_file_explorer_screen(frame: &mut Frame, app: &mut App) {
         Constraint::Length(app.file_explorer_table.longest_item_lens.2 + 4),
     ];
 
-    let highlight_style = Style::default()
-        .bg(app.background_highlight_color())
-        .fg(app.text_highlight_color());
-    let border_block_style = Style::default()
-        .bg(app.background_color())
-        .fg(app.border_color());
-    let border_block = Block::new().borders(Borders::ALL).style(border_block_style);
+    let border_block = Block::new()
+        .borders(Borders::ALL)
+        .style(app.styles.screen_border_style);
     let table_chunk_area_without_top_row = Rect {
         x: main_chunk.x,
         y: main_chunk.y + 1,
@@ -202,17 +186,17 @@ fn render_file_explorer_screen(frame: &mut Frame, app: &mut App) {
     render_table(
         frame,
         &mut app.file_explorer_table.state,
-        Some(header),
+        Some(header_row),
         rows,
         col_constraints.to_vec(),
         table_area,
-        highlight_style,
+        app.styles.highlight_row_style,
         border_block,
     );
 
     render_vertical_scrollbar(
         frame,
-        scrollbar_style,
+        app.styles.screen_border_style,
         scrollbar_area,
         None,
         &mut app.file_explorer_table.scroll_state,
@@ -247,9 +231,6 @@ fn render_database_schema_screen(frame: &mut Frame, app: &mut App) {
         handle_footer_data_and_rendering(frame, app, chunks[1]);
     }
 
-    let db_page_style = Style::default()
-        .bg(app.background_color())
-        .fg(app.text_color());
     let (main_chunk, info_chunk) = split_with_optional_info_chunk(frame_area, app);
     let no_db_found_string = &app.language.screen_db_schema_no_db_found;
     let db_name = app
@@ -268,7 +249,7 @@ fn render_database_schema_screen(frame: &mut Frame, app: &mut App) {
             ))
             .right_aligned(),
         )
-        .style(db_page_style);
+        .style(app.styles.screen_style);
     let inner_area = outer_block.inner(main_chunk);
     let table_column_chunks =
         get_chunks_from_percentages(inner_area, Direction::Horizontal, vec![50, 50]);
@@ -311,16 +292,14 @@ fn render_new_database_screen(frame: &mut Frame, app: &mut App) {
         handle_footer_data_and_rendering(frame, app, chunks[1]);
     }
 
-    let page_style = Style::default()
-        .bg(app.background_color())
-        .fg(app.text_color());
     let (main_chunk, info_chunk) = split_with_optional_info_chunk(frame_area, app);
-    let insert_text_area_on_style = Style::default()
-        .bg(app.background_highlight_color())
-        .fg(app.text_highlight_color());
 
     if let Some(form) = &mut app.create_db_form {
-        form.set_styles(insert_text_area_on_style, Style::default(), page_style);
+        form.set_styles(
+            app.styles.highlight_row_style,
+            Style::default(),
+            app.styles.screen_style,
+        );
     }
 
     let content_area = Rect {
@@ -364,16 +343,7 @@ fn render_database_table_screen(frame: &mut Frame, app: &mut App) {
     }
 
     let (main_chunk, info_chunk) = split_with_optional_info_chunk(frame_area, app);
-    let db_page_style = Style::default()
-        .bg(app.background_color())
-        .fg(app.text_color());
-    let col_name_style = Style::default()
-        .fg(app.text_color())
-        .add_modifier(Modifier::ITALIC | Modifier::UNDERLINED);
-    let metadata_style = Style::default()
-        .fg(app.text_alt_color())
-        .add_modifier(Modifier::ITALIC);
-    let scrollbar_style = Style::default().fg(app.border_color());
+
     let empty_table_string = &app.language.screen_db_table_table_placeholder;
     let table_name = app.selected_db_table.as_ref().expect(empty_table_string);
     let current_table_string = &app.language.screen_db_table_current_table;
@@ -387,7 +357,7 @@ fn render_database_table_screen(frame: &mut Frame, app: &mut App) {
             ))
             .right_aligned(),
         )
-        .style(db_page_style);
+        .style(app.styles.screen_style);
     let inner_area = outer_block.inner(main_chunk);
 
     frame.render_widget(outer_block, main_chunk);
@@ -401,70 +371,62 @@ fn render_database_table_screen(frame: &mut Frame, app: &mut App) {
             let line = col.get_line_from_col_info(
                 language_strings,
                 *display_metainfo,
-                col_name_style,
-                metadata_style,
+                app.styles.identifier_style,
+                app.styles.metadata_style,
             );
             Cell::from(line)
         })
         .collect();
-    let header = Row::new(header_cells).style(db_page_style);
-    let highlight_style = Style::default()
-        .bg(app.background_highlight_color())
-        .fg(app.text_highlight_color());
-    let rows: Vec<_> = app
-        .row_list_view
-        .as_ref()
-        .unwrap()
-        .items
-        .iter()
-        .map(|row| {
-            let row_cells = row
-                .values
-                .iter()
-                .map(|val| Cell::from(val.clone()))
-                .collect::<Vec<_>>();
-            Row::new(row_cells).style(db_page_style)
-        })
-        .collect();
+    let header = Row::new(header_cells).style(app.styles.screen_style);
 
-    let table_name = table_name.to_string();
-    let border_block_style = Style::default()
-        .bg(app.background_color())
-        .fg(app.border_color());
-    let border_block = Block::new()
-        .borders(Borders::ALL)
-        .style(border_block_style)
-        .title(table_name);
-    let unwrapped_row_list = app.row_list_view.as_mut().unwrap();
-    let min = 5;
-    let max = 40;
-    let col_constraints = compute_col_widths(
-        &app.selected_table_columns,
-        &unwrapped_row_list.items,
-        min,
-        max,
-        language_strings,
-        &app.options.display_col_metainfo_in_table_view,
-    );
+    if let Some(rows) = app.row_list_view.as_mut() {
+        let row_items: Vec<Row<'_>> = rows
+            .items
+            .iter()
+            .enumerate()
+            .map(|(i, data)| {
+                let style = match i % 2 {
+                    0 => app.styles.list_row_style,
+                    _ => app.styles.list_row_alt_style,
+                };
+                Row::new(data.values.clone()).style(style)
+            })
+            .collect();
+        let table_name = table_name.to_string();
+        let border_block = Block::new()
+            .borders(Borders::ALL)
+            .style(app.styles.screen_border_style)
+            .title(table_name);
+        let min = 5;
+        let max = 40;
+        let col_constraints = compute_col_widths(
+            &app.selected_table_columns,
+            &rows.items,
+            min,
+            max,
+            language_strings,
+            &app.options.display_col_metainfo_in_table_view,
+        );
 
-    render_table(
-        frame,
-        &mut unwrapped_row_list.state,
-        Some(header),
-        rows,
-        col_constraints,
-        inner_area,
-        highlight_style,
-        border_block,
-    );
+        render_table(
+            frame,
+            &mut rows.state,
+            Some(header),
+            row_items,
+            col_constraints,
+            inner_area,
+            app.styles.highlight_row_style,
+            border_block,
+        );
 
-    render_vertical_scrollbar(
-        frame,
-        scrollbar_style,
-        inner_area,
-        None,
-        &mut unwrapped_row_list.scroll_bar_state,
-    );
+        render_vertical_scrollbar(
+            frame,
+            app.styles.screen_border_style,
+            inner_area,
+            None,
+            &mut rows.scroll_bar_state,
+        );
+    }
 
     if let Some(info_chunk) = info_chunk {
         let events = [
@@ -497,14 +459,10 @@ fn render_options_screen(frame: &mut Frame, app: &mut App) {
         handle_footer_data_and_rendering(frame, app, chunks[1]);
     }
 
-    let general_page_style = Style::default()
-        .fg(app.text_color())
-        .bg(app.background_color());
-    let selected_style = Style::default().fg(app.error_color());
     let options_title = &app.language.screen_options_title;
     let options_block = Block::default()
         .title(format!(" {}", options_title.to_string()))
-        .style(general_page_style);
+        .style(app.styles.screen_style);
 
     frame.render_widget(options_block, frame_area);
 
@@ -520,16 +478,10 @@ fn render_options_screen(frame: &mut Frame, app: &mut App) {
     let color_schemes_string = &app.language.screen_options_color_schemes;
     let header = Row::new(vec![Cell::from(color_schemes_string.to_string())]);
     let constraints = vec![Constraint::Min(5)];
-    let border_block_style = Style::default()
-        .bg(app.background_color())
-        .fg(app.border_color());
-    let border_block = Block::new().borders(Borders::ALL).style(border_block_style);
+    let border_block = Block::new()
+        .borders(Borders::ALL)
+        .style(app.styles.screen_border_style);
     let selected_scheme = app.options.selected_color_scheme;
-    let text_color = app.text_color();
-    let highlight_style = Style::default()
-        .bg(app.background_highlight_color())
-        .fg(app.text_highlight_color());
-    let border_color = app.border_color();
     let color_table = &mut app.options.available_color_schemes;
     let rows: Vec<_> = color_table
         .items
@@ -537,11 +489,11 @@ fn render_options_screen(frame: &mut Frame, app: &mut App) {
         .map(|scheme| {
             let scheme_name = format!("{:?}", scheme);
             let style = if *scheme == selected_scheme {
-                Style::default().fg(text_color).add_modifier(Modifier::BOLD)
+                app.styles.screen_style.add_modifier(Modifier::BOLD)
             } else {
-                Style::default().fg(text_color)
+                app.styles.screen_style
             };
-            Row::new(vec![Cell::from(scheme_name)]).style(style)
+            Row::new(vec![scheme_name]).style(style)
         })
         .collect();
 
@@ -559,13 +511,13 @@ fn render_options_screen(frame: &mut Frame, app: &mut App) {
         rows,
         constraints,
         color_scheme_table_inner_area,
-        highlight_style,
+        app.styles.highlight_row_style,
         border_block,
     );
 
     render_vertical_scrollbar(
         frame,
-        Style::default().fg(border_color),
+        app.styles.screen_border_style,
         horizontal_chunks[0],
         None,
         &mut color_table.scroll_bar_state,
@@ -575,7 +527,7 @@ fn render_options_screen(frame: &mut Frame, app: &mut App) {
         frame,
         horizontal_chunks[1],
         &app.options.selected_color_scheme,
-        border_block_style,
+        app.styles.screen_border_style,
     );
 
     let selectable_options_strings = [
@@ -619,9 +571,9 @@ fn render_options_screen(frame: &mut Frame, app: &mut App) {
         let label = Line::from(content);
         let paragraph = Paragraph::new(label)
             .style(if field.selected {
-                selected_style
+                app.styles.highlighted_element_style
             } else {
-                general_page_style
+                app.styles.screen_style
             })
             .block(block);
         let option_widget_area = Rect {
@@ -659,9 +611,6 @@ fn render_options_screen(frame: &mut Frame, app: &mut App) {
 
 fn render_quit_popup(frame: &mut Frame, app: &App) {
     let area = centered_rect(55, 30, frame.area());
-    let quit_popup_style = Style::default()
-        .bg(app.warning_color())
-        .fg(app.text_color());
 
     let events = [AppInputEvent::QuitAppConfirm, AppInputEvent::ClosePopUp];
 
@@ -679,16 +628,13 @@ fn render_quit_popup(frame: &mut Frame, app: &App) {
             &[]
         },
         quit_confirmation_string,
-        quit_popup_style,
+        app.styles.warning_style,
         area,
     );
 }
 
 fn render_no_db_loaded_popup(frame: &mut Frame, app: &mut App) {
     let area = centered_rect(55, 30, frame.area());
-    let popup_style = Style::default()
-        .bg(app.warning_color())
-        .fg(app.text_color());
 
     let events = [
         AppInputEvent::OpenFileExplorerScreen,
@@ -710,7 +656,7 @@ fn render_no_db_loaded_popup(frame: &mut Frame, app: &mut App) {
             &[]
         },
         no_db_loaded_string,
-        popup_style,
+        app.styles.warning_style,
         area,
     );
 }
@@ -718,30 +664,18 @@ fn render_no_db_loaded_popup(frame: &mut Frame, app: &mut App) {
 fn render_insert_row_popup(frame: &mut Frame, app: &mut App) {
     let area = centered_rect(55, 55, frame.area());
     let (main_chunk, info_chunk) = split_with_optional_info_chunk(area, app);
-    let insert_row_popup_style = Style::default()
-        .bg(app.background_alt_color())
-        .fg(app.text_color());
-    let metadata_style = Style::default()
-        .fg(app.text_alt_color())
-        .add_modifier(Modifier::ITALIC);
-    let insert_text_area_on_style = Style::default()
-        .bg(app.background_highlight_color())
-        .fg(app.text_highlight_color());
-    let insert_text_area_off_style = Style::default()
-        .bg(app.background_alt_color())
-        .fg(app.text_color());
     let language_strings = App::get_strings_for_col_info(&app.language);
 
     if let Some(form) = app.row_insert_form.as_mut() {
         form.set_styles(
-            insert_text_area_on_style,
-            insert_text_area_off_style,
-            insert_row_popup_style,
+            app.styles.highlight_row_style,
+            app.styles.popup_style,
+            app.styles.popup_style,
         );
 
         let popup_block = Block::default()
             .borders(Borders::ALL)
-            .style(insert_row_popup_style);
+            .style(app.styles.popup_style);
 
         frame.render_widget(Clear, main_chunk);
         frame.render_widget(popup_block, main_chunk);
@@ -759,8 +693,8 @@ fn render_insert_row_popup(frame: &mut Frame, app: &mut App) {
             let mut label_line = col_info.get_line_from_col_info(
                 language_strings,
                 *display_metainfo,
-                insert_row_popup_style,
-                metadata_style,
+                app.styles.popup_style,
+                app.styles.metadata_style,
             );
 
             let label_width = line_width(&label_line) as u16;
@@ -769,12 +703,12 @@ fn render_insert_row_popup(frame: &mut Frame, app: &mut App) {
             if field.selected {
                 label_line.spans.push(Span::styled(
                     field.text_box.text_value.clone(),
-                    insert_text_area_on_style,
+                    app.styles.highlight_row_style,
                 ))
             } else {
                 label_line.spans.push(Span::styled(
                     field.text_box.text_value.clone(),
-                    insert_text_area_off_style,
+                    app.styles.popup_style,
                 ));
             }
 
@@ -815,21 +749,12 @@ fn render_insert_row_popup(frame: &mut Frame, app: &mut App) {
 fn render_insert_raw_sql_popup(frame: &mut Frame, app: &mut App) {
     let area = centered_rect(55, 55, frame.area());
     let (main_chunk, info_chunk) = split_with_optional_info_chunk(area, app);
-    let insert_raw_sql_popup_style = Style::default()
-        .bg(app.background_alt_color())
-        .fg(app.text_color());
-    let insert_text_area_on_style = Style::default()
-        .bg(app.background_highlight_color())
-        .fg(app.text_highlight_color());
-    let insert_text_area_off_style = Style::default()
-        .bg(app.text_color())
-        .fg(app.background_alt_color());
 
     if let Some(form) = &mut app.raw_sql_form {
         form.set_styles(
-            insert_text_area_on_style,
-            insert_text_area_off_style,
-            insert_raw_sql_popup_style,
+            app.styles.highlight_row_style,
+            app.styles.popup_style,
+            app.styles.popup_style,
         );
     }
 
@@ -855,25 +780,11 @@ fn render_insert_raw_sql_popup(frame: &mut Frame, app: &mut App) {
 fn render_insert_table_popup(frame: &mut Frame, app: &mut App) {
     let area = centered_rect(55, 55, frame.area());
     let (main_chunk, info_chunk) = split_with_optional_info_chunk(area, app);
-    let insert_table_popup_style = Style::default()
-        .bg(app.background_alt_color())
-        .fg(app.text_color());
-    let border_block_style = Style::default()
-        .bg(app.background_color())
-        .fg(app.border_color());
-    let highlight_style = Style::default()
-        .bg(app.background_highlight_color())
-        .fg(app.text_highlight_color());
-    let scrollbar_style = Style::default().fg(app.border_color());
 
-    let Some(unwrapped_table_insert_form) = app.table_insert_form.as_mut() else {
+    let Some(form) = app.table_insert_form.as_mut() else {
         return;
     };
-    let popup_block = Block::default()
-        .borders(Borders::ALL)
-        .style(insert_table_popup_style);
-
-    let table_block = Block::new().style(insert_table_popup_style);
+    let popup_block = Block::default().style(app.styles.popup_style);
 
     frame.render_widget(Clear, main_chunk);
     frame.render_widget(popup_block, main_chunk);
@@ -888,12 +799,15 @@ fn render_insert_table_popup(frame: &mut Frame, app: &mut App) {
     let (table_area, scrollbar_area) =
         get_table_and_scrollbar_areas(table_chunk_area_without_top_row);
 
-    let table_name = format!(
-        "Table: {}",
-        unwrapped_table_insert_form.draft.name.text_value,
-    );
+    let table_name = format!("Table: {}", form.draft.name.text_value,);
 
-    let table_name_paragraph = Paragraph::new(table_name).style(border_block_style);
+    let table_name_style = if form.selected_field == TableField::TableName {
+        app.styles.highlight_row_style
+    } else {
+        app.styles.popup_style
+    };
+
+    let table_name_paragraph = Paragraph::new(table_name).style(table_name_style);
 
     frame.render_widget(
         table_name_paragraph,
@@ -905,17 +819,9 @@ fn render_insert_table_popup(frame: &mut Frame, app: &mut App) {
         },
     );
 
-    render_vertical_scrollbar(
-        frame,
-        scrollbar_style,
-        scrollbar_area,
-        None,
-        &mut unwrapped_table_insert_form.scroll_state,
-    );
-
     let mut table_form_rows = Vec::new();
 
-    if !unwrapped_table_insert_form.draft.columns.is_empty() {
+    if !form.draft.columns.is_empty() {
         let name = "Column";
         let data_type = "Data Type";
         let primary_key = "PK";
@@ -933,15 +839,27 @@ fn render_insert_table_popup(frame: &mut Frame, app: &mut App) {
             Constraint::Max(3),
         ];
 
-        for col in &unwrapped_table_insert_form.draft.columns {
-            let dt = format!("{}", col.data_type);
-            let pk = format!("{}", if col.primary_key { "X" } else { "" });
-            let unique = format!("{}", if col.unique { "X" } else { "" });
-            let nn = format!("{}", if col.not_null { "X" } else { "" });
-            let fk = format!("{}", if col.foreign_key.is_some() { "X" } else { "" });
-            let mut col_row = vec![col.name.text_value.clone(), dt, pk, unique, nn, fk];
+        for (i, col_draft) in form.draft.columns.iter().enumerate() {
+            let style = match i % 2 {
+                0 => app.styles.list_row_style,
+                _ => app.styles.list_row_alt_style,
+            };
 
-            if let Some(fk) = &col.foreign_key {
+            let dt = format!("{}", col_draft.data_type);
+            let pk = format!("{}", if col_draft.primary_key { "X" } else { "" });
+            let unique = format!("{}", if col_draft.unique { "X" } else { "" });
+            let nn = format!("{}", if col_draft.not_null { "X" } else { "" });
+            let fk = format!(
+                "{}",
+                if col_draft.foreign_key.is_some() {
+                    "X"
+                } else {
+                    ""
+                }
+            );
+            let mut col_row = vec![col_draft.name.text_value.clone(), dt, pk, unique, nn, fk];
+
+            if let Some(fk) = &col_draft.foreign_key {
                 let fk_col = fk.referenced_column.text_value.clone();
                 let fk_table = fk.referenced_table.text_value.clone();
                 let fk_col_header = "Ref Col";
@@ -954,20 +872,31 @@ fn render_insert_table_popup(frame: &mut Frame, app: &mut App) {
                 col_row.push(fk_col);
             }
 
-            table_form_rows.push(Row::new(col_row));
+            table_form_rows.push(Row::new(col_row).style(style));
         }
 
-        let header = Some(Row::new(header_vec));
+        let table_block = Block::new()
+            .style(app.styles.popup_border_style)
+            .borders(Borders::ALL);
+        let header = Some(Row::new(header_vec).style(app.styles.identifier_style));
 
         render_table(
             frame,
-            &mut unwrapped_table_insert_form.state,
+            &mut form.state,
             header,
             table_form_rows,
             widths,
             table_area,
-            highlight_style,
+            app.styles.highlight_row_style,
             table_block,
+        );
+
+        render_vertical_scrollbar(
+            frame,
+            app.styles.popup_border_style,
+            scrollbar_area,
+            None,
+            &mut form.scroll_state,
         );
     }
 
@@ -994,15 +923,13 @@ fn render_insert_table_popup(frame: &mut Frame, app: &mut App) {
 fn render_drop_table_popup(frame: &mut Frame, app: &mut App) {
     let area = centered_rect(55, 55, frame.area());
     let (main_chunk, info_chunk) = split_with_optional_info_chunk(area, app);
-    let drop_table_popup_style = Style::default()
-        .bg(app.background_alt_color())
-        .fg(app.text_color());
-    let text_area_style = Style::default()
-        .bg(app.background_highlight_color())
-        .fg(app.text_highlight_color());
 
     if let Some(form) = &mut app.table_delete_form {
-        form.set_styles(text_area_style, Style::default(), drop_table_popup_style);
+        form.set_styles(
+            app.styles.highlight_row_style,
+            Style::default(),
+            app.styles.popup_style,
+        );
     }
 
     if let Some(form) = &app.table_delete_form {
@@ -1027,24 +954,13 @@ fn render_drop_table_popup(frame: &mut Frame, app: &mut App) {
 fn render_delete_row_popup(frame: &mut Frame, app: &mut App) {
     let area = centered_rect(55, 55, frame.area());
     let (main_chunk, info_chunk) = split_with_optional_info_chunk(area, app);
-    let delete_row_popup_style = Style::default()
-        .bg(app.background_alt_color())
-        .fg(app.text_color());
-    let delete_text_area_on_style = Style::default()
-        .bg(app.background_highlight_color())
-        .fg(app.text_color());
-    let delete_text_area_off_style = Style::default()
-        .bg(app.background_alt_color())
-        .fg(app.text_color());
+
     if let Some(form) = &mut app.row_delete_form {
         form.set_styles(
-            delete_text_area_on_style,
-            delete_text_area_off_style,
-            delete_row_popup_style,
+            app.styles.highlight_row_style,
+            app.styles.popup_style,
+            app.styles.popup_style,
         );
-    }
-
-    if let Some(form) = &app.row_delete_form {
         form.render_widget_and_cursor(frame, main_chunk);
     }
 
@@ -1068,13 +984,12 @@ fn render_delete_row_popup(frame: &mut Frame, app: &mut App) {
 fn render_error_popup(frame: &mut Frame, app: &mut App) {
     if let Some(error) = &app.current_error {
         let area = centered_rect(40, 30, frame.area());
-        let style = Style::default().bg(app.error_color()).fg(app.text_color());
         let error_title = &app.language.popup_error_title;
         let error_block = Block::default()
             .borders(Borders::ALL)
             .title(error_title.to_string())
-            .border_style(Style::default().fg(app.border_color()))
-            .style(style);
+            .border_style(app.styles.popup_border_style)
+            .style(app.styles.error_style);
         let error_message = format!("{}", error);
         let mut error_text = Text::from(error_message);
 
@@ -1105,11 +1020,7 @@ fn render_error_popup(frame: &mut Frame, app: &mut App) {
 fn render_table_list(frame: &mut Frame, app: &mut App, area: Rect) {
     let table_title = &app.language.table_list_title;
 
-    if app.table_list_view.is_some() {
-        let scrollbar_style = Style::default().fg(app.border_color());
-        let row_style = Style::default()
-            .bg(app.background_color())
-            .fg(app.text_color());
+    if let Some(view) = app.table_list_view.as_mut() {
         let header_name_string = &app.language.table_list_name_header;
         let header_rows_string = &app.language.table_list_rows_header;
         let header_type_string = &app.language.table_list_type_header;
@@ -1118,26 +1029,29 @@ fn render_table_list(frame: &mut Frame, app: &mut App, area: Rect) {
             Cell::new(header_rows_string.to_string()),
             Cell::new(header_type_string.to_string()),
         ])
-        .style(row_style);
+        .style(app.styles.identifier_style);
         let view_element_string = &app.language.table_list_view_element;
         let table_element_string = &app.language.table_list_table_element;
-        let rows: Vec<Row> = app
-            .table_list_view
-            .as_ref()
-            .unwrap()
+        let rows = view
             .items
             .iter()
-            .map(|table| {
+            .enumerate()
+            .map(|(i, info_item)| {
+                let style = match i % 2 {
+                    0 => app.styles.list_row_style,
+                    _ => app.styles.list_row_alt_style,
+                };
+                let view_str = if info_item.is_view {
+                    view_element_string.to_string()
+                } else {
+                    table_element_string.to_string()
+                };
                 Row::new(vec![
-                    Cell::from(Text::from(table.name.clone())),
-                    Cell::from(Text::from(table.row_count.to_string())),
-                    Cell::from(Text::from(if table.is_view {
-                        view_element_string.to_string()
-                    } else {
-                        table_element_string.to_string()
-                    })),
+                    info_item.name.clone(),
+                    info_item.row_count.to_string(),
+                    view_str,
                 ])
-                .style(row_style)
+                .style(style)
             })
             .collect();
 
@@ -1147,47 +1061,37 @@ fn render_table_list(frame: &mut Frame, app: &mut App, area: Rect) {
             Constraint::Length(7), // type (table, view)
         ];
 
-        let border_block_style = Style::default()
-            .bg(app.background_color())
-            .fg(app.border_color());
         let border_block = Block::new()
             .borders(Borders::ALL)
-            .style(border_block_style)
+            .style(app.styles.screen_border_style)
             .title(table_title.to_string());
-        let highlight_style = Style::default()
-            .bg(app.background_highlight_color())
-            .fg(app.text_highlight_color());
-        let unwrapped_table_list = app.table_list_view.as_mut().unwrap();
 
         render_table(
             frame,
-            &mut unwrapped_table_list.state,
+            &mut view.state,
             Some(header),
             rows,
             col_constraints.to_vec(),
             area,
-            highlight_style,
+            app.styles.highlight_row_style,
             border_block,
         );
 
         render_vertical_scrollbar(
             frame,
-            scrollbar_style,
+            app.styles.screen_border_style,
             area,
             None,
-            &mut unwrapped_table_list.scroll_state,
+            &mut view.scroll_state,
         );
     } else {
-        let style = Style::default()
-            .bg(app.background_color())
-            .fg(app.text_color());
         let empty_block = Block::default()
             .title(table_title.to_string())
             .borders(Borders::ALL);
         let table_list_empty_string = &app.language.table_list_emtpy_placeholder;
         let paragraph = Paragraph::new(table_list_empty_string.to_string())
             .block(empty_block)
-            .style(style);
+            .style(app.styles.screen_style);
 
         frame.render_widget(Clear, area);
         frame.render_widget(paragraph, area);
@@ -1197,45 +1101,43 @@ fn render_table_list(frame: &mut Frame, app: &mut App, area: Rect) {
 fn render_column_list(frame: &mut Frame, app: &mut App, area: Rect) {
     let column_list_title = &app.language.column_list_title;
 
-    if app.column_list_view.is_some() {
-        let scrollbar_style = Style::default().fg(app.border_color());
+    if let Some(view) = app.column_list_view.as_mut() {
         let header_name_string = &app.language.column_list_name_header;
         let header_type_string = &app.language.column_list_type_header;
         let header_constraints_string = &app.language.column_list_constraints_header;
-        let header = [
+        let header_row = Row::new(vec![
             header_name_string.to_string(),
             header_type_string.to_string(),
             header_constraints_string.to_string(),
-        ]
-        .into_iter()
-        .map(Cell::from)
-        .collect::<Row>()
-        .style(Style::default().fg(app.text_color()));
+        ])
+        .style(app.styles.identifier_style);
 
-        let rows: Vec<Row> = app
-            .column_list_view
-            .as_ref()
-            .unwrap()
+        let rows: Vec<Row> = view
             .items
             .iter()
-            .map(|col| {
+            .enumerate()
+            .map(|(i, info_item)| {
+                let style = match i % 2 {
+                    0 => app.styles.list_row_style,
+                    _ => app.styles.list_row_alt_style,
+                };
                 let mut col_constraint_text = "".to_string();
-                if col.is_pk {
+                if info_item.is_pk {
                     let pk_string = &app.language.sql_pk_constraint;
                     col_constraint_text.push_str(format!("[{}]", pk_string).as_str());
                 }
-                if col.is_unique {
+                if info_item.is_unique {
                     let unique_string = &app.language.sql_unique_constraint;
                     col_constraint_text.push_str(format!("[{}]", unique_string).as_str());
                 }
-                if col.is_not_null {
+                if info_item.is_not_null {
                     let not_null_string = &app.language.sql_not_null_constraint;
                     col_constraint_text.push_str(format!("[{}]", not_null_string).as_str());
                 }
-                if col.is_fk {
+                if info_item.is_fk {
                     let unknown_ref_table_string = &app.language.column_list_unknown_fk_ref;
                     let fk_string = &app.language.sql_fk_constraint;
-                    let ref_table = col
+                    let ref_table = info_item
                         .references_table
                         .as_deref()
                         .unwrap_or(unknown_ref_table_string);
@@ -1244,10 +1146,11 @@ fn render_column_list(frame: &mut Frame, app: &mut App, area: Rect) {
                 }
 
                 Row::new(vec![
-                    Cell::from(Text::from(col.name.to_string())),
-                    Cell::from(Text::from(col.col_type.to_string())),
-                    Cell::from(Text::from(col_constraint_text)),
+                    info_item.name.to_string(),
+                    info_item.col_type.to_string(),
+                    col_constraint_text,
                 ])
+                .style(style)
             })
             .collect();
 
@@ -1257,49 +1160,37 @@ fn render_column_list(frame: &mut Frame, app: &mut App, area: Rect) {
             Constraint::Min(10),
         ];
 
-        let highlight_style = Style::default()
-            .bg(app.background_highlight_color())
-            .fg(app.text_highlight_color());
-        let border_block_style = Style::default()
-            .bg(app.background_color())
-            .fg(app.border_color());
         let border_block = Block::new()
             .borders(Borders::ALL)
-            .style(border_block_style)
+            .style(app.styles.screen_border_style)
             .title(column_list_title.to_string());
-        let Some(unwrapped_column_list) = app.column_list_view.as_mut() else {
-            return;
-        };
 
         render_table(
             frame,
-            &mut unwrapped_column_list.state,
-            Some(header),
+            &mut view.state,
+            Some(header_row),
             rows,
             col_constraints.to_vec(),
             area,
-            highlight_style,
+            app.styles.highlight_row_style,
             border_block,
         );
 
         render_vertical_scrollbar(
             frame,
-            scrollbar_style,
+            app.styles.screen_border_style,
             area,
             None,
-            &mut unwrapped_column_list.scroll_state,
+            &mut view.scroll_state,
         );
     } else {
-        let style = Style::default()
-            .bg(app.background_color())
-            .fg(app.text_color());
         let empty_block = Block::default()
             .title(column_list_title.to_string())
             .borders(Borders::ALL);
         let column_list_emtpy_string = &app.language.column_list_emtpy_placeholder;
         let paragraph = Paragraph::new(column_list_emtpy_string.to_string())
             .block(empty_block)
-            .style(style);
+            .style(app.styles.screen_style);
 
         frame.render_widget(Clear, area);
         frame.render_widget(paragraph, area);
@@ -1487,20 +1378,24 @@ fn render_info_paragraph<S>(info_bits: &[S], frame: &mut Frame, app: &App, area:
 where
     S: AsRef<str>,
 {
-    let info_style = Style::default()
-        .fg(app.border_color())
-        .bg(app.background_alt_color());
     let info_title = &app.language.info_block_title;
 
-    render_titled_paragraph(frame, app, info_bits, info_title, info_style, area);
+    render_titled_paragraph(
+        frame,
+        app,
+        info_bits,
+        info_title,
+        app.styles.info_style,
+        area,
+    );
 }
 
 fn format_info_text<'a, S>(text_bits: &'a [S], app: &App) -> Text<'a>
 where
     S: AsRef<str>,
 {
-    let general_text_style = Style::default().fg(app.text_color());
-    let alt_text_style_1 = Style::default().fg(app.text_alt_color());
+    let general_text_style = app.styles.footer_style;
+    let alt_text_style_1 = app.styles.footer_keycombo_style;
 
     let mut info_text = Text::default();
 
@@ -1550,11 +1445,8 @@ fn render_footer_row(
     left_info: String,
     right_info: String,
 ) {
-    let footer_style = Style::default()
-        .bg(app.background_alt_color())
-        .fg(app.text_color());
     let footer_block = Block::default()
-        .style(footer_style)
+        .style(app.styles.footer_style)
         .title(Line::from(left_info).left_aligned())
         .title(Line::from(right_info).right_aligned());
 

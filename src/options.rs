@@ -5,12 +5,10 @@ use strum::{EnumIter, IntoEnumIterator};
 
 use crate::{
     lang::language::SupportedLanguage,
-    ui::colors::{
-        app_colors::AppColors,
-        dynamic_colors::DynamicColors,
-        static_colors::StaticColors,
-    },
     traits::color_scheme::ColorScheme,
+    ui::colors::{
+        app_colors::AppColors, dynamic_colors::DynamicColors, static_colors::StaticColors,
+    },
     widgets::{generic_list_view::GenericListView, selectable_field::SelectableField},
 };
 

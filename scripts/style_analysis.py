@@ -102,24 +102,24 @@ def visualize_clusters(selected: list[Style], all_styles: list[Style]):
         
         print(f"  └── total: {len(covered)}\n")
 
-
 if __name__ == '__main__':
-    #render splash screen
     styles = []
-    splash_main_page_style = Style(text_col, back_col)
+
+    #render splash screen - 0
+    splash_main_page_style = Style(text_col, back_col)#yes
     styles.append(splash_main_page_style)
 
-    #info block
-    info_style = Style(border_col, back_alt_col)
+    #info block - 1
+    info_style = Style(border_col, back_alt_col)#yes
     styles.append(info_style)
 
-    #file explorer screen
-    fex_scrollbar_style = Style(border_col)
-    fex_page_style = Style(text_col, back_col)
-    fex_0_line_style = Style(text_col, back_alt_col)
-    fex_1_line_style = Style(text_col, back_col)
-    fex_highlight_style = Style(text_highlight_col, back_highlight_col)
-    fex_border_block_style = Style(border_col, back_col)
+    #file explorer screen - 2
+    fex_scrollbar_style = Style(border_col)#yes
+    fex_page_style = Style(text_col, back_col)#yes
+    fex_0_line_style = Style(text_col, back_alt_col)#yes
+    fex_1_line_style = Style(text_col, back_col)#yes
+    fex_highlight_style = Style(text_highlight_col, back_highlight_col)#yes
+    fex_border_block_style = Style(border_col, back_col)#yes
     styles.append(fex_scrollbar_style)
     styles.append(fex_page_style)
     styles.append(fex_0_line_style)
@@ -127,43 +127,43 @@ if __name__ == '__main__':
     styles.append(fex_highlight_style)
     styles.append(fex_border_block_style)
 
-    #database schema screen
-    db_schema_page_style = Style(text_col, back_col)
+    #database schema screen - 8
+    db_schema_page_style = Style(text_col, back_col)#yes
     styles.append(db_schema_page_style)
 
-    #render table list
-    render_table_scrollbar_style = Style(border_col, back_col)
-    render_table_row_style = Style(text_col, back_col)
-    render_table_border_block_style = Style(border_col, back_col)
-    render_table_highlight_style = Style(text_highlight_col, back_highlight_col)
+    #render table list - 9
+    render_table_scrollbar_style = Style(border_col, back_col)#yes
+    render_table_row_style = Style(text_col, back_col)#yes
+    render_table_border_block_style = Style(border_col, back_col)#yes
+    render_table_highlight_style = Style(text_highlight_col, back_highlight_col)#yes
     styles.append(render_table_scrollbar_style)
     styles.append(render_table_row_style)
     styles.append(render_table_border_block_style)
     styles.append(render_table_highlight_style)
 
-    #render column list
-    render_col_scrollbar_style = Style(border_col)
-    render_col_header_style = Style(text_col)
-    render_col_highlight_style = Style(text_highlight_col, back_highlight_col)
-    render_col_border_block_style = Style(border_col, back_col)
+    #render column list - 12
+    render_col_scrollbar_style = Style(border_col)#yes
+    render_col_header_style = Style(text_col)#yes
+    render_col_highlight_style = Style(text_highlight_col, back_highlight_col)#yes
+    render_col_border_block_style = Style(border_col, back_col)#yes
     styles.append(render_col_scrollbar_style)
     styles.append(render_col_header_style)
     styles.append(render_col_highlight_style)
     styles.append(render_col_border_block_style)
 
-    #new database screen
-    new_db_page_style = Style(text_alt_col, back_col)
-    new_db_insert_text_area_on_style = Style(text_highlight_col, back_highlight_col)
+    #new database screen - 16
+    new_db_page_style = Style(text_alt_col, back_col)#yes
+    new_db_insert_text_area_on_style = Style(text_highlight_col, back_highlight_col)#yes
     styles.append(new_db_page_style)
     styles.append(new_db_insert_text_area_on_style)
 
-    #render DB table screen
-    render_db_table_page_style = Style(text_alt_col, back_col)
-    render_db_col_name_style = Style(text_col, None, frozenset([MOD_ITALIC, MOD_UNDERLINED]))
-    render_db_metadata_style = Style(text_alt_col, None, frozenset([MOD_ITALIC]))
-    render_db_scrollbar_style = Style(border_col)
-    render_db_highlight_style = Style(text_highlight_col, back_highlight_col)
-    render_db_border_block_style = Style(border_col, back_col)
+    #render DB table screen - 18
+    render_db_table_page_style = Style(text_col, back_col)#yes
+    render_db_col_name_style = Style(text_col, None, frozenset([MOD_ITALIC, MOD_UNDERLINED]))#yes
+    render_db_metadata_style = Style(text_alt_col, None, frozenset([MOD_ITALIC]))#yes
+    render_db_scrollbar_style = Style(border_col)#yes
+    render_db_highlight_style = Style(text_highlight_col, back_highlight_col)#yes
+    render_db_border_block_style = Style(border_col, back_col)#yes
     styles.append(render_db_table_page_style)
     styles.append(render_db_col_name_style)
     styles.append(render_db_metadata_style)
@@ -171,13 +171,13 @@ if __name__ == '__main__':
     styles.append(render_db_highlight_style)
     styles.append(render_db_border_block_style)
 
-    #render options screen
-    render_options_page_style = Style(text_col, back_col)
-    render_options_selected_style = Style(error_col)
-    render_options_border_block_style = Style(border_col, back_col)
-    render_options_highlight_style = Style(text_highlight_col, back_highlight_col)
-    render_options_selected_row_style = Style(text_col, None, frozenset([MOD_BOLD]))
-    render_options_not_selected_row_style = Style(text_col)
+    #render options screen - 23
+    render_options_page_style = Style(text_col, back_col)#yes
+    render_options_selected_style = Style(error_col)#yes
+    render_options_border_block_style = Style(border_col, back_col)#yes
+    render_options_highlight_style = Style(text_highlight_col, back_highlight_col)#yes
+    render_options_selected_row_style = Style(text_col, None, frozenset([MOD_BOLD]))#yes
+    render_options_not_selected_row_style = Style(text_col)#yes
     styles.append(render_options_page_style)
     styles.append(render_options_selected_style)
     styles.append(render_options_border_block_style)
@@ -185,59 +185,59 @@ if __name__ == '__main__':
     styles.append(render_options_selected_row_style)
     styles.append(render_options_not_selected_row_style)
 
-    #render quit popuop
-    render_quit_popup_style = Style(text_col, warning_col)
+    #render quit popuop - 29
+    render_quit_popup_style = Style(text_col, warning_col)#yes
     styles.append(render_quit_popup_style)
 
-    #render no db loaded popup
-    render_nodb_popup_style = Style(text_col, warning_col)
+    #render no db loaded popup - 30
+    render_nodb_popup_style = Style(text_col, warning_col)#yes
     styles.append(render_nodb_popup_style)
 
-    #render insert row popup
-    render_insert_row_popup_style = Style(text_col, back_alt_col)
-    render_insert_row_metadata_style = Style(text_alt_col, None, frozenset([MOD_ITALIC]))
-    render_insert_row_text_on_style = Style(text_highlight_col, back_highlight_col)
-    render_insert_row_text_off_style = Style(text_col, back_alt_col)
+    #render insert row popup - 31
+    render_insert_row_popup_style = Style(text_col, back_alt_col)#yes
+    render_insert_row_metadata_style = Style(text_alt_col, None, frozenset([MOD_ITALIC]))#yes
+    render_insert_row_text_on_style = Style(text_highlight_col, back_highlight_col)#yes
+    render_insert_row_text_off_style = Style(text_col, back_alt_col)#yes
     styles.append(render_insert_row_popup_style)
     styles.append(render_insert_row_metadata_style)
     styles.append(render_insert_row_text_on_style)
     styles.append(render_insert_row_text_off_style)
 
-    #render insert sql popup
-    render_insert_sql_popup_style = Style(text_col, back_alt_col)
-    render_insert_sql_text_in_style = Style(text_highlight_col, back_highlight_col)
-    render_insert_sql_text_off_style = Style(text_col, back_alt_col)
+    #render insert sql popup - 35
+    render_insert_sql_popup_style = Style(text_col, back_alt_col)#yes
+    render_insert_sql_text_in_style = Style(text_highlight_col, back_highlight_col)#yes
+    render_insert_sql_text_off_style = Style(text_col, back_alt_col)#yes
     styles.append(render_insert_sql_popup_style)
     styles.append(render_insert_sql_text_in_style)
     styles.append(render_insert_sql_text_off_style)
 
-    #render insert table popup
-    render_insert_table_popup_style = Style(text_col, back_alt_col)
-    render_insert_table_border_block_stype = Style(border_col, back_col)
-    render_insert_table_highlight_style = Style(text_highlight_col, back_highlight_col)
-    render_insert_table_scrollbar_style = Style(border_col)
+    #render insert table popup - 38
+    render_insert_table_popup_style = Style(text_col, back_alt_col)#yes
+    render_insert_table_border_block_stype = Style(border_col, back_col)#yes
+    render_insert_table_highlight_style = Style(text_highlight_col, back_highlight_col)#yes
+    render_insert_table_scrollbar_style = Style(border_col)#yes
     styles.append(render_insert_table_popup_style)
     styles.append(render_insert_table_border_block_stype)
     styles.append(render_insert_table_highlight_style)
     styles.append(render_insert_table_scrollbar_style)
 
-    #render drop table popup
-    render_drop_table_popup_style = Style(text_col, back_alt_col)
-    render_drop_table_text_area_style = Style(text_highlight_col, back_highlight_col)
+    #render drop table popup - 41
+    render_drop_table_popup_style = Style(text_col, back_alt_col)#yes
+    render_drop_table_text_area_style = Style(text_highlight_col, back_highlight_col)#yes
     styles.append(render_drop_table_popup_style)
     styles.append(render_drop_table_text_area_style)
 
-    #render delete row popup
-    render_delete_row_popup_style = Style(text_col, back_alt_col)
-    render_delete_row_text_area_on_style = Style(text_col, back_highlight_col)
-    render_delete_row_text_area_off_style = Style(text_col, back_alt_col)
+    #render delete row popup - 43
+    render_delete_row_popup_style = Style(text_col, back_alt_col)#yes
+    render_delete_row_text_area_on_style = Style(text_col, back_highlight_col)#yes
+    render_delete_row_text_area_off_style = Style(text_col, back_alt_col)#yes
     styles.append(render_delete_row_popup_style)
     styles.append(render_delete_row_text_area_on_style)
     styles.append(render_delete_row_text_area_off_style)
 
-    #render error popup
-    render_error_popup_style = Style(text_col, error_col)
-    render_error_block_style = Style(border_col)
+    #render error popup - 46
+    render_error_popup_style = Style(text_col, error_col)#yes
+    render_error_block_style = Style(border_col)#yes
     styles.append(render_error_popup_style)
     styles.append(render_error_block_style)
 
