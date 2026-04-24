@@ -2,9 +2,11 @@ use crate::{
     app::{App, PopUp, Screen},
     column::column_info::ColumnInfo,
     events::input::key_bindings::AppInputEvent,
+    lang::language::AppLanguage,
     options::{OptionKind, SelectedColorScheme},
     row::row_info::RowInfo,
-    traits::color_scheme::ColorScheme,
+    traits::{color_scheme::ColorScheme, styled_row::StyledRow},
+    ui::app_styles::AppStyles,
     widgets::new_table::form::TableField,
 };
 
@@ -150,20 +152,7 @@ fn render_file_explorer_screen(frame: &mut Frame, app: &mut App) {
     ])
     .style(app.styles.screen_style)
     .height(1);
-    let rows: Vec<Row> = app
-        .file_explorer_table
-        .items
-        .iter()
-        .enumerate()
-        .map(|(i, data)| {
-            let style = match i % 2 {
-                0 => app.styles.list_row_style,
-                _ => app.styles.list_row_alt_style,
-            };
-            let items: Vec<&str> = data.ref_array().iter().map(|item| item.as_str()).collect();
-            Row::new(items).style(style)
-        })
-        .collect();
+    let rows = build_rows(&app.file_explorer_table.items, &app.styles, &app.language);
     let col_constraints = [
         Constraint::Min(app.file_explorer_table.longest_item_lens.0 + 1),
         Constraint::Length(app.file_explorer_table.longest_item_lens.1 + 1),
@@ -380,18 +369,7 @@ fn render_database_table_screen(frame: &mut Frame, app: &mut App) {
     let header = Row::new(header_cells).style(app.styles.screen_style);
 
     if let Some(rows) = app.row_list_view.as_mut() {
-        let row_items: Vec<Row<'_>> = rows
-            .items
-            .iter()
-            .enumerate()
-            .map(|(i, data)| {
-                let style = match i % 2 {
-                    0 => app.styles.list_row_style,
-                    _ => app.styles.list_row_alt_style,
-                };
-                Row::new(data.values.clone()).style(style)
-            })
-            .collect();
+        let row_items = build_rows(&rows.items, &app.styles, &app.language);
         let table_name = table_name.to_string();
         let border_block = Block::new()
             .borders(Borders::ALL)
@@ -840,39 +818,18 @@ fn render_insert_table_popup(frame: &mut Frame, app: &mut App) {
         ];
 
         for (i, col_draft) in form.draft.columns.iter().enumerate() {
-            let style = match i % 2 {
-                0 => app.styles.list_row_style,
-                _ => app.styles.list_row_alt_style,
-            };
+            let row = col_draft.to_row(&app.styles, &app.language, i);
 
-            let dt = format!("{}", col_draft.data_type);
-            let pk = format!("{}", if col_draft.primary_key { "X" } else { "" });
-            let unique = format!("{}", if col_draft.unique { "X" } else { "" });
-            let nn = format!("{}", if col_draft.not_null { "X" } else { "" });
-            let fk = format!(
-                "{}",
-                if col_draft.foreign_key.is_some() {
-                    "X"
-                } else {
-                    ""
-                }
-            );
-            let mut col_row = vec![col_draft.name.text_value.clone(), dt, pk, unique, nn, fk];
-
-            if let Some(fk) = &col_draft.foreign_key {
-                let fk_col = fk.referenced_column.text_value.clone();
-                let fk_table = fk.referenced_table.text_value.clone();
+            if let Some(_fk) = &col_draft.foreign_key {
                 let fk_col_header = "Ref Col";
                 let fk_table_header = "Ref Table";
                 header_vec.push(fk_table_header);
                 header_vec.push(fk_col_header);
                 widths.push(Constraint::Min(10));
                 widths.push(Constraint::Min(8));
-                col_row.push(fk_table);
-                col_row.push(fk_col);
             }
 
-            table_form_rows.push(Row::new(col_row).style(style));
+            table_form_rows.push(row);
         }
 
         let table_block = Block::new()
@@ -1030,30 +987,8 @@ fn render_table_list(frame: &mut Frame, app: &mut App, area: Rect) {
             Cell::new(header_type_string.to_string()),
         ])
         .style(app.styles.identifier_style);
-        let view_element_string = &app.language.table_list_view_element;
-        let table_element_string = &app.language.table_list_table_element;
-        let rows = view
-            .items
-            .iter()
-            .enumerate()
-            .map(|(i, info_item)| {
-                let style = match i % 2 {
-                    0 => app.styles.list_row_style,
-                    _ => app.styles.list_row_alt_style,
-                };
-                let view_str = if info_item.is_view {
-                    view_element_string.to_string()
-                } else {
-                    table_element_string.to_string()
-                };
-                Row::new(vec![
-                    info_item.name.clone(),
-                    info_item.row_count.to_string(),
-                    view_str,
-                ])
-                .style(style)
-            })
-            .collect();
+
+        let rows = build_rows(&view.items, &app.styles, &app.language);
 
         let col_constraints = [
             Constraint::Min(15),   // table name
@@ -1112,47 +1047,7 @@ fn render_column_list(frame: &mut Frame, app: &mut App, area: Rect) {
         ])
         .style(app.styles.identifier_style);
 
-        let rows: Vec<Row> = view
-            .items
-            .iter()
-            .enumerate()
-            .map(|(i, info_item)| {
-                let style = match i % 2 {
-                    0 => app.styles.list_row_style,
-                    _ => app.styles.list_row_alt_style,
-                };
-                let mut col_constraint_text = "".to_string();
-                if info_item.is_pk {
-                    let pk_string = &app.language.sql_pk_constraint;
-                    col_constraint_text.push_str(format!("[{}]", pk_string).as_str());
-                }
-                if info_item.is_unique {
-                    let unique_string = &app.language.sql_unique_constraint;
-                    col_constraint_text.push_str(format!("[{}]", unique_string).as_str());
-                }
-                if info_item.is_not_null {
-                    let not_null_string = &app.language.sql_not_null_constraint;
-                    col_constraint_text.push_str(format!("[{}]", not_null_string).as_str());
-                }
-                if info_item.is_fk {
-                    let unknown_ref_table_string = &app.language.column_list_unknown_fk_ref;
-                    let fk_string = &app.language.sql_fk_constraint;
-                    let ref_table = info_item
-                        .references_table
-                        .as_deref()
-                        .unwrap_or(unknown_ref_table_string);
-                    col_constraint_text
-                        .push_str(&format!("[{} -> {}]", fk_string, ref_table).to_string());
-                }
-
-                Row::new(vec![
-                    info_item.name.to_string(),
-                    info_item.col_type.to_string(),
-                    col_constraint_text,
-                ])
-                .style(style)
-            })
-            .collect();
+        let rows = build_rows(&view.items, &app.styles, &app.language);
 
         let col_constraints = [
             Constraint::Min(15),
@@ -1348,6 +1243,18 @@ fn compute_col_widths(
 
             Constraint::Length(width as u16)
         })
+        .collect()
+}
+
+fn build_rows<'a, T: StyledRow>(
+    items: &'a [T],
+    styles: &AppStyles,
+    language: &AppLanguage,
+) -> Vec<Row<'a>> {
+    items
+        .iter()
+        .enumerate()
+        .map(|(i, item)| item.to_row(styles, language, i))
         .collect()
 }
 

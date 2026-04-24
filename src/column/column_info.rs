@@ -1,6 +1,11 @@
 use ratatui::{
     style::Style,
     text::{Line, Span},
+    widgets::Row,
+};
+
+use crate::{
+    lang::language::AppLanguage, traits::styled_row::StyledRow, ui::app_styles::AppStyles,
 };
 
 #[derive(Clone)]
@@ -90,5 +95,44 @@ impl ColumnInfo {
         }
 
         length
+    }
+}
+
+impl StyledRow for ColumnInfo {
+    fn to_row(&self, styles: &AppStyles, language: &AppLanguage, index: usize) -> Row<'_> {
+        let style = if index % 2 == 0 {
+            styles.list_row_style
+        } else {
+            styles.list_row_alt_style
+        };
+        let mut col_constraint_text = "".to_string();
+        if self.is_pk {
+            let pk_string = &language.sql_pk_constraint;
+            col_constraint_text.push_str(format!("[{}]", pk_string).as_str());
+        }
+        if self.is_unique {
+            let unique_string = &language.sql_unique_constraint;
+            col_constraint_text.push_str(format!("[{}]", unique_string).as_str());
+        }
+        if self.is_not_null {
+            let not_null_string = &language.sql_not_null_constraint;
+            col_constraint_text.push_str(format!("[{}]", not_null_string).as_str());
+        }
+        if self.is_fk {
+            let unknown_ref_table_string = &language.column_list_unknown_fk_ref;
+            let fk_string = &language.sql_fk_constraint;
+            let ref_table = self
+                .references_table
+                .as_deref()
+                .unwrap_or(&unknown_ref_table_string);
+            col_constraint_text.push_str(&format!("[{} -> {}]", fk_string, ref_table).to_string());
+        }
+
+        Row::new(vec![
+            self.name.to_string(),
+            self.col_type.to_string(),
+            col_constraint_text,
+        ])
+        .style(style)
     }
 }

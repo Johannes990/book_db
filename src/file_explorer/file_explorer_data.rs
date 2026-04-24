@@ -1,3 +1,8 @@
+use crate::lang::language::AppLanguage;
+use crate::traits::styled_row::StyledRow;
+use crate::ui::app_styles::AppStyles;
+use ratatui::widgets::Row;
+
 pub struct FileExplorerData {
     path_name: String,
     path_size: String,
@@ -33,5 +38,16 @@ impl FileExplorerData {
 
     pub fn is_dir(&self) -> &bool {
         &self.is_dir
+    }
+}
+
+impl StyledRow for FileExplorerData {
+    fn to_row(&self, styles: &AppStyles, _language: &AppLanguage, index: usize) -> Row<'_> {
+        let style = if index % 2 == 0 {
+            styles.list_row_style
+        } else {
+            styles.list_row_alt_style
+        };
+        Row::new(self.ref_array().iter().map(|item| item.as_str())).style(style)
     }
 }

@@ -1,6 +1,10 @@
 use std::fmt;
 
-use crate::widgets::text_box::TextBox;
+use crate::{
+    lang::language::AppLanguage, traits::styled_row::StyledRow, ui::app_styles::AppStyles,
+    widgets::text_box::TextBox,
+};
+use ratatui::widgets::Row;
 
 pub struct ForeignKeyDraft {
     pub referenced_table: TextBox,
@@ -93,6 +97,31 @@ impl ColumnDraft {
         } else {
             self.foreign_key = Some(ForeignKeyDraft::new());
         }
+    }
+}
+
+impl StyledRow for ColumnDraft {
+    fn to_row(&self, styles: &AppStyles, _language: &AppLanguage, index: usize) -> Row<'_> {
+        let style = if index % 2 == 0 {
+            styles.list_row_style
+        } else {
+            styles.list_row_alt_style
+        };
+
+        let dt = format!("{}", self.data_type);
+        let pk = format!("{}", if self.primary_key { "X" } else { "" });
+        let unique = format!("{}", if self.unique { "X" } else { "" });
+        let nn = format!("{}", if self.not_null { "X" } else { "" });
+        let fk = format!("{}", if self.foreign_key.is_some() { "X" } else { "" });
+        let mut col_row = vec![self.name.text_value.clone(), dt, pk, unique, nn, fk];
+
+        if let Some(fk) = &self.foreign_key {
+            let fk_col = fk.referenced_column.text_value.clone();
+            let fk_table = fk.referenced_table.text_value.clone();
+            col_row.push(fk_table);
+            col_row.push(fk_col);
+        }
+        Row::new(col_row).style(style)
     }
 }
 
