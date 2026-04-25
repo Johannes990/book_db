@@ -1,7 +1,7 @@
 use crate::column::column_info::ColumnInfo;
 use crate::errors::backend::DBError;
 use crate::row::row_info::RowInfo;
-use rusqlite::{types::ValueRef, Connection, Result, Statement, ToSql};
+use rusqlite::{types::ValueRef, Connection, Result, ToSql};
 use sqlparser::dialect::SQLiteDialect;
 use sqlparser::parser::Parser;
 use std::collections::HashMap;
@@ -185,32 +185,6 @@ impl DB {
         Ok(columns)
     }
 
-    pub fn _create_table(
-        &mut self,
-        table_name: String,
-        columns: Vec<String>,
-        constraints: Vec<String>,
-    ) -> Result<(), DBError> {
-        self._check_table_does_not_exist(&table_name)?;
-
-        let col_names = self._col_names_from_sql(&columns);
-        self.db_tab_col_map.insert(table_name.clone(), col_names);
-
-        let columns_str = columns.join(", ");
-        let constraints_str = constraints.join(", ");
-        let table_contents = columns_str + ", " + &constraints_str;
-        let sql = format!(
-            "CREATE TABLE IF NOT EXISTS {} ({})",
-            table_name, table_contents
-        );
-
-        self.db_conn.execute(&sql, [])?;
-
-        self.refresh_table_columns(&table_name)?;
-
-        Ok(())
-    }
-
     pub fn drop_table(&mut self, table_name: String) -> Result<(), DBError> {
         self.check_table_exists(table_name.as_str())?;
 
@@ -259,24 +233,6 @@ impl DB {
         Ok(())
     }
 
-    pub fn _select_row_statement(
-        &self,
-        table_name: &String,
-        cols: &Vec<String>,
-    ) -> Result<Statement<'_>, DBError> {
-        self.check_table_exists(table_name)?;
-
-        let table_cols = self.db_tab_col_map.get(table_name).unwrap();
-
-        self._check_cols_match_existing(table_cols, cols)?;
-
-        let col_str = cols.join(", ");
-        let sql = format!("SELECT {} FROM {}", col_str, table_name);
-        let res = self.db_conn.prepare(&sql)?;
-
-        Ok(res)
-    }
-
     pub fn delete_row_statement(
         &self,
         table_name: &str,
@@ -302,34 +258,12 @@ impl DB {
         self.db_tab_col_map.contains_key(table_name)
     }
 
-    fn _check_table_does_not_exist(&self, table_name: &str) -> Result<(), DBError> {
-        if !self.check_tab_col_map_contains_table(&table_name.to_string()) {
-            Ok(())
-        } else {
-            Err(DBError::TableAlreadyExists(table_name.to_string()))
-        }
-    }
-
     fn check_table_exists(&self, table_name: &str) -> Result<(), DBError> {
         if self.check_tab_col_map_contains_table(&table_name.to_string()) {
             Ok(())
         } else {
             Err(DBError::TableDoesNotExist(table_name.to_string()))
         }
-    }
-
-    fn _check_cols_match_existing(
-        &self,
-        existing_cols: &[String],
-        cols: &Vec<String>,
-    ) -> Result<(), DBError> {
-        for col in cols {
-            if !existing_cols.contains(col) {
-                return Err(DBError::ColumnDoesNotExist(col.to_string()));
-            }
-        }
-
-        Ok(())
     }
 
     fn check_col_exists_in_table(&self, table_name: &str, col_name: &str) -> Result<(), DBError> {
@@ -359,17 +293,5 @@ impl DB {
         }
 
         Ok(())
-    }
-
-    fn _col_names_from_sql(&self, columns: &Vec<String>) -> Vec<String> {
-        let mut col_names = Vec::new();
-        for col_str in columns {
-            let col_parts: Vec<_> = col_str.split(' ').collect();
-            let col_name = col_parts[0];
-            println!("Received col name {}", col_name);
-            col_names.push(col_name.to_string());
-        }
-
-        col_names
     }
 }

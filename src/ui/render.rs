@@ -847,27 +847,33 @@ fn render_insert_table_popup(frame: &mut Frame, app: &mut App) {
                 }
             };
 
-            let dt_string = format!("{}", col_draft.data_type);
-            let pk_string = format!("{}", if col_draft.primary_key { option_set } else { option_not_set });
-            let unique_string = format!("{}", if col_draft.unique { option_set } else { option_not_set });
-            let not_null_string = format!("{}", if col_draft.not_null { option_set } else { option_not_set });
-            let fk_string = format!("{}", if col_draft.foreign_key.is_some() { option_set } else { option_not_set });
+            let dt_string = col_draft.data_type.to_string();
+            let pk_string = if col_draft.primary_key { option_set } else { option_not_set }.to_string();
+            let unique_string = if col_draft.unique { option_set } else { option_not_set }.to_string();
+            let not_null_string = if col_draft.not_null { option_set } else { option_not_set }.to_string();
+            let fk_string = if col_draft.foreign_key.is_some() { option_set } else { option_not_set }.to_string();
 
-            let name = styled_cell(col_draft.name.text_value.clone(), ColumnField::Name);
-            let dt = styled_cell(dt_string, ColumnField::DataType);
-            let pk = styled_cell(pk_string, ColumnField::PrimaryKey);
-            let unique = styled_cell(unique_string, ColumnField::Unique);
-            let nn = styled_cell(not_null_string, ColumnField::NotNull);
-            let fk = styled_cell(fk_string, ColumnField::ForeignKeyToggle);
+            let mut col_cells = vec![
+                styled_cell(col_draft.name.text_value.clone(), ColumnField::Name),
+                styled_cell(dt_string, ColumnField::DataType),
+                styled_cell(pk_string, ColumnField::PrimaryKey),
+                styled_cell(unique_string, ColumnField::Unique),
+                styled_cell(not_null_string, ColumnField::NotNull),
+                styled_cell(fk_string, ColumnField::ForeignKeyToggle),
+            ];
 
-            let mut col_cells = vec![name, dt, pk, unique, nn, fk];
-
-            if let Some(fk) = &col_draft.foreign_key {
-                let fk_col = styled_cell(fk.referenced_column.text_value.clone(), ColumnField::ForeignKeyColumn);
-                let fk_table = styled_cell(fk.referenced_table.text_value.clone(), ColumnField::ForeignKeyTable);
-                col_cells.push(fk_table);
-                col_cells.push(fk_col);
+            if has_fk {
+                if let Some(fk) = &col_draft.foreign_key {
+                    let fk_table = styled_cell(fk.referenced_table.text_value.clone(), ColumnField::ForeignKeyTable);
+                    let fk_col = styled_cell(fk.referenced_column.text_value.clone(), ColumnField::ForeignKeyColumn);
+                    col_cells.push(fk_table);
+                    col_cells.push(fk_col);
+                } else {
+                    col_cells.push(Cell::from(""));
+                    col_cells.push(Cell::from(""));
+                }
             }
+            
 
             let row_style = if i % 2 == 0 {
                 app.styles.list_row_style
