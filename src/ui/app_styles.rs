@@ -60,9 +60,7 @@ impl AppStyles {
                 .add_modifier(Modifier::ITALIC | Modifier::UNDERLINED),
             metadata_style: Style::default().fg(text_alt).add_modifier(Modifier::ITALIC),
             highlighted_element_style: Style::default()
-                .fg(text_highlight)
-                .bg(background_highlight)
-                .add_modifier(Modifier::BOLD),
+                .add_modifier(Modifier::BOLD | Modifier::UNDERLINED),
             footer_style: Style::default().fg(text).bg(background_alt),
             footer_keycombo_style: Style::default().fg(accent).bg(background_alt),
         }

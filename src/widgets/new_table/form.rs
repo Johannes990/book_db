@@ -50,7 +50,7 @@ impl ColumnField {
                 if col.foreign_key.is_some() {
                     ColumnField::ForeignKeyColumn
                 } else {
-                    ColumnField::Unique
+                    ColumnField::ForeignKeyToggle
                 }
             }
             ColumnField::DataType => ColumnField::Name,

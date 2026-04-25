@@ -194,7 +194,7 @@ fn get_data_from_path(
         );
     }
 
-    let start = Instant::now();
+    /*let start = Instant::now();
     let tree_rx = spawn_tree_builder(paths_to_search_from);
     let tree = tree_rx.recv().unwrap();
 
@@ -210,7 +210,7 @@ fn get_data_from_path(
         q.recv().unwrap()
     )
     .as_str());
-    log(format!("querying took {:?}", duration2).as_str());
+    log(format!("querying took {:?}", duration2).as_str());*/
 
     entries
 }

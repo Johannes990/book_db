@@ -7,7 +7,7 @@ use crate::{
     row::row_info::RowInfo,
     traits::{color_scheme::ColorScheme, styled_row::StyledRow},
     ui::app_styles::AppStyles,
-    widgets::new_table::form::TableField,
+    widgets::new_table::form::{ColumnField, TableField},
 };
 
 use ratatui::{
@@ -806,6 +806,7 @@ fn render_insert_table_popup(frame: &mut Frame, app: &mut App) {
         let unique = "Unique";
         let not_null = "Not Null";
         let foreign_key = "FK";
+
         let mut header_vec = vec![name, data_type, primary_key, unique, not_null, foreign_key];
 
         let mut widths = vec![
@@ -817,19 +818,64 @@ fn render_insert_table_popup(frame: &mut Frame, app: &mut App) {
             Constraint::Max(3),
         ];
 
-        for (i, col_draft) in form.draft.columns.iter().enumerate() {
-            let row = col_draft.to_row(&app.styles, &app.language, i);
+        let has_fk = form.draft.columns.iter().any(|col| col.foreign_key.is_some());
 
-            if let Some(_fk) = &col_draft.foreign_key {
-                let fk_col_header = "Ref Col";
-                let fk_table_header = "Ref Table";
-                header_vec.push(fk_table_header);
-                header_vec.push(fk_col_header);
-                widths.push(Constraint::Min(10));
-                widths.push(Constraint::Min(8));
+        if has_fk {
+            let fk_col_header = "Ref Col";
+            let fk_table_header = "Ref Table";
+            header_vec.push(fk_table_header);
+            header_vec.push(fk_col_header);
+            widths.push(Constraint::Min(10));
+            widths.push(Constraint::Min(8));
+        }
+
+        for (i, col_draft) in form.draft.columns.iter().enumerate() {
+            //let row = col_draft.to_row(&app.styles, &app.language, i);
+            let option_set = "<X>";
+            let option_not_set = "< >";
+
+            let selected = match form.selected_field {
+                TableField::Column(row, field) if row == i => Some(field),
+                _ => None,
+            };
+
+            let styled_cell = |value: String, field: ColumnField| {
+                if selected == Some(field) {
+                    Cell::from(value).style(app.styles.highlighted_element_style)
+                } else {
+                    Cell::from(value)
+                }
+            };
+
+            let dt_string = format!("{}", col_draft.data_type);
+            let pk_string = format!("{}", if col_draft.primary_key { option_set } else { option_not_set });
+            let unique_string = format!("{}", if col_draft.unique { option_set } else { option_not_set });
+            let not_null_string = format!("{}", if col_draft.not_null { option_set } else { option_not_set });
+            let fk_string = format!("{}", if col_draft.foreign_key.is_some() { option_set } else { option_not_set });
+
+            let name = styled_cell(col_draft.name.text_value.clone(), ColumnField::Name);
+            let dt = styled_cell(dt_string, ColumnField::DataType);
+            let pk = styled_cell(pk_string, ColumnField::PrimaryKey);
+            let unique = styled_cell(unique_string, ColumnField::Unique);
+            let nn = styled_cell(not_null_string, ColumnField::NotNull);
+            let fk = styled_cell(fk_string, ColumnField::ForeignKeyToggle);
+
+            let mut col_cells = vec![name, dt, pk, unique, nn, fk];
+
+            if let Some(fk) = &col_draft.foreign_key {
+                let fk_col = styled_cell(fk.referenced_column.text_value.clone(), ColumnField::ForeignKeyColumn);
+                let fk_table = styled_cell(fk.referenced_table.text_value.clone(), ColumnField::ForeignKeyTable);
+                col_cells.push(fk_table);
+                col_cells.push(fk_col);
             }
 
-            table_form_rows.push(row);
+            let row_style = if i % 2 == 0 {
+                app.styles.list_row_style
+            } else {
+                app.styles.list_row_alt_style
+            };
+
+            table_form_rows.push(Row::new(col_cells).style(row_style));
         }
 
         let table_block = Block::new()
@@ -1249,7 +1295,7 @@ fn compute_col_widths(
 fn build_rows<'a, T: StyledRow>(
     items: &'a [T],
     styles: &AppStyles,
-    language: &AppLanguage,
+    language: &AppLanguage
 ) -> Vec<Row<'a>> {
     items
         .iter()
@@ -1292,7 +1338,7 @@ where
         app,
         info_bits,
         info_title,
-        app.styles.info_style,
+        app.styles.footer_style,
         area,
     );
 }
@@ -1302,7 +1348,7 @@ where
     S: AsRef<str>,
 {
     let general_text_style = app.styles.footer_style;
-    let alt_text_style_1 = app.styles.footer_keycombo_style;
+    let keycombo_style = app.styles.footer_keycombo_style;
 
     let mut info_text = Text::default();
 
@@ -1310,7 +1356,7 @@ where
         let s = bit.as_ref();
 
         if i % 2 == 0 {
-            info_text.push_span(Span::styled::<&str, Style>(s, alt_text_style_1));
+            info_text.push_span(Span::styled::<&str, Style>(s, keycombo_style));
             info_text.push_span(Span::styled(" - ", general_text_style));
         } else {
             info_text.push_span(Span::styled::<&str, Style>(s, general_text_style));
