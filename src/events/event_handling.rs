@@ -127,6 +127,20 @@ fn splash_screen_handler(app: &mut App, key_event: KeyEvent) -> Result<(), AppEr
         return Ok(());
     }
 
+    if let Some(db) = app.selected_db.as_ref() {
+        let mut db_str = String::new();
+        let db_map = &db.table_column_map;
+        for key in db_map.keys() {
+            let str_vec = db_map.get(key);
+            let default = Vec::new();
+            let str_vec_unwrap = str_vec.unwrap_or(&default);
+            for db_val in str_vec_unwrap {
+                db_str.push_str(format!("{}: {}\n", key, db_val).as_str());
+            }
+        }
+        log(&db_str);
+    }
+
     let Some(event) = app.key_bindings.resolve_event(
         app.current_screen,
         app.current_popup,
@@ -842,6 +856,10 @@ fn insert_table_popup_handler(app: &mut App, key_event: KeyEvent) -> Result<(), 
         return Ok(());
     }
 
+    let Some(db) = &mut app.selected_db else {
+        return Ok(());
+    };
+
     let Some(insert_form) = app.table_insert_form.as_mut() else {
         app.current_error = Some(AppError::InvalidHandle("CreateTableForm".to_string()));
         app.switch_to_popup(PopUp::Error);
@@ -925,13 +943,10 @@ fn insert_table_popup_handler(app: &mut App, key_event: KeyEvent) -> Result<(), 
         }
         AppInputEvent::ToggleOption => {
             if let TableField::Column(idx, field) = insert_form.selected_field {
-                insert_form.toggle_field(idx, &field);
+                insert_form.toggle_field(idx, &field, &db.table_column_map);
             }
         }
         AppInputEvent::ExecuteAction => {
-            let Some(db) = &mut app.selected_db else {
-                return Ok(());
-            };
             let sql_string = insert_form.draft.to_sql();
             {
                 match db.execute_raw_sql(sql_string) {

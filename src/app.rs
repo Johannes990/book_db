@@ -394,12 +394,12 @@ impl App {
 
     pub fn populate_table_col_map(&mut self) {
         if let Some(db) = &mut self.selected_db {
-            db.db_tab_col_map.clear();
+            db.table_column_map.clear();
 
             if let Ok(tables) = db.get_table_list() {
                 for table in tables {
                     if let Ok(cols) = db.get_table_columns(&table) {
-                        db.db_tab_col_map
+                        db.table_column_map
                             .insert(table, cols.iter().map(|col| col.name.clone()).collect());
                     }
                 }

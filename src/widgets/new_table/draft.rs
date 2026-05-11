@@ -1,17 +1,36 @@
+use std::collections::BTreeMap;
 use std::fmt;
 
 use crate::widgets::text_box::TextBox;
 
 pub struct ForeignKeyDraft {
-    pub referenced_table: TextBox,
-    pub referenced_column: TextBox,
+    pub referenced_table: String,
+    table_idx: usize,
+    pub referenced_column: String,
+    column_idx: usize,
 }
 
 impl ForeignKeyDraft {
-    pub fn new() -> Self {
-        Self {
-            referenced_table: TextBox::default(),
-            referenced_column: TextBox::default(),
+    pub fn new(tab_col_map: &BTreeMap<String, Vec<String>>) -> Self {
+        let ofkv = tab_col_map.first_key_value();
+        match ofkv {
+            Some(fkv) => {
+                let referenced_table = fkv.0.to_string();
+                let referenced_column = fkv.1[0].clone();
+
+                Self {
+                    referenced_table,
+                    table_idx: 0,
+                    referenced_column,
+                    column_idx: 0,
+                }
+            }
+            None => Self {
+                referenced_table: String::new(),
+                table_idx: 0,
+                referenced_column: String::new(),
+                column_idx: 0,
+            },
         }
     }
 }
@@ -87,12 +106,68 @@ impl ColumnDraft {
         self.not_null = !self.not_null;
     }
 
-    pub fn toggle_foreign_key(&mut self) {
+    pub fn toggle_foreign_key(&mut self, tab_col_map: &BTreeMap<String, Vec<String>>) {
         if self.foreign_key.is_some() {
             self.foreign_key = None;
         } else {
-            self.foreign_key = Some(ForeignKeyDraft::new());
+            self.foreign_key = Some(ForeignKeyDraft::new(tab_col_map));
         }
+    }
+
+    pub fn toggle_foreign_key_table(&mut self, tab_col_map: &BTreeMap<String, Vec<String>>) {
+        if tab_col_map.is_empty() {
+            return;
+        }
+
+        let Some(fk_field) = self.foreign_key.as_mut() else {
+            return;
+        };
+
+        let tables: Vec<_> = tab_col_map.keys().collect();
+        fk_field.table_idx += 1;
+
+        if fk_field.table_idx >= tab_col_map.len() {
+            fk_field.table_idx = 0;
+        }
+
+        fk_field.referenced_table = tables[fk_field.table_idx].to_string();
+
+        let columns = match tab_col_map.get(&fk_field.referenced_table) {
+            Some(column_vec) => column_vec,
+            None => &Vec::new(),
+        };
+
+        if columns.len() == 0 {
+            fk_field.referenced_column = "".to_string();
+        }
+
+        if fk_field.column_idx >= columns.len() {
+            fk_field.column_idx = 0;
+        }
+
+        fk_field.referenced_column = columns[fk_field.column_idx].clone();
+    }
+
+    pub fn toggle_foreign_key_column(&mut self, tab_col_map: &BTreeMap<String, Vec<String>>) {
+        if tab_col_map.is_empty() {
+            return;
+        }
+
+        let Some(fk_field) = self.foreign_key.as_mut() else {
+            return;
+        };
+
+        let columns = match tab_col_map.get(&fk_field.referenced_table) {
+            Some(column_vec) => column_vec,
+            None => &Vec::new(),
+        };
+
+        fk_field.column_idx += 1;
+        if fk_field.column_idx >= columns.len() {
+            fk_field.column_idx = 0;
+        }
+
+        fk_field.referenced_column = columns[fk_field.column_idx].clone();
     }
 }
 
@@ -145,9 +220,7 @@ impl TableDraft {
             if let Some(fk) = &col.foreign_key {
                 let fk_def = format!(
                     "FOREIGN KEY ({}) REFERENCES {}({})",
-                    col.name.text_value,
-                    fk.referenced_table.text_value,
-                    fk.referenced_column.text_value
+                    col.name.text_value, fk.referenced_table, fk.referenced_column
                 );
                 col_sql_strings.push(fk_def);
             }

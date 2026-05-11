@@ -4,13 +4,13 @@ use crate::row::row_info::RowInfo;
 use rusqlite::{types::ValueRef, Connection, Result, ToSql};
 use sqlparser::dialect::SQLiteDialect;
 use sqlparser::parser::Parser;
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 
 pub struct DB {
     pub db_name: String,
     pub db_extension: String,
     pub db_conn: Connection,
-    pub db_tab_col_map: HashMap<String, Vec<String>>,
+    pub table_column_map: BTreeMap<String, Vec<String>>,
 }
 
 impl DB {
@@ -23,7 +23,7 @@ impl DB {
             db_name: name,
             db_extension: extension,
             db_conn: conn,
-            db_tab_col_map: HashMap::new(),
+            table_column_map: BTreeMap::new(),
         })
     }
 
@@ -255,7 +255,7 @@ impl DB {
     }
 
     fn check_tab_col_map_contains_table(&self, table_name: &String) -> bool {
-        self.db_tab_col_map.contains_key(table_name)
+        self.table_column_map.contains_key(table_name)
     }
 
     fn check_table_exists(&self, table_name: &str) -> Result<(), DBError> {
@@ -267,7 +267,7 @@ impl DB {
     }
 
     fn check_col_exists_in_table(&self, table_name: &str, col_name: &str) -> Result<(), DBError> {
-        let table_cols = self.db_tab_col_map.get(table_name).unwrap();
+        let table_cols = self.table_column_map.get(table_name).unwrap();
         if !(table_cols.contains(&col_name.to_string())) {
             return Err(DBError::ColumnDoesNotExist(col_name.to_string()));
         }
@@ -281,7 +281,8 @@ impl DB {
             .into_iter()
             .map(|col| col.name)
             .collect::<Vec<_>>();
-        self.db_tab_col_map.insert(table_name.to_string(), columns);
+        self.table_column_map
+            .insert(table_name.to_string(), columns);
 
         Ok(())
     }

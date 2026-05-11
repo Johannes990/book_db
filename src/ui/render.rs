@@ -818,7 +818,11 @@ fn render_insert_table_popup(frame: &mut Frame, app: &mut App) {
             Constraint::Max(3),
         ];
 
-        let has_fk = form.draft.columns.iter().any(|col| col.foreign_key.is_some());
+        let has_fk = form
+            .draft
+            .columns
+            .iter()
+            .any(|col| col.foreign_key.is_some());
 
         if has_fk {
             let fk_col_header = "Ref Col";
@@ -848,10 +852,30 @@ fn render_insert_table_popup(frame: &mut Frame, app: &mut App) {
             };
 
             let dt_string = col_draft.data_type.to_string();
-            let pk_string = if col_draft.primary_key { option_set } else { option_not_set }.to_string();
-            let unique_string = if col_draft.unique { option_set } else { option_not_set }.to_string();
-            let not_null_string = if col_draft.not_null { option_set } else { option_not_set }.to_string();
-            let fk_string = if col_draft.foreign_key.is_some() { option_set } else { option_not_set }.to_string();
+            let pk_string = if col_draft.primary_key {
+                option_set
+            } else {
+                option_not_set
+            }
+            .to_string();
+            let unique_string = if col_draft.unique {
+                option_set
+            } else {
+                option_not_set
+            }
+            .to_string();
+            let not_null_string = if col_draft.not_null {
+                option_set
+            } else {
+                option_not_set
+            }
+            .to_string();
+            let fk_string = if col_draft.foreign_key.is_some() {
+                option_set
+            } else {
+                option_not_set
+            }
+            .to_string();
 
             let mut col_cells = vec![
                 styled_cell(col_draft.name.text_value.clone(), ColumnField::Name),
@@ -864,8 +888,10 @@ fn render_insert_table_popup(frame: &mut Frame, app: &mut App) {
 
             if has_fk {
                 if let Some(fk) = &col_draft.foreign_key {
-                    let fk_table = styled_cell(fk.referenced_table.text_value.clone(), ColumnField::ForeignKeyTable);
-                    let fk_col = styled_cell(fk.referenced_column.text_value.clone(), ColumnField::ForeignKeyColumn);
+                    let fk_table =
+                        styled_cell(fk.referenced_table.clone(), ColumnField::ForeignKeyTable);
+                    let fk_col =
+                        styled_cell(fk.referenced_column.clone(), ColumnField::ForeignKeyColumn);
                     col_cells.push(fk_table);
                     col_cells.push(fk_col);
                 } else {
@@ -873,7 +899,6 @@ fn render_insert_table_popup(frame: &mut Frame, app: &mut App) {
                     col_cells.push(Cell::from(""));
                 }
             }
-            
 
             let row_style = if i % 2 == 0 {
                 app.styles.list_row_style
@@ -1301,7 +1326,7 @@ fn compute_col_widths(
 fn build_rows<'a, T: StyledRow>(
     items: &'a [T],
     styles: &AppStyles,
-    language: &AppLanguage
+    language: &AppLanguage,
 ) -> Vec<Row<'a>> {
     items
         .iter()

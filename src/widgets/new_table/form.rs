@@ -8,7 +8,7 @@ use crate::{
     },
 };
 
-use std::fmt;
+use std::{collections::BTreeMap, fmt};
 
 #[derive(PartialEq, Copy, Clone)]
 #[allow(dead_code)]
@@ -198,28 +198,23 @@ impl CreateTableForm {
             TableField::Column(i, ColumnField::Name) => {
                 self.draft.columns.get_mut(i).map(|name| &mut name.name)
             }
-            TableField::Column(i, ColumnField::ForeignKeyTable) => self
-                .draft
-                .columns
-                .get_mut(i)
-                .and_then(|c| c.foreign_key.as_mut())
-                .map(|fk| &mut fk.referenced_table),
-            TableField::Column(i, ColumnField::ForeignKeyColumn) => self
-                .draft
-                .columns
-                .get_mut(i)
-                .and_then(|c| c.foreign_key.as_mut())
-                .map(|fk| &mut fk.referenced_column),
             _ => None,
         }
     }
 
-    pub fn toggle_field(&mut self, idx: usize, field: &ColumnField) {
+    pub fn toggle_field(
+        &mut self,
+        idx: usize,
+        field: &ColumnField,
+        tab_col_map: &BTreeMap<String, Vec<String>>,
+    ) {
         let Some(col) = self.draft.columns.get_mut(idx as usize) else {
             return;
         };
         match field {
-            ColumnField::ForeignKeyToggle => col.toggle_foreign_key(),
+            ColumnField::ForeignKeyToggle => col.toggle_foreign_key(tab_col_map),
+            ColumnField::ForeignKeyTable => col.toggle_foreign_key_table(tab_col_map),
+            ColumnField::ForeignKeyColumn => col.toggle_foreign_key_column(tab_col_map),
             ColumnField::NotNull => col.toggle_not_null(),
             ColumnField::PrimaryKey => col.toggle_primary_key(),
             ColumnField::Unique => col.toggle_unique(),
