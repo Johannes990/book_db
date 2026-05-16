@@ -989,21 +989,41 @@ fn render_delete_row_popup(frame: &mut Frame, app: &mut App) {
     let area = centered_rect(55, 55, frame.area());
     let (main_chunk, info_chunk) = split_with_optional_info_chunk(area, app);
 
-    if let Some(form) = &mut app.row_delete_form {
-        form.set_styles(
+    let Some(form) = &mut app.row_delete_form else {
+        /*form.set_styles(
             app.styles.highlight_row_style,
             app.styles.popup_style,
             app.styles.popup_style,
-        );
-        form.render_widget_and_cursor(frame, main_chunk);
-    }
+        );*/
+        return;
+    };
+
+    let title_line = Line::from(form.title.clone()).style(app.styles.popup_style);
+    let column = &form.selected_col;
+    let column_line = Line::from(vec![
+        Span::styled("where column: ", app.styles.popup_style),
+        Span::styled(column, app.styles.popup_style),
+    ]);
+    let row_line = Line::from(vec![
+        Span::styled("has value: ", app.styles.popup_style),
+        Span::styled(
+            form.field_value.text_value.clone(),
+            app.styles.highlight_row_style,
+        ),
+    ]);
+    let text = vec![title_line, column_line, row_line];
+
+    let content_block = Paragraph::new(text).block(Block::bordered());
+
+    frame.render_widget(Clear, main_chunk);
+    frame.render_widget(content_block, main_chunk);
 
     if let Some(info_chunk) = info_chunk {
         let events = [
             AppInputEvent::ClosePopUp,
             AppInputEvent::SwitchToEdit,
-            AppInputEvent::MoveUpPrimary,
-            AppInputEvent::MoveDownPrimary,
+            AppInputEvent::MoveDownSecondary,
+            AppInputEvent::MoveUpSecondary,
             AppInputEvent::ExecuteAction,
         ];
 

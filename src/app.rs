@@ -16,7 +16,10 @@ use crate::{
     traits::color_scheme::ColorScheme,
     ui::{app_styles::AppStyles, colors::static_colors::StaticColors, render},
     utils::log::log,
-    widgets::{new_table::form::CreateTableForm, text_form::TextForm},
+    widgets::{
+        new_table::form::CreateTableForm, row_delete_form::RowDeleteForm, text_box::TextBox,
+        text_form::TextForm,
+    },
 };
 use ratatui::Terminal;
 use serde::{Deserialize, Serialize};
@@ -75,7 +78,7 @@ pub struct App {
     pub column_list_view: Option<ColumnListView>,
     pub row_list_view: Option<RowListView>,
     pub row_insert_form: Option<TextForm>,
-    pub row_delete_form: Option<TextForm>,
+    pub row_delete_form: Option<RowDeleteForm>,
     pub raw_sql_form: Option<TextForm>,
     pub table_insert_form: Option<CreateTableForm>,
     pub table_delete_form: Option<TextForm>,
@@ -329,21 +332,30 @@ impl App {
     }
 
     pub fn create_row_insert_form(&mut self, table_cols: Vec<String>) {
-        let title_text = format!(
-            "Enter new entry into table {}",
-            self.selected_db_table.as_deref().unwrap()
-        );
+        let Some(selected_db_table) = self.selected_db_table.as_ref() else {
+            return;
+        };
+        let title_text = format!("Enter new entry into table {}", selected_db_table);
         self.row_insert_form = Some(TextForm::new(table_cols, title_text));
     }
 
     pub fn create_row_delete_form(&mut self) {
-        let title_text = format!(
-            "Delete entry from table {}",
-            self.selected_db_table.as_deref().unwrap()
-        );
-        self.row_delete_form = Some(TextForm::new(
-            vec!["Column name".to_string(), "Row value".to_string()],
+        let Some(db) = self.selected_db.as_ref() else {
+            return;
+        };
+        let Some(selected_db_table) = self.selected_db_table.as_ref() else {
+            return;
+        };
+        let cols = match db.table_column_map.get(selected_db_table) {
+            Some(cols) => cols,
+            None => &Vec::new(),
+        };
+        let title_text = format!("Delete entry from table {}", selected_db_table);
+        let field_value_form = TextBox::default();
+        self.row_delete_form = Some(RowDeleteForm::from(
             title_text,
+            cols.to_vec(),
+            field_value_form,
         ));
     }
 

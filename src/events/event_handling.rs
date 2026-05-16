@@ -702,7 +702,7 @@ fn delete_row_popup_handler(app: &mut App, key_event: KeyEvent) -> Result<(), Ap
             return Ok(());
         };
 
-        let exit = handle_edit_mode_input(form, &key_event);
+        let exit = handle_edit_mode_input(&mut form.field_value, &key_event);
 
         if exit {
             app.switch_mode(Mode::Browse);
@@ -723,7 +723,7 @@ fn delete_row_popup_handler(app: &mut App, key_event: KeyEvent) -> Result<(), Ap
     match event {
         AppInputEvent::ClosePopUp => app.switch_to_popup(PopUp::None),
         AppInputEvent::SwitchToEdit => app.switch_mode(Mode::Edit),
-        AppInputEvent::MoveUpPrimary => {
+        AppInputEvent::MoveDownSecondary => {
             let Some(form) = app.row_delete_form.as_mut() else {
                 app.current_error = Some(AppError::Navigation(
                     NavigationError::RowDeleteFormNavigation(
@@ -733,9 +733,9 @@ fn delete_row_popup_handler(app: &mut App, key_event: KeyEvent) -> Result<(), Ap
                 app.switch_to_popup(PopUp::Error);
                 return Ok(());
             };
-            form.previous();
+            form.previous_col();
         }
-        AppInputEvent::MoveDownPrimary => {
+        AppInputEvent::MoveUpSecondary => {
             let Some(form) = app.row_delete_form.as_mut() else {
                 app.current_error = Some(AppError::Navigation(
                     NavigationError::RowDeleteFormNavigation(
@@ -745,7 +745,7 @@ fn delete_row_popup_handler(app: &mut App, key_event: KeyEvent) -> Result<(), Ap
                 app.switch_to_popup(PopUp::Error);
                 return Ok(());
             };
-            form.next();
+            form.next_col();
         }
         AppInputEvent::ExecuteAction => {
             let Some(db) = app.selected_db.as_mut() else {
@@ -761,8 +761,8 @@ fn delete_row_popup_handler(app: &mut App, key_event: KeyEvent) -> Result<(), Ap
             let Some(form) = app.row_delete_form.as_mut() else {
                 return Ok(());
             };
-            let col = form.fields[0].text_box.text_value.clone();
-            let row = form.fields[1].text_box.text_value.clone();
+            let col = &form.selected_col;
+            let row = form.field_value.text_value.clone();
 
             match db.delete_row_statement(table_name, &col, &row) {
                 Ok(affected) => {
